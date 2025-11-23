@@ -63,29 +63,6 @@ export default function Profile() {
     },
   });
 
-  useEffect(() => {
-    const success = searchParams.get('success');
-    const canceled = searchParams.get('canceled');
-
-    if (success === 'true') {
-      toast.success("Pagamento realizado com sucesso! Seu plano foi atualizado.");
-    } else if (canceled === 'true') {
-      toast.info("O processo de pagamento foi cancelado.");
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (cliente) {
-      form.reset({
-        name: cliente.name,
-        email: cliente.email || '',
-        phone: cliente.phone,
-        cpf: cliente.cpf || '',
-      });
-      setAvatarUrl(cliente.avatar_url || null);
-    }
-  }, [cliente, form]);
-
   const refreshUserData = async () => {
     if (!cliente) return;
     
@@ -112,6 +89,30 @@ export default function Profile() {
       console.error('Error refreshing user data:', error);
     }
   };
+
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const canceled = searchParams.get('canceled');
+
+    if (success === 'true') {
+      toast.success("Pagamento realizado com sucesso! Seu plano foi atualizado.");
+      refreshUserData();
+    } else if (canceled === 'true') {
+      toast.info("O processo de pagamento foi cancelado.");
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (cliente) {
+      form.reset({
+        name: cliente.name,
+        email: cliente.email || '',
+        phone: cliente.phone,
+        cpf: cliente.cpf || '',
+      });
+      setAvatarUrl(cliente.avatar_url || null);
+    }
+  }, [cliente, form]);
 
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
     /**
