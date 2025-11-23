@@ -72,6 +72,7 @@ export function PlansSection() {
           plan_id: planId,
           success_url: `${window.location.origin}/perfil?tab=plans&success=true`,
           cancel_url: `${window.location.origin}/perfil?tab=plans&canceled=true`,
+          locale: navigator.language,
         },
       });
 
