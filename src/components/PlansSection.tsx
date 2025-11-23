@@ -2,6 +2,9 @@ import { usePlanInfo } from '@/hooks/usePlanInfo';
 import { PricingCard } from '@/components/ui/pricing-card';
 import { motion } from 'framer-motion';
 import { Star, Sparkles } from 'lucide-react';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useState } from "react";
 import { 
   CheckCircle, 
   XCircle, 
@@ -57,6 +60,37 @@ interface Plan {
 
 export function PlansSection() {
   const { planInfo } = usePlanInfo();
+  const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
+
+  const handleUpgrade = async (planId: string) => {
+    if (planId === 'free') return;
+    
+    try {
+      setLoadingPlanId(planId);
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: {
+          plan_id: planId,
+          success_url: `${window.location.origin}/settings?success=true`,
+          cancel_url: `${window.location.origin}/settings?canceled=true`,
+        },
+      });
+
+      if (error) throw error;
+      
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast.error(error.message || "Erro ao iniciar checkout. Tente novamente.");
+    } finally {
+      setLoadingPlanId(null);
+    }
+  };
 
   const plans: Plan[] = [
     {
@@ -238,6 +272,8 @@ export function PlansSection() {
             plan={plan}
             isCurrentPlan={isCurrentPlan(plan.id)}
             index={index}
+            onUpgrade={() => handleUpgrade(plan.id)}
+            isLoading={loadingPlanId === plan.id}
           />
         ))}
       </div>

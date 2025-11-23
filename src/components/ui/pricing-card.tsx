@@ -65,9 +65,11 @@ interface PricingCardProps {
   plan: Plan;
   isCurrentPlan: boolean;
   index: number;
+  onUpgrade?: () => void;
+  isLoading?: boolean;
 }
 
-export function PricingCard({ plan, isCurrentPlan, index }: PricingCardProps) {
+export function PricingCard({ plan, isCurrentPlan, index, onUpgrade, isLoading }: PricingCardProps) {
   const getPlanBadgeColor = (color: string) => {
     switch (color) {
       case 'orange':
@@ -297,8 +299,10 @@ export function PricingCard({ plan, isCurrentPlan, index }: PricingCardProps) {
                 className="w-full" 
                 variant={plan.id === 'free' ? 'outline' : 'default'}
                 size="lg"
+                onClick={onUpgrade}
+                disabled={isLoading || plan.id === 'free'}
               >
-                {plan.id === 'free' ? 'Já Incluído' : 'Fazer Upgrade'}
+                {isLoading ? "Processando..." : (plan.id === 'free' ? 'Já Incluído' : 'Fazer Upgrade')}
               </Button>
             )}
           </motion.div>
