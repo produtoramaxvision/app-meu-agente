@@ -70,8 +70,8 @@ export function PlansSection() {
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         body: {
           plan_id: planId,
-          success_url: `${window.location.origin}/settings?success=true`,
-          cancel_url: `${window.location.origin}/settings?canceled=true`,
+          success_url: `${window.location.origin}/perfil?tab=plans&success=true`,
+          cancel_url: `${window.location.origin}/perfil?tab=plans&canceled=true`,
         },
       });
 

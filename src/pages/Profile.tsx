@@ -64,6 +64,17 @@ export default function Profile() {
   });
 
   useEffect(() => {
+    const success = searchParams.get('success');
+    const canceled = searchParams.get('canceled');
+
+    if (success === 'true') {
+      toast.success("Pagamento realizado com sucesso! Seu plano foi atualizado.");
+    } else if (canceled === 'true') {
+      toast.info("O processo de pagamento foi cancelado.");
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     if (cliente) {
       form.reset({
         name: cliente.name,
