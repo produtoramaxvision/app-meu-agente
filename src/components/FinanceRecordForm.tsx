@@ -247,6 +247,18 @@ export function FinanceRecordForm({ userPhone, onSuccess, recordToEdit, open: co
 
   const isPaid = form.watch('agendar');
   const recorrente = form.watch('recorrente');
+  const transactionType = form.watch('tipo');
+
+  const paymentToggleLabel =
+    transactionType === 'entrada' ? 'Marcar como recebido?' : 'Marcar como pago?';
+
+  const paymentToggleDescription = isPaid
+    ? transactionType === 'entrada'
+      ? 'A transação será registrada como recebida.'
+      : 'A transação será registrada como paga.'
+    : transactionType === 'entrada'
+      ? 'A conta será criada como pendente (a receber).'
+      : 'A conta será criada como pendente (a pagar).';
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -438,7 +450,7 @@ export function FinanceRecordForm({ userPhone, onSuccess, recordToEdit, open: co
                 name="agendar"
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between">
-                    <FormLabel>Marcar como pago/recebido?</FormLabel>
+                    <FormLabel>{paymentToggleLabel}</FormLabel>
                     <FormControl>
                       <Switch
                         checked={field.value}
@@ -449,7 +461,7 @@ export function FinanceRecordForm({ userPhone, onSuccess, recordToEdit, open: co
                 )}
               />
               <p className="text-sm text-text-muted">
-                {isPaid ? 'A transação será registrada como paga/recebida.' : 'A conta será criada como pendente (a pagar/receber).'}
+                {paymentToggleDescription}
               </p>
             </div>
 
