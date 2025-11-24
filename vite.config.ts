@@ -36,7 +36,6 @@ export default defineConfig(({ mode }) => {
     serverConfig.hmr = {
       host: "localhost",
       port: 8080,
-      // Permitir acesso externo para TestSprite
       clientPort: process.env.VITE_HMR_CLIENT_PORT ? parseInt(process.env.VITE_HMR_CLIENT_PORT) : undefined
     };
     serverConfig.allowedHosts = ["localhost", "127.0.0.1", "app.meuagente.api.br"];
