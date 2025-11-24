@@ -1,0 +1,564 @@
+[
+  {
+    "id": "TC001",
+    "title": "User Registration with Valid Credentials",
+    "description": "Verify that a new user can register successfully using valid phone number and password.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to the registration page."
+      },
+      {
+        "type": "action",
+        "description": "Input a valid phone number."
+      },
+      {
+        "type": "action",
+        "description": "Input a valid password meeting security requirements."
+      },
+      {
+        "type": "action",
+        "description": "Submit the registration form."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the registration is successful and user is redirected to the dashboard."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that a session is created and persisted."
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "User Login with Correct Credentials",
+    "description": "Ensure a user can log in successfully with correct phone number and password.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to login page."
+      },
+      {
+        "type": "action",
+        "description": "Input a registered phone number and valid password."
+      },
+      {
+        "type": "action",
+        "description": "Click the login button."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify login is successful and the user is redirected to the dashboard."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify session persistence across page reloads."
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "User Login with Incorrect Credentials",
+    "description": "Ensure login fails and appropriate error messages display when incorrect credentials are entered.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to login page."
+      },
+      {
+        "type": "action",
+        "description": "Input a registered phone number with incorrect password."
+      },
+      {
+        "type": "action",
+        "description": "Click the login button."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify login is rejected."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an appropriate error message about incorrect credentials is displayed."
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Dashboard Load and Real-Time Update",
+    "description": "Validate that the dashboard loads all components correctly, displays financial summaries, and updates in real-time when data changes.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Login and navigate to the dashboard."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that financial summaries, upcoming bills, goal progress, and insights cards are displayed."
+      },
+      {
+        "type": "action",
+        "description": "Add a new financial transaction or update an existing one in backend or UI."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that dashboard components reflect the updated financial data in real-time without manual refresh."
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Add Financial Transaction with Valid Data",
+    "description": "Verify user can successfully add a financial transaction with valid category, amount, and date.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to add new transaction form."
+      },
+      {
+        "type": "action",
+        "description": "Input valid data: correct category, amount, description, and date."
+      },
+      {
+        "type": "action",
+        "description": "Submit the form."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the transaction is added and visible in the transactions list."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify dashboard updates accordingly."
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Prevent Duplicate Financial Transactions",
+    "description": "Ensure application prevents adding duplicate transactions with the same category, amount, and date.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Add a transaction with specific category, amount, and date."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to add the exact same transaction again."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the application prevents duplicate entry and displays an appropriate validation error."
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Edit Financial Transaction and Validate Data",
+    "description": "Verify user can edit existing financial transactions and input validations are enforced correctly.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to existing transaction and open edit dialog."
+      },
+      {
+        "type": "action",
+        "description": "Modify valid fields with valid data."
+      },
+      {
+        "type": "action",
+        "description": "Submit the changes."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify transaction is updated successfully."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to input invalid amount or category."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify validation errors are shown preventing submit."
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Delete Financial Transaction",
+    "description": "Validate that user can delete financial transactions and dashboard updates accordingly.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Select a financial transaction from the list."
+      },
+      {
+        "type": "action",
+        "description": "Confirm deletion action."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that the transaction is removed from the list."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify dashboard financial summaries update correctly after deletion."
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Create and Track Financial Goal Successfully",
+    "description": "Verify user can create a financial goal, edit it, mark as complete, and view progress statistics.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to goal creation form."
+      },
+      {
+        "type": "action",
+        "description": "Enter valid goal details such as target amount, deadline, and description."
+      },
+      {
+        "type": "action",
+        "description": "Submit the goal creation form."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify goal appears in goal list with initial progress stats."
+      },
+      {
+        "type": "action",
+        "description": "Update progress or mark goal as complete."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify progress stats update correctly and goal status changes to completed."
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Create, Edit and Drag-and-Drop Calendar Events",
+    "description": "Validate that calendar events can be created, edited, and reordered via drag-and-drop in all calendar views.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to calendar in day, week, and month view."
+      },
+      {
+        "type": "action",
+        "description": "Create new events with title, date/time, and reminders."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify events appear correctly in respective calendar views."
+      },
+      {
+        "type": "action",
+        "description": "Edit event details and save."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify event details update correctly in all views."
+      },
+      {
+        "type": "action",
+        "description": "Drag and drop events to new time slots or dates."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify events are repositioned correctly and changes are saved."
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Notification Management - Mark Read/Unread and Deletion",
+    "description": "Ensure users can view notifications, mark them as read/unread, and delete notifications without errors.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Open notifications dropdown."
+      },
+      {
+        "type": "action",
+        "description": "Mark a notification as read."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify notification status updates and visual indication changes."
+      },
+      {
+        "type": "action",
+        "description": "Mark a notification as unread."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify notification returns to unread state visually and logically."
+      },
+      {
+        "type": "action",
+        "description": "Delete one or more notifications."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify notifications are removed and no UI errors occur."
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Support Ticket Submission and Tracking",
+    "description": "Validate the entire support system including ticket submission, status updates, and FAQ access.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to support ticket form."
+      },
+      {
+        "type": "action",
+        "description": "Submit a new support ticket with valid details."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify ticket is created and listed in user's support ticket list."
+      },
+      {
+        "type": "action",
+        "description": "Update the ticket status or reply to it."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the ticket status or conversation updates correctly."
+      },
+      {
+        "type": "action",
+        "description": "Access FAQ section."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify FAQs load correctly and are searchable."
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "User Profile Update and Avatar Upload",
+    "description": "Verify user can update profile information, upload a new avatar, and save security settings successfully.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to user profile settings page."
+      },
+      {
+        "type": "action",
+        "description": "Update user details such as name, email, or phone."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify updated information is saved and displayed correctly."
+      },
+      {
+        "type": "action",
+        "description": "Upload a new avatar image."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify avatar uploads successfully and updates on profile."
+      },
+      {
+        "type": "action",
+        "description": "Modify security settings such as password and enable multi-factor authentication if available."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify security settings are saved without exposing sensitive data."
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Subscription Plan Upgrade and Downgrade with Stripe Integration",
+    "description": "Ensure users can change subscription plans via Stripe, with real-time UI updates and backend data consistency enforced by triggers.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to subscription management page."
+      },
+      {
+        "type": "action",
+        "description": "Initiate upgrade to a higher subscription tier using Stripe checkout."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify subscription status updates in UI after successful checkout."
+      },
+      {
+        "type": "action",
+        "description": "Validate backend database reflects subscription change and triggers have enforced consistency."
+      },
+      {
+        "type": "action",
+        "description": "Initiate downgrade to a lower subscription tier using Stripe portal."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify downgrade is processed correctly with appropriate UI and backend updates."
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "PWA Offline Functionality and Sync",
+    "description": "Verify the app works offline using PWA features, provides update prompts, and syncs data correctly once online.",
+    "category": "functional",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Access the application and enable PWA installation."
+      },
+      {
+        "type": "action",
+        "description": "Go offline and continue to use core features like viewing dashboard, adding transactions, and editing tasks/goals."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify functionality remains available and consistent in offline mode."
+      },
+      {
+        "type": "action",
+        "description": "Reconnect to internet."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify data syncing occurs correctly without data loss."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify user is prompted to update to newer versions if available."
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Route Protection and Access Control",
+    "description": "Ensure protected routes are inaccessible without authentication and sessions enforce access control.",
+    "category": "security",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Attempt to access protected pages (dashboard, profile, subscription) without logging in."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that user is redirected to login page."
+      },
+      {
+        "type": "action",
+        "description": "Login with valid credentials."
+      },
+      {
+        "type": "action",
+        "description": "Access protected pages."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify full access and that user session persists during navigation."
+      },
+      {
+        "type": "action",
+        "description": "Logout and try accessing protected pages again."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access is denied and redirect occurs."
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Invalid Input Handling in Forms",
+    "description": "Verify all forms (authentication, transactions, goals, events, support tickets) handle invalid inputs gracefully with user-friendly error messages.",
+    "category": "error handling",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to each form in the application."
+      },
+      {
+        "type": "action",
+        "description": "Enter invalid data such as empty required fields, invalid email formats, negative amounts, or incorrect date ranges."
+      },
+      {
+        "type": "action",
+        "description": "Attempt to submit the form."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify submission is blocked and relevant error messages are shown for each invalid input."
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Support Ticket Status Tracking and Update",
+    "description": "Ensure that support tickets reflect accurate status updates and user can track progress.",
+    "category": "functional",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Create a new support ticket."
+      },
+      {
+        "type": "action",
+        "description": "Admin or support agent updates the ticket status (open, in progress, resolved)."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify that the ticket status updates in user's ticket list and details view."
+      },
+      {
+        "type": "action",
+        "description": "User replies to a ticket."
+      },
+      {
+        "type": "assertion",
+        "description": "Verify conversation updates display properly."
+      }
+    ]
+  }
+]

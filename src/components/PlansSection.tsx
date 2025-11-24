@@ -97,7 +97,7 @@ export function PlansSection() {
       toast.info("Redirecionando para o portal de gerenciamento...");
       const { data, error } = await supabase.functions.invoke('create-portal-session', {
         body: {
-          return_url: window.location.href,
+          return_url: `${window.location.origin}/perfil?tab=plans&portal_return=true`,
         },
       });
 

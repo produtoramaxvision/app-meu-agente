@@ -66,9 +66,14 @@ export default function Profile() {
   useEffect(() => {
     const success = searchParams.get('success');
     const canceled = searchParams.get('canceled');
+    const portalReturn = searchParams.get('portal_return');
 
-    if (success === 'true') {
-      toast.success("Pagamento realizado com sucesso! Atualizando seu plano...");
+    if (success === 'true' || portalReturn === 'true') {
+      if (success === 'true') {
+        toast.success("Pagamento realizado com sucesso! Atualizando seu plano...");
+      } else {
+        toast.info("Verificando atualizações do plano...");
+      }
       
       // Adiciona um delay inicial para dar tempo do webhook processar
       const timer1 = setTimeout(() => {
@@ -318,7 +323,21 @@ export default function Profile() {
               <div className="space-y-2">
                 <h4 className="font-medium">Status da Conta</h4>
                 <div className="flex items-center gap-2">
-                  <div className={`h-2 w-2 rounded-full ${cliente?.is_active ? 'bg-green-500' : 'bg-red-500'}`} />
+                  {/* Indicador de status da conta com efeito pulsante quando ativa */}
+                  <div className="relative flex h-3 w-3 items-center justify-center">
+                    {cliente?.is_active && (
+                      <span
+                        className="absolute inline-flex h-3 w-3 animate-ping rounded-full bg-green-400 opacity-60"
+                      />
+                    )}
+                    <span
+                      className={`relative inline-flex h-2 w-2 rounded-full border-2 ${
+                        cliente?.is_active
+                          ? 'bg-green-500 border-green-500'
+                          : 'bg-red-500 border-red-500'
+                      }`}
+                    />
+                  </div>
                   <span className="text-sm text-muted-foreground">
                     {cliente?.is_active ? 'Conta ativa' : 'Conta inativa'}
                   </span>
@@ -328,11 +347,41 @@ export default function Profile() {
               <div className="space-y-2">
                 <h4 className="font-medium">Assinatura</h4>
                 <div className="flex items-center gap-2">
-                  <div className={`h-2 w-2 rounded-full ${
-                    cliente?.subscription_active 
-                      ? (getPlanColor() === 'orange' ? 'bg-orange-500' : 'bg-green-500')
-                      : 'bg-yellow-500'
-                  }`} />
+                  {/* Indicador de status do plano com cores por plano e efeito pulsante na borda */}
+                  <div className="relative flex h-3 w-3 items-center justify-center">
+                    {/* Anel pulsante */}
+                    {cliente?.subscription_active && (
+                      <span
+                        className={`absolute inline-flex h-3 w-3 animate-ping rounded-full opacity-60 ${
+                          getPlanColor() === 'orange'
+                            ? 'bg-orange-400'
+                            : getPlanColor() === 'blue'
+                            ? 'bg-blue-400'
+                            : getPlanColor() === 'green'
+                            ? 'bg-green-400'
+                            : getPlanColor() === 'purple'
+                            ? 'bg-purple-400'
+                            : 'bg-green-400'
+                        }`}
+                      />
+                    )}
+                    {/* Bolinha principal */}
+                    <span
+                      className={`relative inline-flex h-2 w-2 rounded-full border-2 ${
+                        cliente?.subscription_active
+                          ? getPlanColor() === 'orange'
+                            ? 'bg-orange-500 border-orange-500'
+                            : getPlanColor() === 'blue'
+                            ? 'bg-blue-500 border-blue-500'
+                            : getPlanColor() === 'green'
+                            ? 'bg-green-500 border-green-500'
+                            : getPlanColor() === 'purple'
+                            ? 'bg-purple-500 border-purple-500'
+                            : 'bg-green-500 border-green-500'
+                          : 'bg-yellow-500 border-yellow-500'
+                      }`}
+                    />
+                  </div>
                   <span className="text-sm text-muted-foreground">
                     {cliente?.subscription_active 
                       ? `Assinatura ativa (${getPlanDisplayName().toLowerCase()})` 
