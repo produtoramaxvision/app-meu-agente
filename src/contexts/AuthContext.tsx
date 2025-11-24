@@ -630,6 +630,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // ✅ FIX: Realtime subscription para manter dados do usuário sempre atualizados
+  // Isso resolve problemas de cache onde o webhook atualiza o backend mas o frontend não reflete
+  useEffect(() => {
+    if (!cliente?.phone) return;
+
+    const channel = supabase
+      .channel(`cliente_update:${cliente.phone}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'clientes',
+          filter: `phone=eq.${cliente.phone}`,
+        },
+        (payload) => {
+          console.log('Realtime update received:', payload.new);
+          setCliente((currentCliente) => {
+            if (!currentCliente) return null;
+            
+            const updatedRecord = payload.new as any;
+            
+            // Preservar lógica de timestamp do avatar
+            let avatarUrl = updatedRecord.avatar_url;
+            if (avatarUrl && currentCliente.avatar_url) {
+               const currentBase = currentCliente.avatar_url.split('?')[0];
+               const newBase = avatarUrl.split('?')[0];
+               if (currentBase === newBase) {
+                   // Manter timestamp existente para evitar reload da imagem se não mudou
+                   avatarUrl = currentCliente.avatar_url;
+               } else {
+                   // Novo avatar = novo timestamp
+                   avatarUrl = `${newBase}?t=${new Date().getTime()}`;
+               }
+            }
+            
+            return {
+              ...currentCliente,
+              ...updatedRecord,
+              avatar_url: avatarUrl
+            };
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [cliente?.phone]);
+
   // ✅ OTIMIZAÇÃO: Memoizar value do context (padrão React.dev)
   // Evita re-renders desnecessários dos consumers quando deps não mudam
   const contextValue = useMemo(() => ({

@@ -66,9 +66,14 @@ export default function Profile() {
   useEffect(() => {
     const success = searchParams.get('success');
     const canceled = searchParams.get('canceled');
+    const portalReturn = searchParams.get('portal_return');
 
-    if (success === 'true') {
-      toast.success("Pagamento realizado com sucesso! Atualizando seu plano...");
+    if (success === 'true' || portalReturn === 'true') {
+      if (success === 'true') {
+        toast.success("Pagamento realizado com sucesso! Atualizando seu plano...");
+      } else {
+        toast.info("Verificando atualizações do plano...");
+      }
       
       // Adiciona um delay inicial para dar tempo do webhook processar
       const timer1 = setTimeout(() => {
