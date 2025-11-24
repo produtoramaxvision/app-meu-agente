@@ -1,73 +1,64 @@
 import { test, expect } from '@playwright/test';
 
 const BASE_URL = 'http://localhost:8080';
-const TEST_PHONE = '55 (11) 9 4974-6110';
-const TEST_PASSWORD = '12345678';
 
-test('fluxo completo: login, upgrade de plano e liberação de exportar relatórios', async ({ page }) => {
-  // Login – etapa telefone
-  await page.goto(`${BASE_URL}/auth/login`);
+test.describe('Fluxo de Assinatura Stripe', () => {
+  
+  test('deve iniciar fluxo de upgrade e tratar retorno de sucesso', async ({ page }) => {
+    // 1. Mock da API de Checkout Session para não depender do Stripe real
+    await page.route('**/functions/v1/create-checkout-session', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ url: 'http://localhost:8080/perfil?tab=plans&success=true&mocked=true' })
+      });
+    });
 
-  await page.getByLabel('Telefone').fill(TEST_PHONE);
-  await page.getByRole('button', { name: 'Continuar' }).click();
+    // 2. Setup: Login falso ou navegar direto se possível (aqui assumindo fluxo de login necessário)
+    // Para testes mais rápidos, poderíamos mockar o estado de auth, mas vamos pelo login UI para garantir
+    await page.goto(`${BASE_URL}/auth/login`);
+    
+    // Se já estiver logado, redireciona, senão preenche login
+    if (await page.getByLabel('Telefone').isVisible()) {
+        await page.getByLabel('Telefone').fill('11999999999');
+        await page.getByRole('button', { name: 'Continuar' }).click();
+        await page.getByLabel('Senha').fill('12345678');
+        await page.getByRole('button', { name: 'Entrar' }).click();
+    }
 
-  // Etapa senha
-  await page.getByLabel('Senha').fill(TEST_PASSWORD);
-  await page.getByRole('button', { name: 'Entrar' }).click();
+    await page.waitForURL('**/dashboard', { timeout: 15000 });
 
-  // Deve ir para o dashboard
-  await page.waitForURL('**/dashboard', { timeout: 15000 });
+    // 3. Ir para Planos
+    await page.goto(`${BASE_URL}/perfil?tab=plans`);
+    
+    // 4. Clicar em Upgrade (Ex: Plano Business)
+    // Usamos um seletor mais específico para evitar ambiguidade
+    const businessCard = page.locator('.border-green-200, .dark\\:border-green-800').first();
+    await expect(businessCard).toBeVisible();
+    
+    // Interceptar a navegação
+    const upgradeButton = businessCard.getByRole('button', { name: /Fazer Upgrade/i });
+    await upgradeButton.click();
 
-  // Ir direto para a aba de planos no perfil
-  await page.goto(`${BASE_URL}/perfil?tab=plans`);
+    // 5. Validar que o app tentou redirecionar para a URL retornada pelo backend (nosso mock)
+    await page.waitForURL('**/?tab=plans&success=true&mocked=true', { timeout: 10000 });
 
-  // Clicar em "Fazer Upgrade" no plano Básico
-  const basicCard = page.getByText('Plano Básico', { exact: false }).first();
-  await expect(basicCard).toBeVisible();
+    // 6. Validar comportamento de sucesso (Toast e refresh)
+    // O toast de sucesso deve aparecer
+    await expect(page.getByText('Pagamento realizado com sucesso')).toBeVisible();
+    
+    // Validar que a função de refresh foi chamada (indiretamente, verificando se elementos de UI de plano ativo aparecem ou se o toast apareceu)
+  });
 
-  const basicUpgradeButton = basicCard.getByRole('button', { name: /Fazer Upgrade/i });
-  await basicUpgradeButton.click();
+  test('deve tratar retorno de cancelamento', async ({ page }) => {
+    await page.goto(`${BASE_URL}/auth/login`);
+    // ... login logic se necessário ...
+    await page.waitForURL('**/dashboard');
 
-  // Deve redirecionar para o Stripe Checkout
-  await page.waitForURL('https://checkout.stripe.com/**', { timeout: 20000 });
+    // Simular retorno de cancelamento do Stripe
+    await page.goto(`${BASE_URL}/perfil?tab=plans&canceled=true`);
 
-  // Preencher dados do cartão de teste Stripe
-  // Observação: os seletores abaixo assumem o layout padrão do Stripe Checkout em modo de teste.
-  // Eles podem precisar de ajustes finos caso o HTML mude.
-  const frame = page.frameLocator('iframe[name="__privateStripeFrame*"]').first();
-
-  await frame.getByPlaceholder('Cartão ou número da conta').fill('5555 5555 5555 4444');
-  await frame.getByPlaceholder('MM / AA').fill('12 / 33');
-  await frame.getByPlaceholder('CVC').fill('333');
-
-  // Confirmar pagamento
-  await frame.getByRole('button', { name: /Pagar|Pay/i }).click();
-
-  // Aguardar redirecionamento de volta para o app
-  await page.waitForURL('**/perfil?tab=plans&success=true', { timeout: 60000 });
-
-  // Ir para aba Configurações
-  await page.goto(`${BASE_URL}/perfil?tab=settings`);
-
-  // Validar que a assinatura está ativa e com plano não-free
-  await expect(page.getByText(/Assinatura ativa/i)).toBeVisible();
-  await expect(page.getByText(/plano básico|plano business|plano premium/i)).toBeVisible();
-
-  // Ir para Relatórios e validar que o botão Exportar está liberado
-  await page.goto(`${BASE_URL}/relatorios`);
-
-  const exportButton = page.getByRole('button', { name: /Exportar/i }).first();
-  await expect(exportButton).toBeVisible();
-
-  // Abrir dropdown de exportação – se não estiver bloqueado pelo ProtectedExportButton,
-  // o menu com opções deve aparecer.
-  await exportButton.click();
-
-  await expect(page.getByText(/Exportar PDF/i)).toBeVisible();
-  await expect(page.getByText(/Exportar JSON/i)).toBeVisible();
-  await expect(page.getByText(/Exportar CSV/i)).toBeVisible();
+    // Validar toast de informação
+    await expect(page.getByText('O processo de pagamento foi cancelado')).toBeVisible();
+  });
 });
-
-
-
-

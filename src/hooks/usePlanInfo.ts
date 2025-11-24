@@ -71,7 +71,7 @@ export function usePlanInfo() {
   const getBasicPlanInfo = (): PlanInfo => ({
     name: 'basic',
     displayName: 'Plano Básico',
-    color: 'green',
+    color: 'blue',
     features: [
       'Tudo do plano Free',
       'Suporte por email',
@@ -112,7 +112,7 @@ export function usePlanInfo() {
   const getPremiumPlanInfo = (): PlanInfo => ({
     name: 'premium',
     displayName: 'Plano Premium',
-    color: 'green',
+    color: 'purple',
     features: [
       'Tudo do plano Business',
       'Web Search avançado',
