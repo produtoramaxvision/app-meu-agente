@@ -143,13 +143,52 @@ export default function Profile() {
      */
     if (!cliente) return;
 
+    // Normalizar email (string vazia -> null)
+    const newEmailTrimmed = (values.email || '').trim();
+    const currentEmailTrimmed = (cliente.email || '').trim();
+    const emailChanged = newEmailTrimmed !== currentEmailTrimmed;
+
     setIsSubmitting(true);
     try {
+      // 1) Se o email mudou e não está vazio, atualizar primeiro no Supabase Auth
+      if (emailChanged && newEmailTrimmed) {
+        const { error: authError } = await supabase.auth.updateUser({
+          email: newEmailTrimmed,
+        });
+
+        if (authError) {
+          console.error('Error updating auth email:', authError);
+
+          let message = 'Erro ao atualizar email no sistema de autenticação.';
+          const lower = authError.message.toLowerCase();
+
+          if (
+            lower.includes('already registered') ||
+            lower.includes('already exists') ||
+            lower.includes('email address must be unique') ||
+            authError.status === 422
+          ) {
+            message = 'Este email já está em uso. Use outro email.';
+          } else if (
+            lower.includes('invalid email') ||
+            lower.includes('email format') ||
+            authError.status === 400
+          ) {
+            message = 'Email inválido. Verifique o formato do email.';
+          }
+
+          toast.error(message);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // 2) Atualizar sempre os dados na tabela clientes (fonte de verdade do perfil)
       const { error } = await supabase
         .from('clientes')
         .update({
           name: values.name,
-          email: values.email || null,
+          email: newEmailTrimmed || null,
           cpf: values.cpf || null,
         })
         .eq('phone', cliente.phone);
@@ -160,11 +199,11 @@ export default function Profile() {
         return;
       }
 
-      // Update context with new data
+      // 3) Atualizar contexto com os novos dados
       updateCliente({
         ...cliente,
         name: values.name,
-        email: values.email || undefined,
+        email: newEmailTrimmed || undefined,
         cpf: values.cpf || undefined,
       });
 
@@ -388,11 +427,6 @@ export default function Profile() {
                       : 'Assinatura inativa'}
                   </span>
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="font-medium">Telefone</h4>
-                <p className="text-sm text-muted-foreground">{cliente?.phone}</p>
               </div>
 
               <div className="space-y-2">
