@@ -138,6 +138,18 @@ export default function Login() {
         cpf: cleanCpf,
         password: password,
       });
+
+      // Após criar a conta com sucesso:
+      // - a função signup já dispara o toast e navega para /auth/login
+      // - aqui garantimos que a UI volte para o passo inicial de login
+      setStep('phone');
+      setPassword('');
+      setSignupData({
+        name: '',
+        email: '',
+        cpf: '',
+        confirmPassword: '',
+      });
     } catch (err: any) {
       toast.error(err.message);
     } finally {

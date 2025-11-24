@@ -409,12 +409,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!emailRegex.test(userEmail)) {
         throw new Error('Formato de email inválido');
       }
-      
-      // Criar usuário no Supabase Auth com confirmação de email
-      // Determinar URL de redirect baseado no ambiente
-      const redirectUrl = window.location.hostname === 'localhost' 
-        ? 'http://localhost:8080/auth/login'
-        : 'https://app.meuagente.api.br/auth/login';
+
+      /**
+       * URL de redirect pós-confirmação de email
+       *
+       * IMPORTANTE:
+       * - Em desenvolvimento, deve apontar para o localhost do app.
+       * - Em produção, deve usar o domínio oficial (ex.: https://app.meuagente.api.br).
+       * - A origem DEVE estar configurada como "Redirect URL" permitido no painel do Supabase.
+       * 
+       * Usamos uma env VITE_APP_BASE_URL para não depender de window.location.hostname
+       * quando o app estiver rodando em previews, subdomínios, etc.
+       */
+      const rawBaseUrl = (import.meta as any).env?.VITE_APP_BASE_URL as string | undefined;
+      const baseUrl = (rawBaseUrl || window.location.origin).replace(/\/$/, '');
+      const redirectUrl = `${baseUrl}/auth/login`;
       
       const { data, error } = await supabase.auth.signUp({
         email: userEmail,
