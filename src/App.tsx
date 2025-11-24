@@ -12,6 +12,8 @@ import { AppLayout } from "./components/layout/AppLayout";
 import { initPerformanceMonitoring } from "./lib/performance-monitor";
 import { PageLoadingFallback } from "./components/PageLoadingFallback";
 
+import { CheckoutPendingHandler } from "./components/CheckoutPendingHandler";
+
 // ✅ Auth pages mantidas eager (primeira coisa que usuário não autenticado vê)
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
@@ -43,6 +45,7 @@ const App = () => (
     >
       <ThemeProvider>
         <AuthProvider>
+          <CheckoutPendingHandler />
           <TooltipProvider>
             <Toaster />
             <Sonner />

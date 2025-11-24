@@ -5,6 +5,7 @@ import { Star, Sparkles } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
+import { useStripeCheckout, PlanType } from '@/hooks/useStripeCheckout';
 import { 
   CheckCircle, 
   XCircle, 
@@ -61,32 +62,20 @@ interface Plan {
 export function PlansSection() {
   const { planInfo } = usePlanInfo();
   const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
+  const { startCheckout } = useStripeCheckout();
 
   const handleUpgrade = async (planId: string) => {
     if (planId === 'free') return;
     
+    setLoadingPlanId(planId);
     try {
-      setLoadingPlanId(planId);
-      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
-        body: {
-          plan_id: planId,
-          success_url: `${window.location.origin}/perfil?tab=plans&success=true`,
-          cancel_url: `${window.location.origin}/perfil?tab=plans&canceled=true`,
-        },
+      await startCheckout(planId as PlanType, {
+        successUrl: `${window.location.origin}/perfil?tab=plans&success=true`,
+        cancelUrl: `${window.location.origin}/perfil?tab=plans&canceled=true`,
       });
-
-      if (error) throw error;
-      
-      if (data?.error) {
-        throw new Error(data.error);
-      }
-
-      if (data?.url) {
-        window.location.href = data.url;
-      }
     } catch (error: any) {
-      console.error('Error:', error);
-      toast.error(error.message || "Erro ao iniciar checkout. Tente novamente.");
+      // Error is already handled by useStripeCheckout hook (toast displayed)
+      console.error('Upgrade error:', error);
     } finally {
       setLoadingPlanId(null);
     }
