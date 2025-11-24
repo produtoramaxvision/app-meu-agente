@@ -88,7 +88,9 @@ export default function Login() {
     try {
       await login(cleanPhone, password);
     } catch (err: any) {
-      toast.error(err.message);
+      // O AuthContext já exibe um toast unificado com tentativas restantes
+      // Aqui apenas limpamos a senha para reforçar a segurança
+      console.error('Login error:', err);
       setPassword('');
     } finally {
       setLoading(false);

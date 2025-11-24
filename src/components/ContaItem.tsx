@@ -225,13 +225,13 @@ export function ContaItem({ conta, onStatusChange }: ContaItemProps) {
                 </ActionMenu>
               </div>
 
-              <div className="relative z-10 flex flex-col md:flex-row md:items-center md:gap-4">
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center md:gap-4 gap-3">
                 {/* Main Content */}
-                <div className="flex-1 space-y-2 mb-4 md:mb-0 pr-12 md:pr-16">
+                <div className="flex-1 space-y-1.5 sm:space-y-2 mb-3 sm:mb-4 md:mb-0 pr-8 sm:pr-10 md:pr-16">
                   <div className="flex items-start justify-between gap-2">
                     <h3
                       className={cn(
-                        'font-bold text-base leading-tight flex-1',
+                        'font-bold text-base sm:text-lg leading-tight flex-1',
                         conta.status === 'pago' && 'line-through text-text-muted'
                       )}
                     >
@@ -261,8 +261,13 @@ export function ContaItem({ conta, onStatusChange }: ContaItemProps) {
                 </div>
 
                 {/* Value, Actions e Menu alinhados à direita */}
-                <div className="flex items-center justify-between md:justify-end gap-4 pr-10 md:pr-3">
-                  <div className={`text-lg font-bold tabular-nums ${conta.tipo === 'saida' ? 'text-destructive' : 'text-green-600 dark:text-green-500'}`}>
+                <div className="flex items-baseline justify-between md:justify-end gap-3 sm:gap-4 md:gap-6 pr-2 sm:pr-4 md:pr-10">
+                  <div
+                    className={cn(
+                      'text-lg sm:text-xl font-bold tabular-nums',
+                      conta.tipo === 'saida' ? 'text-destructive' : 'text-green-600 dark:text-green-500'
+                    )}
+                  >
                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(conta.valor)}
                   </div>
                   

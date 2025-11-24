@@ -452,13 +452,13 @@ export default function Agenda() {
               </p>
             </div>
             
-            {/* Botão de Refresh */}
+            {/* Botão de Refresh - Desktop/Tablet */}
             <Button
               variant="ghost"
               size="sm"
               onClick={handleRefresh}
               disabled={isRefreshing || isLoading}
-              className="mt-1 h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary transition-all duration-200 hover:scale-110"
+              className="hidden md:inline-flex mt-1 h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary transition-all duration-200 hover:scale-110"
               aria-label="Atualizar agenda"
               title="Atualizar agenda"
             >
@@ -476,6 +476,32 @@ export default function Agenda() {
               className="w-full"
               aria-label="Selecionar visualização da agenda"
             >
+              {/* Botão Novo Evento - somente Mobile (acima do seletor de visualização) */}
+              <div className="md:hidden mb-3">
+                <button
+                  onClick={() => setEventFormOpen(true)}
+                  disabled={isCreatingEvent || isUpdatingEvent}
+                  className="group relative overflow-hidden rounded-lg px-3 xs:px-4 py-2 xs:py-3 transition-all duration-200 bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] hover:shadow-lg hover:scale-105 flex items-center justify-center gap-2 w-full disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 touch-manipulation"
+                  aria-label="Criar novo evento na agenda"
+                  aria-describedby="new-event-description-mobile"
+                >
+                  {isCreatingEvent ? (
+                    <Spinner size="sm" />
+                  ) : (
+                    <Plus className="h-4 w-4 text-white transition-transform group-hover:scale-110 group-hover:rotate-90" aria-hidden="true" />
+                  )}
+                  <span className="text-xs xs:text-sm font-semibold text-white">
+                    {isCreatingEvent ? 'Criando...' : 'Novo Evento'}
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" aria-hidden="true" />
+                </button>
+
+                {/* Descrição oculta para leitores de tela (mobile) */}
+                <div id="new-event-description-mobile" className="sr-only">
+                  Abre o formulário para criar um novo evento na agenda. Use a tecla N como atalho.
+                </div>
+              </div>
+
               <TabsList 
                 className="grid grid-cols-3 xs:grid-cols-6 gap-1 p-1 h-auto w-full"
                 role="tablist"
@@ -555,6 +581,23 @@ export default function Agenda() {
       <Card className="group relative overflow-hidden hover:scale-105 transition-all duration-200 animate-fade-in hover:shadow-lg hover:shadow-primary/5 before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100" style={{ animationDelay: '150ms' }}>
         <CardHeader className="flex flex-row items-center justify-between relative z-10 pb-3">
           <CardTitle className="text-lg">Filtros</CardTitle>
+          {/* Botão de Refresh - Mobile (dentro do card de filtros, canto superior direito) */}
+          <div className="md:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing || isLoading}
+              className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary transition-all duration-200 hover:scale-110"
+              aria-label="Atualizar agenda"
+              title="Atualizar agenda"
+            >
+              <RefreshCw className={cn(
+                "h-4 w-4 transition-transform duration-200",
+                isRefreshing && "animate-spin"
+              )} />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="relative z-10 pt-0">
           <AgendaFilters
@@ -661,8 +704,8 @@ export default function Agenda() {
 
         {/* Sidebar Direita */}
         <div className="md:col-span-4 lg:col-span-4 xl:col-span-3 space-y-4 md:space-y-6">
-          {/* Botão Novo Evento */}
-          <div className="animate-fade-in" style={{ animationDelay: '250ms' }}>
+          {/* Botão Novo Evento - Desktop/Tablet */}
+          <div className="hidden md:block animate-fade-in" style={{ animationDelay: '250ms' }}>
             <button
               onClick={() => setEventFormOpen(true)}
               disabled={isCreatingEvent || isUpdatingEvent}

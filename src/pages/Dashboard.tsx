@@ -190,10 +190,10 @@ export default function Dashboard() {
         <Card className="group relative overflow-hidden hover:scale-[1.02] transition-all duration-300 animate-fade-in hover:shadow-2xl hover:shadow-primary/10 hover:ring-2 hover:ring-primary/20 hover:-translate-y-1 before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100" style={{ animationDelay: '0ms' }}>
           <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
             <CardTitle className="text-sm font-medium text-text-muted">Total Receitas</CardTitle>
-            <ArrowUpIcon className="h-4 w-4 text-[#39a85b] transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:drop-shadow-lg" />
+            <ArrowUpIcon className="h-4 w-4 text-yellow-500 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:drop-shadow-lg" />
           </CardHeader>
           <CardContent className="relative z-10">
-            <div className="text-2xl font-bold text-[#39a85b]">
+            <div className="text-2xl font-bold text-yellow-600">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metrics.totalReceitas)}
             </div>
           </CardContent>

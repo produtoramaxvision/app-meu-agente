@@ -3,6 +3,7 @@ import { ThemeSwitch } from '@/components/ds/ThemeSwitch';
 import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { useSearch } from '@/contexts/SearchContext';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
@@ -367,13 +368,18 @@ export function AppHeader({ onMenuClick, isMenuOpen = false }: AppHeaderProps) {
         {/* Right Side */}
         <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
           {/* Botão para abrir a Command Palette (além do atalho Ctrl/Cmd+K) */}
-          <button
+          <Button
             onClick={() => setIsCommandPaletteOpen(true)}
-            className="hidden sm:flex h-9 w-9 items-center justify-center rounded-md border border-border bg-surface hover:bg-surface/80 transition-colors"
+            variant="ghost"
+            size="icon"
             aria-label="Abrir paleta de comandos (Ctrl+K)"
+            className="hidden sm:inline-flex h-9 w-9 group relative overflow-hidden rounded-lg p-2 transition-all duration-200 hover:scale-105"
           >
-            <CommandIcon className="h-4 w-4 text-text-muted" />
-          </button>
+            <span className="relative z-10">
+              <CommandIcon className="h-4 w-4 text-text-muted" />
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+          </Button>
 
           <ThemeSwitch />
           <NotificationBell />

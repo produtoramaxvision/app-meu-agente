@@ -156,7 +156,10 @@ export default function Tasks() {
           ) : tasks.length > 0 ? (
             <div className="space-y-3">
               {tasks.map((task, index) => (
-                <div key={task.id} className="animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
+                <div
+                  key={task.id}
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 50}ms` }}>
                   <TaskItem
                     task={task}
                     onToggleComplete={() => toggleTaskCompletion.mutate(task)}

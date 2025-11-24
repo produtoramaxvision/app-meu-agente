@@ -153,7 +153,10 @@ export function UpcomingTasksCard() {
             <div className="space-y-3 flex-1 custom-scrollbar smooth-scrollbar overflow-y-auto max-h-[360px] px-1 py-2">
               {urgentTasks.map((task, index) => {
                 return (
-                  <div key={task.id} className="animate-fade-in" style={{ animationDelay: `${index * 60}ms` }}>
+                  <div
+                    key={task.id}
+                    className="animate-fade-in"
+                    style={{ animationDelay: `${index * 50}ms` }}>
                     <TaskItem
                       task={task}
                       onToggleComplete={() => toggleTaskCompletion.mutate(task)}

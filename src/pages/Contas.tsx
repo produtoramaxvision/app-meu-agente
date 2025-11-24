@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { FinanceRecordForm } from '@/components/FinanceRecordForm';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSearch } from '@/contexts/SearchContext';
+import { PeriodFilter } from '@/components/PeriodFilter';
 
 type TabFilter = 'a-pagar' | 'a-receber' | 'pagas' | 'recebidas';
 
@@ -19,6 +20,7 @@ export default function Contas() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [tabFilter, setTabFilter] = useState<TabFilter>('a-pagar');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [selectedPeriod, setSelectedPeriod] = useState<number>(30);
   
   // Buscar registros com filtro de categoria aplicado no hook
   const { 
@@ -29,7 +31,7 @@ export default function Contas() {
     getTotalPendingIncome,
     getTotalPaidBills,
     getTotalReceivedIncome
-  } = useFinancialData(undefined, categoryFilter, 'all', 'all');
+  } = useFinancialData(selectedPeriod, categoryFilter, 'all', 'all');
 
   // Obter categorias únicas dos registros para o Select
   const categories = useMemo(() => {
@@ -76,6 +78,8 @@ export default function Contas() {
   const totalPendingIncome = getTotalPendingIncome();
   const totalPaidBills = getTotalPaidBills();
   const totalReceivedIncome = getTotalReceivedIncome();
+  // Novo: valor líquido recebido = tudo que entrou (recebido) - tudo que saiu (pago)
+  const netReceived = totalReceivedIncome - totalPaidBills;
 
   const sortedRecords = [...filteredRecords].sort((a, b) => 
     new Date(a.data_vencimento || 0).getTime() - new Date(b.data_vencimento || 0).getTime()
@@ -168,59 +172,40 @@ export default function Contas() {
   return (
     <div className="py-4 sm:py-6 lg:py-8 space-y-8">
       {/* Header + Filtro de Categoria */}
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-        <div className="animate-fade-in">
-          <h1 className="text-4xl font-extrabold bg-gradient-to-br from-text via-brand-700 to-brand-500 bg-clip-text text-transparent drop-shadow-sm">
-            Contas
-          </h1>
-          <p className="text-text-muted mt-2">
-            Gerencie suas contas a pagar e a receber.
-          </p>
-        </div>
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div className="animate-fade-in">
+            <h1 className="text-4xl font-extrabold bg-gradient-to-br from-text via-brand-700 to-brand-500 bg-clip-text text-transparent drop-shadow-sm">
+              Contas
+            </h1>
+            <p className="text-text-muted mt-2">
+              Gerencie suas contas a pagar e a receber.
+            </p>
+          </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 animate-fade-in" style={{ animationDelay: '100ms' }}>
-          {/* Filtro de Categoria */}
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full sm:w-[220px]">
-              <SelectValue placeholder="Todas as categorias" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as categorias</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 animate-fade-in" style={{ animationDelay: '100ms' }}>
+            {/* Filtro de Categoria */}
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-full sm:w-[220px] md:w-[260px]">
+                <SelectValue placeholder="Todas as categorias" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as categorias</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          {/* Desktop New Transaction Button */}
-          <div className="hidden md:block">
-            <button
-              onClick={() => setIsFormOpen(true)}
-              className="group relative inline-flex items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg"
-            >
-              <span className="relative z-10 flex items-center">
-                <Plus className="mr-2 h-4 w-4 transition-transform group-hover:scale-110 group-hover:rotate-90" />
-                Nova Transação
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-            </button>
+            {/* Filtro de Período */}
+            <PeriodFilter
+              selectedPeriod={selectedPeriod}
+              onPeriodChange={setSelectedPeriod}
+              className="w-full sm:w-auto"
+            />
           </div>
         </div>
-      </div>
-
-      {/* Botão Nova Transação - Mobile/Tablet */}
-      <div className="md:hidden animate-fade-in" style={{ animationDelay: '150ms' }}>
-        <button
-          onClick={() => setIsFormOpen(true)}
-          className="group relative overflow-hidden rounded-lg px-4 py-2.5 transition-all duration-200 bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] hover:shadow-lg hover:scale-105 flex items-center justify-center gap-2 w-full"
-        >
-          <Plus className="h-4 w-4 text-white transition-transform group-hover:scale-110 group-hover:rotate-90" />
-          <span className="text-sm font-semibold text-white">Nova Transação</span>
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-        </button>
-      </div>
 
       {/* Metrics Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -239,10 +224,10 @@ export default function Contas() {
         <Card className="group relative overflow-hidden hover:scale-[1.02] transition-all duration-300 animate-fade-in hover:shadow-2xl hover:shadow-primary/10 hover:ring-2 hover:ring-primary/20 hover:-translate-y-1 before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100" style={{ animationDelay: '100ms' }}>
           <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
             <CardTitle className="text-sm font-medium text-text-muted">A Receber</CardTitle>
-            <ArrowUpIcon className="h-4 w-4 text-[#39a85b] transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:drop-shadow-lg" />
+            <ArrowUpIcon className="h-4 w-4 text-yellow-500 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:drop-shadow-lg" />
           </CardHeader>
           <CardContent className="relative z-10">
-            <div className="text-2xl font-bold text-[#39a85b]">
+            <div className="text-2xl font-bold text-yellow-600">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPendingIncome)}
             </div>
           </CardContent>
@@ -251,10 +236,10 @@ export default function Contas() {
         <Card className="group relative overflow-hidden hover:scale-[1.02] transition-all duration-300 animate-fade-in hover:shadow-2xl hover:shadow-primary/10 hover:ring-2 hover:ring-primary/20 hover:-translate-y-1 before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100" style={{ animationDelay: '200ms' }}>
           <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
             <CardTitle className="text-sm font-medium text-text-muted">Pago</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-[#39a85b] transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:drop-shadow-lg" />
+            <CheckCircle2 className="h-4 w-4 text-white transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:drop-shadow-lg" />
           </CardHeader>
           <CardContent className="relative z-10">
-            <div className="text-2xl font-bold text-[#39a85b]">
+            <div className="text-2xl font-bold text-white">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPaidBills)}
             </div>
           </CardContent>
@@ -262,12 +247,12 @@ export default function Contas() {
 
         <Card className="group relative overflow-hidden hover:scale-[1.02] transition-all duration-300 animate-fade-in hover:shadow-2xl hover:shadow-primary/10 hover:ring-2 hover:ring-primary/20 hover:-translate-y-1 before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100" style={{ animationDelay: '300ms' }}>
           <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
-            <CardTitle className="text-sm font-medium text-text-muted">Recebido</CardTitle>
+            <CardTitle className="text-sm font-medium text-text-muted">Total atualizado</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-[#39a85b] transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:drop-shadow-lg" />
           </CardHeader>
           <CardContent className="relative z-10">
             <div className="text-2xl font-bold text-[#39a85b]">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalReceivedIncome)}
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(netReceived)}
             </div>
           </CardContent>
         </Card>
@@ -275,6 +260,18 @@ export default function Contas() {
 
       {/* Tabs */}
       <div className="space-y-6 animate-fade-in" style={{ animationDelay: '400ms' }}>
+        {/* Botão Nova Transação - somente Mobile (acima das tabs) */}
+        <div className="sm:hidden mb-2">
+          <button
+            onClick={() => setIsFormOpen(true)}
+            className="group relative overflow-hidden rounded-lg px-4 py-2.5 transition-all duration-200 bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] hover:shadow-lg hover:scale-105 flex items-center justify-center gap-2 w-full"
+          >
+            <Plus className="h-4 w-4 text-white transition-transform group-hover:scale-110 group-hover:rotate-90" />
+            <span className="text-sm font-semibold text-white">Nova Transação</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+          </button>
+        </div>
+
         <Tabs value={tabFilter} onValueChange={(value) => setTabFilter(value as TabFilter)}>
           <TabsList className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2 p-1 h-auto">
             <TabsTrigger 
@@ -326,10 +323,24 @@ export default function Contas() {
           <TabsContent value="a-pagar">
             <Card className="relative rounded-xl border-2 border-border/40 bg-surface p-2 sm:p-4 transition-all duration-300 hover:shadow-lg">
               <CardHeader>
-                <CardTitle>{getTabTitle()}</CardTitle>
-                <p className="text-sm text-text-muted">
-                  Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
-                </p>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <CardTitle>{getTabTitle()}</CardTitle>
+                    <button
+                      onClick={() => setIsFormOpen(true)}
+                      className="hidden sm:inline-flex group relative items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] px-3 py-1.5 text-xs sm:text-sm font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                    >
+                      <span className="relative z-10 flex items-center">
+                        <Plus className="mr-1.5 h-3 w-3 transition-transform group-hover:scale-110 group-hover:rotate-90" />
+                        <span>Nova Transação</span>
+                      </span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                    </button>
+                  </div>
+                  <p className="text-sm text-text-muted">
+                    Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
+                  </p>
+                </div>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
                 {renderContent()}
@@ -340,10 +351,24 @@ export default function Contas() {
           <TabsContent value="a-receber">
             <Card className="relative rounded-xl border-2 border-border/40 bg-surface p-2 sm:p-4 transition-all duration-300 hover:shadow-lg">
               <CardHeader>
-                <CardTitle>{getTabTitle()}</CardTitle>
-                <p className="text-sm text-text-muted">
-                  Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
-                </p>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <CardTitle>{getTabTitle()}</CardTitle>
+                    <button
+                      onClick={() => setIsFormOpen(true)}
+                      className="hidden sm:inline-flex group relative items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] px-3 py-1.5 text-xs sm:text-sm font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                    >
+                      <span className="relative z-10 flex items-center">
+                        <Plus className="mr-1.5 h-3 w-3 transition-transform group-hover:scale-110 group-hover:rotate-90" />
+                        <span>Nova Transação</span>
+                      </span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                    </button>
+                  </div>
+                  <p className="text-sm text-text-muted">
+                    Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
+                  </p>
+                </div>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
                 {renderContent()}
@@ -354,10 +379,24 @@ export default function Contas() {
           <TabsContent value="pagas">
             <Card className="relative rounded-xl border-2 border-border/40 bg-surface p-2 sm:p-4 transition-all duration-300 hover:shadow-lg">
               <CardHeader>
-                <CardTitle>{getTabTitle()}</CardTitle>
-                <p className="text-sm text-text-muted">
-                  Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
-                </p>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <CardTitle>{getTabTitle()}</CardTitle>
+                    <button
+                      onClick={() => setIsFormOpen(true)}
+                      className="hidden sm:inline-flex group relative items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] px-3 py-1.5 text-xs sm:text-sm font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                    >
+                      <span className="relative z-10 flex items-center">
+                        <Plus className="mr-1.5 h-3 w-3 transition-transform group-hover:scale-110 group-hover:rotate-90" />
+                        <span>Nova Transação</span>
+                      </span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                    </button>
+                  </div>
+                  <p className="text-sm text-text-muted">
+                    Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
+                  </p>
+                </div>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
                 {renderContent()}
@@ -368,10 +407,24 @@ export default function Contas() {
           <TabsContent value="recebidas">
             <Card className="relative rounded-xl border-2 border-border/40 bg-surface p-2 sm:p-4 transition-all duration-300 hover:shadow-lg">
               <CardHeader>
-                <CardTitle>{getTabTitle()}</CardTitle>
-                <p className="text-sm text-text-muted">
-                  Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
-                </p>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <CardTitle>{getTabTitle()}</CardTitle>
+                    <button
+                      onClick={() => setIsFormOpen(true)}
+                      className="hidden sm:inline-flex group relative items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] px-3 py-1.5 text-xs sm:text-sm font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                    >
+                      <span className="relative z-10 flex items-center">
+                        <Plus className="mr-1.5 h-3 w-3 transition-transform group-hover:scale-110 group-hover:rotate-90" />
+                        <span>Nova Transação</span>
+                      </span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                    </button>
+                  </div>
+                  <p className="text-sm text-text-muted">
+                    Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
+                  </p>
+                </div>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
                 {renderContent()}

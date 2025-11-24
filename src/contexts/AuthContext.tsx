@@ -220,16 +220,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return true;
   };
 
-  const incrementFailedAttempts = () => {
+  const incrementFailedAttempts = (baseMessage?: string) => {
     const attempts = parseInt(localStorage.getItem(FAILED_ATTEMPTS_KEY) || '0') + 1;
     localStorage.setItem(FAILED_ATTEMPTS_KEY, attempts.toString());
-    
+
+    const remaining = Math.max(MAX_ATTEMPTS - attempts, 0);
+
+    // Mensagem base mais amigável (se fornecida) ou fallback genérico
+    const mainMessage = baseMessage || 'Credenciais inválidas.';
+
     if (attempts >= MAX_ATTEMPTS) {
       const blockedUntil = Date.now() + BLOCK_DURATION_MS;
       localStorage.setItem(BLOCKED_UNTIL_KEY, blockedUntil.toString());
-      toast.error('Muitas tentativas. Conta bloqueada por 5 minutos.');
+
+      toast.error(
+        `${mainMessage} Muitas tentativas. Sua conta foi bloqueada por 5 minutos.`
+      );
     } else {
-      toast.error(`Credenciais inválidas. ${MAX_ATTEMPTS - attempts} tentativa(s) restante(s).`);
+      toast.error(
+        `${mainMessage} Você ainda tem ${remaining} tentativa(s) antes do bloqueio.`
+      );
     }
   };
 
@@ -277,14 +287,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Validação rigorosa de entrada
     if (!phone || !password) {
-      incrementFailedAttempts();
+      incrementFailedAttempts('Telefone e senha são obrigatórios.');
       throw new Error('Telefone e senha são obrigatórios');
     }
 
     // Validar formato do telefone (apenas números, 10-15 dígitos)
     const phoneRegex = /^\d{10,15}$/;
     if (!phoneRegex.test(phone)) {
-      incrementFailedAttempts();
+      incrementFailedAttempts('Formato de telefone inválido.');
       throw new Error('Formato de telefone inválido');
     }
 
@@ -316,8 +326,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (error) {
-        incrementFailedAttempts();
-        
         // Mapear erros do Supabase para mensagens amigáveis
         let errorMessage = 'Credenciais inválidas';
         if (error.message.includes('Invalid login credentials')) {
@@ -332,12 +340,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (process.env.NODE_ENV === 'development') {
           console.error('Login error:', error);
         }
-        
+
+        // Incrementar tentativas e exibir mensagem única combinada
+        incrementFailedAttempts(errorMessage + '.');
+
         throw new Error(errorMessage);
       }
 
       if (!data.user) {
-        incrementFailedAttempts();
+        incrementFailedAttempts('Erro na autenticação.');
         throw new Error('Erro na autenticação');
       }
 
