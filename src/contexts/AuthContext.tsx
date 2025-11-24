@@ -413,17 +413,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       /**
        * URL de redirect pós-confirmação de email
        *
-       * IMPORTANTE:
-       * - Em desenvolvimento, deve apontar para o localhost do app.
-       * - Em produção, deve usar o domínio oficial (ex.: https://app.meuagente.api.br).
-       * - A origem DEVE estar configurada como "Redirect URL" permitido no painel do Supabase.
-       * 
-       * Usamos uma env VITE_APP_BASE_URL para não depender de window.location.hostname
-       * quando o app estiver rodando em previews, subdomínios, etc.
+       * Atenção:
+       * - Sempre apontamos para o domínio oficial de produção,
+       *   independente de onde o frontend está rodando.
+       * - Isso garante que todos os links de confirmação enviados
+       *   pelo Supabase levem o usuário para o app em produção.
+       * - Certifique-se de que esta URL esteja cadastrada em
+       *   Auth → URL Configuration → Redirect URLs no painel do Supabase.
        */
-      const rawBaseUrl = (import.meta as any).env?.VITE_APP_BASE_URL as string | undefined;
-      const baseUrl = (rawBaseUrl || window.location.origin).replace(/\/$/, '');
-      const redirectUrl = `${baseUrl}/auth/login`;
+      const redirectUrl = 'https://app.meuagente.api.br/auth/login';
       
       const { data, error } = await supabase.auth.signUp({
         email: userEmail,
