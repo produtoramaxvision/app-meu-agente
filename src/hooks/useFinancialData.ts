@@ -152,12 +152,20 @@ export function useFinancialData(
 
     const total = Array.from(categoryMap.values()).reduce((sum, val) => sum + val, 0);
 
+    // ✅ CORREÇÃO: Filtrar categorias com valor zero ou muito pequeno (< 0.1% do total)
+    // Isso evita mostrar categorias irrelevantes no gráfico (ex: "Salário (0.0%)")
+    const MIN_PERCENTAGE_THRESHOLD = 0.1; // Mínimo de 0.1% para aparecer no gráfico
+    
     return Array.from(categoryMap.entries())
       .map(([name, value]) => ({
         name,
         value,
         percentage: total > 0 ? (value / total) * 100 : 0,
       }))
+      .filter((item) => {
+        // Remover categorias com valor zero ou porcentagem muito pequena
+        return item.value > 0 && item.percentage >= MIN_PERCENTAGE_THRESHOLD;
+      })
       .sort((a, b) => b.value - a.value);
   }, [records]);
 
