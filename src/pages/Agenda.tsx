@@ -451,22 +451,6 @@ export default function Agenda() {
                 Seu calendário inteligente, com múltiplas vistas e atualização em tempo real.
               </p>
             </div>
-            
-            {/* Botão de Refresh - Desktop/Tablet */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isRefreshing || isLoading}
-              className="hidden md:inline-flex mt-1 h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary transition-all duration-200 hover:scale-110"
-              aria-label="Atualizar agenda"
-              title="Atualizar agenda"
-            >
-              <RefreshCw className={cn(
-                "h-4 w-4 transition-transform duration-200",
-                isRefreshing && "animate-spin"
-              )} />
-            </Button>
           </div>
           
           <div className="pt-1 animate-fade-in" style={{ animationDelay: '100ms' }}>
@@ -581,23 +565,21 @@ export default function Agenda() {
       <Card className="group relative overflow-hidden hover:scale-105 transition-all duration-200 animate-fade-in hover:shadow-lg hover:shadow-primary/5 before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100" style={{ animationDelay: '150ms' }}>
         <CardHeader className="flex flex-row items-center justify-between relative z-10 pb-3">
           <CardTitle className="text-lg">Filtros</CardTitle>
-          {/* Botão de Refresh - Mobile (dentro do card de filtros, canto superior direito) */}
-          <div className="md:hidden">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isRefreshing || isLoading}
-              className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary transition-all duration-200 hover:scale-110"
-              aria-label="Atualizar agenda"
-              title="Atualizar agenda"
-            >
-              <RefreshCw className={cn(
-                "h-4 w-4 transition-transform duration-200",
-                isRefreshing && "animate-spin"
-              )} />
-            </Button>
-          </div>
+          {/* Botão de Refresh - todas as telas (canto superior direito do card de filtros) */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing || isLoading}
+            className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary transition-all duration-200 hover:scale-110"
+            aria-label="Atualizar agenda"
+            title="Atualizar agenda"
+          >
+            <RefreshCw className={cn(
+              "h-4 w-4 transition-transform duration-200",
+              isRefreshing && "animate-spin"
+            )} />
+          </Button>
         </CardHeader>
         <CardContent className="relative z-10 pt-0">
           <AgendaFilters
