@@ -31,7 +31,7 @@ type View = 'day' | 'week' | 'month' | 'agenda' | 'timeline' | 'year';
 
 export default function Agenda() {
   const { cliente } = useAuth();
-  const { searchQuery, setSearchQuery } = useSearch();
+  const { searchQuery, setSearchQuery, mode, commandId } = useSearch();
   const queryClient = useQueryClient();
 
   // Função para converter recursos do hook otimizado para o formato esperado pelos componentes
@@ -155,10 +155,27 @@ export default function Agenda() {
     [selectedStatuses.join(',')] // Usar join para estabilizar referência
   );
 
-  const stableSearchQuery = useMemo(() => 
-    debouncedSearch || searchQuery,
-    [debouncedSearch, searchQuery]
-  );
+  const stableSearchQuery = useMemo(() => {
+    // Se o usuário digitou algo no filtro local, ele sempre tem prioridade
+    if (debouncedSearch) return debouncedSearch;
+
+    // Busca global vinda de comandos: só aplica quando o comando for da agenda/timeline
+    const agendaCommandIds: string[] = [
+      'agenda',
+      'events',
+      'timeline',
+      'agenda_day',
+      'agenda_week',
+      'agenda_timeline',
+    ];
+
+    if (mode === 'global' && commandId && agendaCommandIds.includes(commandId)) {
+      return searchQuery;
+    }
+
+    // Caso contrário, não aplica busca global residual na agenda
+    return '';
+  }, [debouncedSearch, searchQuery, mode, commandId]);
 
   const { calendars, events, resources, isLoading, refetch, createEvent, updateEvent, createCalendar } = useOptimizedAgendaData({
     view,
@@ -167,9 +184,42 @@ export default function Agenda() {
     calendarIds: stableCalendarIds,
     categories: stableCategories,
     priorities: stablePriorities,
-    statuses: stableStatuses,
-    searchQuery: stableSearchQuery,
+      statuses: stableStatuses,
+      searchQuery: stableSearchQuery,
   });
+
+  // Quando um comando global de agenda é executado, sincroniza o texto no filtro local
+  useEffect(() => {
+    const agendaCommandIds: string[] = [
+      'agenda',
+      'events',
+      'timeline',
+      'agenda_day',
+      'agenda_week',
+      'agenda_timeline',
+    ];
+
+    if (mode === 'global' && commandId && agendaCommandIds.includes(commandId) && searchQuery && !localSearch) {
+      setLocalSearch(searchQuery);
+    }
+  }, [mode, commandId, searchQuery, localSearch]);
+
+  // Forçar visualização específica quando o comando global indicar uma view
+  useEffect(() => {
+    if (mode !== 'global' || !commandId) return;
+
+    const viewByCommand: Record<string, View> = {
+      timeline: 'timeline',
+      agenda_timeline: 'timeline',
+      agenda_day: 'day',
+      agenda_week: 'week',
+    };
+
+    const targetView = viewByCommand[commandId];
+    if (targetView && view !== targetView) {
+      handleViewChange(targetView);
+    }
+  }, [mode, commandId, view, handleViewChange]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

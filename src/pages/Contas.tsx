@@ -9,11 +9,13 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { FinanceRecordForm } from '@/components/FinanceRecordForm';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useSearch } from '@/contexts/SearchContext';
 
 type TabFilter = 'a-pagar' | 'a-receber' | 'pagas' | 'recebidas';
 
 export default function Contas() {
   const { cliente } = useAuth();
+  const { searchQuery, mode, commandId } = useSearch();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [tabFilter, setTabFilter] = useState<TabFilter>('a-pagar');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -46,11 +48,27 @@ export default function Contas() {
   const statusFilter: 'pago' | 'pendente' = 
     tabFilter === 'pagas' || tabFilter === 'recebidas' ? 'pago' : 'pendente';
 
-  // Filtrar registros para exibição baseado na tab selecionada
+  // Texto de busca efetivo (global para /contas, ou vazio caso contrário)
+  const effectiveSearch = useMemo(() => {
+    if (!searchQuery.trim()) return '';
+    // Só aplica busca global quando o comando foi direcionado para contas
+    if (mode === 'global' && commandId === 'financial') {
+      return searchQuery.toLowerCase();
+    }
+    return '';
+  }, [searchQuery, mode, commandId]);
+
+  // Filtrar registros para exibição baseado na tab selecionada + texto de busca (quando houver)
   const filteredRecords = records.filter(record => {
     const matchesType = record.tipo === typeFilter;
     const matchesStatus = record.status === statusFilter;
-    return matchesType && matchesStatus;
+
+    const matchesSearch =
+      !effectiveSearch ||
+      record.descricao?.toLowerCase().includes(effectiveSearch) ||
+      record.categoria?.toLowerCase().includes(effectiveSearch);
+
+    return matchesType && matchesStatus && matchesSearch;
   });
 
   // Calcular métricas usando todos os registros (não filtrados)

@@ -8,6 +8,16 @@ interface SearchContextValue {
   searchResults: SearchResults;
   setSearchResults: (results: SearchResults) => void;
   clearSearch: () => void;
+
+  // NOVO: modo de busca e metadados de comando global
+  mode: 'global' | 'local';
+  setMode: (mode: 'global' | 'local') => void;
+  rawCommand?: string;
+  setRawCommand: (value: string | undefined) => void;
+  commandId?: string;
+  setCommandId: (id: string | undefined) => void;
+  targetRoute?: string;
+  setTargetRoute: (route: string | undefined) => void;
 }
 
 interface SearchResults {
@@ -23,6 +33,10 @@ const SearchContext = createContext<SearchContextValue | undefined>(undefined);
 export function SearchProvider({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [hasResults, setHasResults] = useState(true);
+  const [mode, setMode] = useState<'global' | 'local'>('local');
+  const [rawCommand, setRawCommand] = useState<string | undefined>(undefined);
+  const [commandId, setCommandId] = useState<string | undefined>(undefined);
+  const [targetRoute, setTargetRoute] = useState<string | undefined>(undefined);
   const [searchResults, setSearchResults] = useState<SearchResults>({
     financial: [],
     tasks: [],
@@ -34,6 +48,10 @@ export function SearchProvider({ children }: { children: ReactNode }) {
   const clearSearch = useCallback(() => {
     setSearchQuery('');
     setHasResults(true);
+    setMode('local');
+    setRawCommand(undefined);
+    setCommandId(undefined);
+    setTargetRoute(undefined);
     setSearchResults({
       financial: [],
       tasks: [],
@@ -46,13 +64,30 @@ export function SearchProvider({ children }: { children: ReactNode }) {
   // ✅ OTIMIZAÇÃO: Memoizar value do context (padrão React.dev)
   const contextValue = useMemo(() => ({
     searchQuery, 
-    setSearchQuery, 
+    setSearchQuery,
     hasResults, 
     setHasResults, 
     searchResults, 
     setSearchResults,
-    clearSearch
-  }), [searchQuery, hasResults, searchResults, clearSearch]);
+    clearSearch,
+    mode,
+    setMode,
+    rawCommand,
+    setRawCommand,
+    commandId,
+    setCommandId,
+    targetRoute,
+    setTargetRoute,
+  }), [
+    searchQuery,
+    hasResults,
+    searchResults,
+    clearSearch,
+    mode,
+    rawCommand,
+    commandId,
+    targetRoute,
+  ]);
 
   return (
     <SearchContext.Provider value={contextValue}>
