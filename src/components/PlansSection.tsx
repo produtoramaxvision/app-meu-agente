@@ -72,7 +72,6 @@ export function PlansSection() {
           plan_id: planId,
           success_url: `${window.location.origin}/perfil?tab=plans&success=true`,
           cancel_url: `${window.location.origin}/perfil?tab=plans&canceled=true`,
-          locale: 'pt-BR',
         },
       });
 
@@ -90,6 +89,30 @@ export function PlansSection() {
       toast.error(error.message || "Erro ao iniciar checkout. Tente novamente.");
     } finally {
       setLoadingPlanId(null);
+    }
+  };
+
+  const handlePortal = async () => {
+    try {
+      toast.info("Redirecionando para o portal de gerenciamento...");
+      const { data, error } = await supabase.functions.invoke('create-portal-session', {
+        body: {
+          return_url: window.location.href,
+        },
+      });
+
+      if (error) throw error;
+      
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (error: any) {
+      console.error('Error:', error);
+      toast.error(error.message || "Erro ao acessar o portal. Tente novamente.");
     }
   };
 
@@ -237,6 +260,15 @@ export function PlansSection() {
     return planInfo.name === planId;
   };
 
+  const PLAN_LEVELS: Record<string, number> = {
+    'free': 0,
+    'basic': 1,
+    'business': 2,
+    'premium': 3
+  };
+
+  const currentPlanLevel = PLAN_LEVELS[planInfo.name] || 0;
+
   return (
     <div className="space-y-8">
       {/* Header Section */}
@@ -267,16 +299,33 @@ export function PlansSection() {
 
       {/* Pricing Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 max-w-7xl mx-auto items-stretch">
-        {plans.map((plan, index) => (
-          <PricingCard
-            key={plan.id}
-            plan={plan}
-            isCurrentPlan={isCurrentPlan(plan.id)}
-            index={index}
-            onUpgrade={() => handleUpgrade(plan.id)}
-            isLoading={loadingPlanId === plan.id}
-          />
-        ))}
+        {plans.map((plan, index) => {
+          const planLevel = PLAN_LEVELS[plan.id] || 0;
+          const isDowngrade = planLevel < currentPlanLevel;
+          
+          let buttonText = "Fazer Upgrade";
+          let buttonVariant: "default" | "outline" | "destructive" | "secondary" | "ghost" | "link" = "default";
+          let onAction = () => handleUpgrade(plan.id);
+
+          if (isDowngrade) {
+            buttonText = "Fazer Downgrade";
+            buttonVariant = "outline";
+            onAction = handlePortal;
+          }
+
+          return (
+            <PricingCard
+              key={plan.id}
+              plan={plan}
+              isCurrentPlan={isCurrentPlan(plan.id)}
+              index={index}
+              onUpgrade={onAction}
+              isLoading={loadingPlanId === plan.id}
+              buttonText={buttonText}
+              buttonVariant={buttonVariant}
+            />
+          );
+        })}
       </div>
 
       {/* Information Section */}
