@@ -29,7 +29,7 @@ interface AuthContextValue {
   logout: () => Promise<void>;
   updateAvatar: (avatarUrl: string | null) => void;
   updateCliente: (updatedData: Partial<Cliente>) => void;
-  checkPhoneExists: (phone: string) => Promise<boolean>;
+  checkPhoneExists: (phone: string) => Promise<{ phoneExists: boolean; hasAuthId: boolean }>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -248,7 +248,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem(BLOCKED_UNTIL_KEY);
   };
 
-  const checkPhoneExists = async (phone: string): Promise<boolean> => {
+  const checkPhoneExists = async (phone: string): Promise<{ phoneExists: boolean; hasAuthId: boolean }> => {
     try {
       // Validar formato do telefone
       const phoneRegex = /^\d{10,15}$/;
@@ -256,20 +256,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Formato de telefone inválido');
       }
 
-      // Chamar função RPC
-      const { data, error } = await supabase.rpc('check_phone_exists', {
-        phone_number: phone
+      // Nova RPC que segue o plano: retorna phone_exists e has_auth_id
+      const { data, error } = await supabase.rpc('check_phone_registration', {
+        phone_input: phone
       });
 
       if (error) {
-        console.error('Error checking phone:', error);
-        return false;
+        console.error('Error checking phone registration:', error);
+        return { phoneExists: false, hasAuthId: false };
       }
 
-      return data === true;
+      // check_phone_registration retorna uma linha com:
+      // { phone_exists, has_auth_id, name, email } de acordo com types gerados
+      const row = Array.isArray(data) ? data[0] : data;
+
+      if (!row) {
+        return { phoneExists: false, hasAuthId: false };
+      }
+
+      return {
+        phoneExists: row.phone_exists === true,
+        hasAuthId: row.has_auth_id === true,
+      };
     } catch (err) {
       console.error('Error in checkPhoneExists:', err);
-      return false;
+      return { phoneExists: false, hasAuthId: false };
     }
   };
 
@@ -527,31 +538,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Erro ao criar usuário');
       }
 
-      // Criar ou atualizar registro na tabela clientes
-      const { error: clienteError } = await supabase
-        .from('clientes')
-        .upsert({
-          phone: phone,
-          name: name,
-          email: email,
-          cpf: cpf,
-          auth_user_id: data.user.id,
-          is_active: true,
-          // Usuário recém-criado entra como plano FREE:
-          // - subscription_active = false (sem assinatura paga)
-          // - plan_id = 'free' para identificar o plano gratuito
-          subscription_active: false,
-          plan_id: 'free',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'phone'
-        });
+      /**
+       * NOVO COMPORTAMENTO (alinhado ao plano):
+       * Após criar o usuário no Supabase Auth, chamamos a RPC
+       * upsert_cliente_from_auth para vincular (ou criar) o registro
+       * na tabela clientes com base no phone.
+       *
+       * Isso centraliza a lógica crítica de vínculo no banco de dados.
+       */
+      const authUserId = data.user.id;
 
-      if (clienteError) {
-        console.error('Error creating cliente record:', clienteError);
-        // Não falhar o signup por erro na tabela clientes
-        // O usuário foi criado no auth, então pode fazer login após confirmar email
+      const { error: upsertError } = await supabase.rpc('upsert_cliente_from_auth', {
+        p_auth_user_id: authUserId,
+        p_cpf: cpf ?? '',
+        p_email: userEmail,
+        p_name: name,
+        p_phone: phone,
+      });
+
+      if (upsertError) {
+        console.error('Error calling upsert_cliente_from_auth:', upsertError);
+        // Importante: não falhar o signup por erro na RPC.
+        // O usuário foi criado no Auth e poderá tentar novamente ou ser ajustado via suporte.
       }
 
       // NÃO FAZER LOGIN AUTOMÁTICO - Requerer confirmação de email

@@ -60,9 +60,12 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const exists = await checkPhoneExists(cleanPhone);
+      const { phoneExists, hasAuthId } = await checkPhoneExists(cleanPhone);
       
-      if (exists) {
+      // Segue o plano:
+      // - phoneExists && hasAuthId -> usuário já tem Auth -> fluxo de login (senha)
+      // - demais casos -> fluxo de criação de conta (signup)
+      if (phoneExists && hasAuthId) {
         setStep('password');
       } else {
         setStep('signup');
