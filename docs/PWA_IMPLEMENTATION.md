@@ -14,7 +14,7 @@ A PWA foi **implementada com sucesso** e está pronta para uso!
 ### 2. ✅ Web App Manifest
 - Manifest gerado automaticamente: `dist/manifest.webmanifest`
 - Configurações incluídas:
-  - Nome: "Meu Agente - Sua Agência de IA de Bolso"
+- Nome: "Meu Agente - Sua agência de Inteligência Artificial de Bolso"
   - Short Name: "Meu Agente"
   - Theme Color: #000000 (preto)
   - Background Color: #0d0d0d (quase preto)

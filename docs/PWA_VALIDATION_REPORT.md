@@ -17,7 +17,7 @@
 - [x] Link do manifest no HTML: ✅ Injetado automaticamente
 - [x] Ícones configurados no manifest: ✅ 3 ícones (192x192, 512x512 any, 512x512 maskable)
 - [x] Configurações corretas:
-  - Nome: "Meu Agente - Sua Agência de IA de Bolso"
+- Nome: "Meu Agente - Sua agência de Inteligência Artificial de Bolso"
   - Short Name: "Meu Agente"
   - Theme Color: #000000
   - Background Color: #0d0d0d
@@ -63,7 +63,7 @@
 ### Manifest Gerado
 ```json
 {
-  "name": "Meu Agente - Sua Agência de IA de Bolso",
+  "name": "Meu Agente - Sua agência de Inteligência Artificial de Bolso",
   "short_name": "Meu Agente",
   "description": "Sistema completo de Agentes e SubAgentes de IA...",
   "start_url": "/",

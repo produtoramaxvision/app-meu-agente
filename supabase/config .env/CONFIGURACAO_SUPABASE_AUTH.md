@@ -75,7 +75,7 @@ https://pzoodkjepcarxnawuxoa.supabase.co/storage/v1/object/public/meuagente-logo
 ```
 
 **Alinhamento com a Marca:**
-- Slogan: "Sua Agência IA de bolso!"
+- Slogan: "Meu Agente - Sua agência de Inteligência Artificial de Bolso"
 - Tagline: "Transforme sua relação com o seu tempo"
 - Design minimalista e elegante
 - Consistência visual com a plataforma

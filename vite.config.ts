@@ -59,9 +59,9 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.svg', 'robots.txt', 'apple-touch-icon.png', 'meuagente_logo.webp'],
         manifest: {
-          name: 'Meu Agente - Sua Agência de IA de Bolso',
+          name: 'Meu Agente - Sua agência de Inteligência Artificial de Bolso',
           short_name: 'Meu Agente',
-          description: 'Sistema completo de Agentes e SubAgentes de IA com diversas funcionalidades poderosas e hub de gestão financeira e autenticação segura',
+          description: 'Meu Agente - Sua agência de Inteligência Artificial de Bolso',
           theme_color: '#000000',
           background_color: '#0d0d0d',
           display: 'standalone',
