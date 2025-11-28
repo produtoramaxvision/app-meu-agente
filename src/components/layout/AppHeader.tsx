@@ -309,7 +309,7 @@ export function AppHeader({ onMenuClick, isMenuOpen = false }: AppHeaderProps) {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
               <Input
                 type="search"
-                placeholder="Buscar em todo o app ou digitar comando (/tarefas, /contas, /agenda...)"
+                placeholder="Buscar ou digitar comando (/tarefas, /contas, /agenda...)"
                 className={cn(
                   "pl-9 pr-10 bg-surface transition-all duration-300",
                   showError && "border-red-500/50 animate-shake"
