@@ -696,7 +696,8 @@ export default function AgendaGridDay({ date, events, calendars, isLoading, onEv
 
   return (
     <>
-      <Card className="p-4 overflow-hidden custom-scrollbar smooth-scrollbar">
+      <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl p-4 custom-scrollbar smooth-scrollbar">
+        <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-sky-500/10 via-transparent to-primary/10 opacity-90" />
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}

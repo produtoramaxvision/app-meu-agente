@@ -678,9 +678,22 @@ export default function Reports() {
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Filtros</CardTitle>
+      <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl">
+        <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-primary/12 via-transparent to-sky-500/12 opacity-90" />
+        <CardHeader className="flex flex-row items-center justify-between relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
+              <Search className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex flex-col">
+              <CardTitle className="text-sm font-semibold tracking-tight">
+                Filtros
+              </CardTitle>
+              <p className="text-[11px] text-text-muted">
+                Ajuste o período, categoria, tipo e busque por descrição
+              </p>
+            </div>
+          </div>
           <button
             onClick={clearFilters}
             className="group relative overflow-hidden rounded-lg px-3 py-1.5 transition-all duration-200 bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] hover:shadow-lg hover:scale-105 flex items-center gap-2"
@@ -689,7 +702,7 @@ export default function Reports() {
             <span className="text-sm font-semibold text-white hidden sm:inline">Limpar Filtros</span>
           </button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative z-10">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">Período</label>
@@ -823,60 +836,100 @@ export default function Reports() {
 
       {/* Insights Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="group relative overflow-hidden hover:scale-[1.02] transition-all duration-300 animate-fade-in hover:shadow-2xl hover:shadow-primary/10 hover:ring-2 hover:ring-primary/20 hover:-translate-y-1 before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100" style={{ animationDelay: '0ms' }}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
-            <CardTitle className="text-sm font-medium text-text-muted">Total Receitas</CardTitle>
-            <ArrowUpIcon className="h-4 w-4 text-[#39a85b] transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:drop-shadow-lg" />
+        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl" style={{ animationDelay: '0ms' }}>
+          <div className="pointer-events-none absolute inset-px rounded-[1rem] bg-gradient-to-br from-emerald-500/15 via-transparent to-emerald-500/5 opacity-90" />
+          <CardHeader className="relative z-10 flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle className="text-xs font-medium text-text-muted tracking-wide uppercase">
+                Total Receitas
+              </CardTitle>
+              <p className="text-[11px] text-emerald-300/90 mt-0.5">
+                Entradas registradas no período
+              </p>
+            </div>
+            <div className="h-9 w-9 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center">
+              <ArrowUpIcon className="h-4 w-4 text-emerald-400" />
+            </div>
           </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="text-2xl font-bold text-[#39a85b]">
+          <CardContent className="relative z-10 pt-1">
+            <div className="text-2xl sm:text-3xl font-semibold text-emerald-400 tracking-tight">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metrics.totalReceitas)}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="group relative overflow-hidden hover:scale-[1.02] transition-all duration-300 animate-fade-in hover:shadow-2xl hover:shadow-primary/10 hover:ring-2 hover:ring-primary/20 hover:-translate-y-1 before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100" style={{ animationDelay: '100ms' }}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
-            <CardTitle className="text-sm font-medium text-text-muted">Total Despesas</CardTitle>
-            <ArrowDownIcon className="h-4 w-4 text-[#a93838] transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:drop-shadow-lg" />
+        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl" style={{ animationDelay: '100ms' }}>
+          <div className="pointer-events-none absolute inset-px rounded-[1rem] bg-gradient-to-br from-red-500/15 via-transparent to-red-500/5 opacity-90" />
+          <CardHeader className="relative z-10 flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle className="text-xs font-medium text-text-muted tracking-wide uppercase">
+                Total Despesas
+              </CardTitle>
+              <p className="text-[11px] text-red-300/90 mt-0.5">
+                Saídas registradas no período
+              </p>
+            </div>
+            <div className="h-9 w-9 rounded-full bg-red-500/15 border border-red-500/40 flex items-center justify-center">
+              <ArrowDownIcon className="h-4 w-4 text-red-400" />
+            </div>
           </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="text-2xl font-bold text-[#a93838]">
+          <CardContent className="relative z-10 pt-1">
+            <div className="text-2xl sm:text-3xl font-semibold text-red-400 tracking-tight">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metrics.totalDespesas)}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="group relative overflow-hidden hover:scale-[1.02] transition-all duration-300 animate-fade-in hover:shadow-2xl hover:shadow-primary/10 hover:ring-2 hover:ring-primary/20 hover:-translate-y-1 before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100" style={{ animationDelay: '200ms' }}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
-            <CardTitle className="text-sm font-medium text-text-muted">Saldo</CardTitle>
-            <TrendingUp className="h-4 w-4 text-primary transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:drop-shadow-lg" />
+        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl" style={{ animationDelay: '200ms' }}>
+          <div className="pointer-events-none absolute inset-px rounded-[1rem] bg-gradient-to-br from-primary/15 via-transparent to-emerald-500/10 opacity-90" />
+          <CardHeader className="relative z-10 flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle className="text-xs font-medium text-text-muted tracking-wide uppercase">
+                Saldo
+              </CardTitle>
+              <p className="text-[11px] text-text-muted mt-0.5">
+                Diferença entre receitas e despesas
+              </p>
+            </div>
+            <div className="h-9 w-9 rounded-full bg-primary/15 border border-primary/40 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-primary" />
+            </div>
           </CardHeader>
-          <CardContent className="relative z-10">
-            <div className={`text-2xl font-bold ${metrics.saldo >= 0 ? 'text-[#39a85b]' : 'text-[#a93838]'}`}>
+          <CardContent className="relative z-10 pt-1">
+            <div className={`text-2xl sm:text-3xl font-semibold tracking-tight ${metrics.saldo >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metrics.saldo)}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="group relative overflow-hidden hover:scale-[1.02] transition-all duration-300 animate-fade-in hover:shadow-2xl hover:shadow-primary/10 hover:ring-2 hover:ring-primary/20 hover:-translate-y-1 before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100" style={{ animationDelay: '300ms' }}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
-            <CardTitle className="text-sm font-medium text-text-muted">
-              {categoryType === 'saida' ? 'Categoria com Maior Gasto' : 'Categoria com Maior Receita'}
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-primary transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:drop-shadow-lg" />
+        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl" style={{ animationDelay: '300ms' }}>
+          <div className="pointer-events-none absolute inset-px rounded-[1rem] bg-gradient-to-br from-sky-500/15 via-transparent to-emerald-500/10 opacity-90" />
+          <CardHeader className="relative z-10 flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle className="text-xs font-medium text-text-muted tracking-wide uppercase">
+                {categoryType === 'saida' ? 'Categoria com Maior Gasto' : 'Categoria com Maior Receita'}
+              </CardTitle>
+              <p className="text-[11px] text-text-muted mt-0.5">
+                Destaque de categoria no período
+              </p>
+            </div>
+            <div className="h-9 w-9 rounded-full bg-sky-500/15 border border-sky-500/40 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-sky-400" />
+            </div>
           </CardHeader>
-          <CardContent className="relative z-10">
+          <CardContent className="relative z-10 pt-1">
             {insights.topCategory ? (
               <>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl sm:text-3xl font-semibold tracking-tight">
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(insights.topCategory.value)}
                 </div>
-                <p className="text-sm text-text-muted mt-1">{insights.topCategory.name}</p>
+                <p className="mt-1 inline-flex items-center rounded-full bg-surface-elevated/80 border border-border/60 px-2.5 py-0.5 text-[11px] font-medium">
+                  {insights.topCategory.name}
+                </p>
               </>
             ) : (
-              <p className="text-text-muted">
-                {categoryType === 'saida' ? 'Adicione despesas para análise' : 'Adicione receitas para análise'}
+              <p className="text-xs text-text-muted">
+                {categoryType === 'saida' ? 'Adicione despesas para análise.' : 'Adicione receitas para análise.'}
               </p>
             )}
           </CardContent>
@@ -1264,8 +1317,9 @@ export default function Reports() {
         <div className="fixed bottom-8 right-8 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
           <Button
             onClick={() => setBulkDeleteDialogOpen(true)}
-            size="lg"
-            className="shadow-2xl hover:shadow-3xl transition-all duration-200 bg-gradient-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white gap-2 px-6 py-6 text-base font-semibold rounded-full"
+            variant="destructive"
+            size="sm"
+            className="rounded-full px-4 py-2 text-sm font-medium gap-2 shadow-lg hover:shadow-xl transition-all duration-200"
           >
             <Trash2 className="h-5 w-5" />
             Excluir {selectedRecords.size} {selectedRecords.size === 1 ? 'selecionado' : 'selecionados'}

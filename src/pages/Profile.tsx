@@ -34,9 +34,12 @@ import { Button } from '@/components/ui/button';
 import { 
   User, 
   Shield, 
-  Database,
-  Settings,
-  Crown
+  Database, 
+  Settings, 
+  Crown,
+  Camera,
+  Activity,
+  Info
 } from 'lucide-react';
 
 const profileSchema = z.object({
@@ -236,14 +239,22 @@ export default function Profile() {
       icon: <User className="h-4 w-4" />,
       content: (
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Foto de Perfil</CardTitle>
-              <CardDescription>
-                Adicione ou altere sua foto de perfil
-              </CardDescription>
+          <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl">
+            <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-primary/12 via-transparent to-sky-500/10 opacity-90" />
+            <CardHeader className="relative z-10 pb-2">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
+                  <Camera className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex flex-col">
+                  <CardTitle className="text-base font-semibold tracking-tight">Foto de Perfil</CardTitle>
+                  <CardDescription className="text-xs text-text-muted">
+                    Personalize sua identidade visual no sistema
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative z-10 pt-2">
               <AvatarUpload
                 currentAvatarUrl={avatarUrl}
                 userPhone={cliente.phone}
@@ -257,14 +268,22 @@ export default function Profile() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações Pessoais</CardTitle>
-              <CardDescription>
-                Atualize seus dados cadastrais
-              </CardDescription>
+          <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl">
+            <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-primary/12 via-transparent to-sky-500/10 opacity-90" />
+            <CardHeader className="relative z-10 pb-2">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
+                  <User className="h-5 w-5 text-primary" />
+                </div>
+                <div className="flex flex-col">
+                  <CardTitle className="text-base font-semibold tracking-tight">Informações Pessoais</CardTitle>
+                  <CardDescription className="text-xs text-text-muted">
+                    Mantenha seus dados cadastrais sempre atualizados
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative z-10">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <FormField
@@ -351,14 +370,20 @@ export default function Profile() {
       icon: <Settings className="h-4 w-4" />,
       content: (
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configurações da Conta</CardTitle>
-              <CardDescription>
+          <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl">
+            <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-violet-500/10 via-transparent to-purple-500/10 opacity-90" />
+            <CardHeader className="relative z-10 pb-2">
+              <CardTitle className="flex items-center gap-3 text-base font-semibold tracking-tight">
+                <div className="h-9 w-9 rounded-full bg-violet-500/10 border border-violet-500/30 flex items-center justify-center">
+                  <Settings className="h-4 w-4 text-violet-600" />
+                </div>
+                Configurações da Conta
+              </CardTitle>
+              <CardDescription className="pl-12 mt-1">
                 Gerencie configurações gerais da sua conta
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 relative z-10">
               <div className="space-y-2">
                 <h4 className="font-medium">Status da Conta</h4>
                 <div className="flex items-center gap-2">
@@ -444,14 +469,20 @@ export default function Profile() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações do Sistema</CardTitle>
-              <CardDescription>
+          <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl">
+            <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-slate-500/10 via-transparent to-zinc-500/10 opacity-90" />
+            <CardHeader className="relative z-10 pb-2">
+              <CardTitle className="flex items-center gap-3 text-base font-semibold tracking-tight">
+                <div className="h-9 w-9 rounded-full bg-slate-500/10 border border-slate-500/30 flex items-center justify-center">
+                  <Activity className="h-4 w-4 text-slate-600" />
+                </div>
+                Informações do Sistema
+              </CardTitle>
+              <CardDescription className="pl-12 mt-1">
                 Detalhes técnicos sobre sua conta
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 relative z-10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-medium mb-2">Versão do App</h4>
@@ -492,11 +523,15 @@ export default function Profile() {
   return (
     <div className="py-4 sm:py-6 lg:py-8 space-y-8">
       <div className="container mx-auto px-4">
-        <div className="text-center space-y-4 mb-12">
-          <h1 className="text-3xl font-bold">Perfil</h1>
-          <p className="text-muted-foreground">
-            Gerencie suas informações pessoais, privacidade e backups
-          </p>
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-10">
+          <div>
+            <h1 className="text-4xl font-extrabold bg-gradient-to-br from-text via-brand-700 to-brand-500 bg-clip-text text-transparent drop-shadow-sm">
+              Perfil
+            </h1>
+            <p className="text-text-muted mt-2">
+              Gerencie suas informações pessoais, privacidade e backups
+            </p>
+          </div>
         </div>
 
         <div className="mx-auto max-w-6xl">

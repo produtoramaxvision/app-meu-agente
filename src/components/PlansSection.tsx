@@ -149,14 +149,17 @@ export function PlansSection() {
         { name: 'Agente Financeiro completo', included: true, icon: <DollarSign className="h-4 w-4" /> },
         { name: 'Agente de Scrape', included: true, icon: <Database className="h-4 w-4" /> },
         { name: 'Agente Web Search', included: true, icon: <Search className="h-4 w-4" /> },
+        { name: 'Agente de Agendamento', included: true, icon: <Calendar className="h-4 w-4" /> },
         { name: 'Exportação CSV/JSON', included: true, icon: <FileText className="h-4 w-4" /> },
         { name: 'Relatórios básicos', included: true, icon: <BarChart3 className="h-4 w-4" /> },
         { name: 'Número WhatsApp dedicado', included: false, icon: <MessageSquare className="h-4 w-4" /> },
         { name: 'Suporte prioritário', included: false, icon: <Shield className="h-4 w-4" /> },
-        { name: 'Sub-agentes especializados', included: false, icon: <Bot className="h-4 w-4" /> },
+        { name: 'Sub-agentes SDR/Marketing/Dev/Vídeo', included: false, icon: <Bot className="h-4 w-4" /> },
         { name: 'Integração Google Workspace', included: false, icon: <Calendar className="h-4 w-4" /> }
       ],
-      subAgents: [],
+      subAgents: [
+        'Agente de Agendamento'
+      ],
       limits: {
         maxRecords: 'Ilimitados',
         maxExports: 'Ilimitadas',
@@ -183,7 +186,6 @@ export function PlansSection() {
         { name: 'Suporte prioritário 24/7', included: true, icon: <Shield className="h-4 w-4" /> },
         { name: 'Agente SDR', included: true, icon: <Users className="h-4 w-4" /> },
         { name: 'Agente de Marketing', included: true, icon: <TrendingUp className="h-4 w-4" /> },
-        { name: 'Agente de Agendamento', included: true, icon: <Calendar className="h-4 w-4" /> },
         { name: 'Agente de Dev', included: true, icon: <Code className="h-4 w-4" /> },
         { name: 'Agente de Vídeo', included: true, icon: <Video className="h-4 w-4" /> },
         { name: 'Integração Google Workspace', included: true, icon: <Calendar className="h-4 w-4" /> }
@@ -191,7 +193,6 @@ export function PlansSection() {
       subAgents: [
         'Agente SDR',
         'Agente de Marketing',
-        'Agente de Agendamento',
         'Agente de Dev',
         'Agente de Vídeo'
       ],

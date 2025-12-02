@@ -209,49 +209,89 @@ export default function Contas() {
 
       {/* Metrics Cards */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="group relative overflow-hidden hover:scale-[1.02] transition-all duration-300 animate-fade-in hover:shadow-2xl hover:shadow-primary/10 hover:ring-2 hover:ring-primary/20 hover:-translate-y-1 before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100" style={{ animationDelay: '0ms' }}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
-            <CardTitle className="text-sm font-medium text-text-muted">A Pagar</CardTitle>
-            <ArrowDownIcon className="h-4 w-4 text-[#a93838] transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:drop-shadow-lg" />
+        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl" style={{ animationDelay: '0ms' }}>
+          <div className="pointer-events-none absolute inset-px rounded-[1rem] bg-gradient-to-br from-red-500/15 via-transparent to-red-500/5 opacity-90" />
+          <CardHeader className="relative z-10 flex flex-row items-start justify-between pb-2">
+            <div>
+              <CardTitle className="text-xs font-medium text-text-muted tracking-wide uppercase">
+                A Pagar
+              </CardTitle>
+              <p className="text-[11px] text-red-400/80 mt-0.5">
+                Contas pendentes de pagamento
+              </p>
+            </div>
+            <div className="mt-1 h-9 w-9 rounded-full bg-red-500/15 border border-red-500/40 flex items-center justify-center">
+              <ArrowDownIcon className="h-4 w-4 text-red-400" />
+            </div>
           </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="text-2xl font-bold text-[#a93838]">
+          <CardContent className="relative z-10 pt-1">
+            <div className="text-2xl sm:text-3xl font-semibold text-red-400 tracking-tight">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPendingBills)}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="group relative overflow-hidden hover:scale-[1.02] transition-all duration-300 animate-fade-in hover:shadow-2xl hover:shadow-primary/10 hover:ring-2 hover:ring-primary/20 hover:-translate-y-1 before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100" style={{ animationDelay: '100ms' }}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
-            <CardTitle className="text-sm font-medium text-text-muted">A Receber</CardTitle>
-            <ArrowUpIcon className="h-4 w-4 text-yellow-500 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:drop-shadow-lg" />
+        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl" style={{ animationDelay: '100ms' }}>
+          <div className="pointer-events-none absolute inset-px rounded-[1rem] bg-gradient-to-br from-amber-400/15 via-transparent to-amber-400/5 opacity-90" />
+          <CardHeader className="relative z-10 flex flex-row items-start justify-between pb-2">
+            <div>
+              <CardTitle className="text-xs font-medium text-text-muted tracking-wide uppercase">
+                A Receber
+              </CardTitle>
+              <p className="text-[11px] text-amber-300/90 mt-0.5">
+                Valores ainda não recebidos
+              </p>
+            </div>
+            <div className="mt-1 h-9 w-9 rounded-full bg-amber-400/15 border border-amber-400/40 flex items-center justify-center">
+              <ArrowUpIcon className="h-4 w-4 text-amber-300" />
+            </div>
           </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="text-2xl font-bold text-yellow-600">
+          <CardContent className="relative z-10 pt-1">
+            <div className="text-2xl sm:text-3xl font-semibold text-amber-300 tracking-tight">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPendingIncome)}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="group relative overflow-hidden hover:scale-[1.02] transition-all duration-300 animate-fade-in hover:shadow-2xl hover:shadow-primary/10 hover:ring-2 hover:ring-primary/20 hover:-translate-y-1 before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100" style={{ animationDelay: '200ms' }}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
-            <CardTitle className="text-sm font-medium text-text-muted">Pago</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-white transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:drop-shadow-lg" />
+        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl" style={{ animationDelay: '200ms' }}>
+          <div className="pointer-events-none absolute inset-px rounded-[1rem] bg-gradient-to-br from-emerald-500/15 via-transparent to-emerald-500/5 opacity-90" />
+          <CardHeader className="relative z-10 flex flex-row items-start justify-between pb-2">
+            <div>
+              <CardTitle className="text-xs font-medium text-text-muted tracking-wide uppercase">
+                Pago
+              </CardTitle>
+              <p className="text-[11px] text-text-muted mt-0.5">
+                Total já quitado no período
+              </p>
+            </div>
+            <div className="mt-1 h-9 w-9 rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center">
+              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            </div>
           </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="text-2xl font-bold text-white">
+          <CardContent className="relative z-10 pt-1">
+            <div className="text-2xl sm:text-3xl font-semibold text-emerald-400 tracking-tight">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalPaidBills)}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="group relative overflow-hidden hover:scale-[1.02] transition-all duration-300 animate-fade-in hover:shadow-2xl hover:shadow-primary/10 hover:ring-2 hover:ring-primary/20 hover:-translate-y-1 before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100" style={{ animationDelay: '300ms' }}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
-            <CardTitle className="text-sm font-medium text-text-muted">Total atualizado</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-[#39a85b] transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:drop-shadow-lg" />
+        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl" style={{ animationDelay: '300ms' }}>
+          <div className="pointer-events-none absolute inset-px rounded-[1rem] bg-gradient-to-br from-primary/15 via-transparent to-emerald-500/10 opacity-90" />
+          <CardHeader className="relative z-10 flex flex-row items-start justify-between pb-2">
+            <div>
+              <CardTitle className="text-xs font-medium text-text-muted tracking-wide uppercase">
+                Total atualizado
+              </CardTitle>
+              <p className="text-[11px] text-text-muted mt-0.5">
+                Líquido entre contas pagas e recebidas
+              </p>
+            </div>
+            <div className="mt-1 h-9 w-9 rounded-full bg-primary/15 border border-primary/40 flex items-center justify-center">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+            </div>
           </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="text-2xl font-bold text-[#39a85b]">
+          <CardContent className="relative z-10 pt-1">
+            <div className="text-2xl sm:text-3xl font-semibold text-emerald-400 tracking-tight">
               {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(netReceived)}
             </div>
           </CardContent>
@@ -321,112 +361,156 @@ export default function Contas() {
           </TabsList>
           
           <TabsContent value="a-pagar">
-            <Card className="relative rounded-xl border-2 border-border/40 bg-surface p-2 sm:p-4 transition-all duration-300 hover:shadow-lg">
-              <CardHeader>
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <CardTitle>{getTabTitle()}</CardTitle>
+            <Card className="relative rounded-2xl border-0 bg-gradient-to-br from-surface via-surface/95 to-background p-2 sm:p-4 shadow-xl">
+              <div className="pointer-events-none absolute inset-px rounded-[1rem] bg-gradient-to-br from-red-500/15 via-transparent to-amber-500/10 opacity-90" />
+              <CardHeader className="relative z-10 pb-3 border-b border-border/40">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <CardTitle className="text-sm font-semibold">
+                        {getTabTitle()}
+                      </CardTitle>
+                      <p className="text-xs text-text-muted mt-0.5">
+                        Visualize suas contas pendentes de pagamento.
+                      </p>
+                    </div>
                     <button
                       onClick={() => setIsFormOpen(true)}
-                      className="hidden sm:inline-flex group relative items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] px-3 py-1.5 text-xs sm:text-sm font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                      className="hidden sm:inline-flex group relative items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] px-3 py-1.5 text-xs sm:text-[13px] font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg"
                     >
-                      <span className="relative z-10 flex items-center">
-                        <Plus className="mr-1.5 h-3 w-3 transition-transform group-hover:scale-110 group-hover:rotate-90" />
+                      <span className="relative z-10 flex items-center gap-1.5">
+                        <Plus className="h-3.5 w-3.5 transition-transform group-hover:scale-110 group-hover:rotate-90" />
                         <span>Nova Transação</span>
                       </span>
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                     </button>
                   </div>
-                  <p className="text-sm text-text-muted">
-                    Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
+                  <p className="text-xs text-text-muted">
+                    Total desta lista:{' '}
+                    <span className="font-semibold text-red-400">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
+                    </span>
                   </p>
                 </div>
               </CardHeader>
-              <CardContent className="p-4 sm:p-6">
+              <CardContent className="relative z-10 p-4 sm:p-6">
                 {renderContent()}
               </CardContent>
             </Card>
           </TabsContent>
           
           <TabsContent value="a-receber">
-            <Card className="relative rounded-xl border-2 border-border/40 bg-surface p-2 sm:p-4 transition-all duration-300 hover:shadow-lg">
-              <CardHeader>
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <CardTitle>{getTabTitle()}</CardTitle>
+            <Card className="relative rounded-2xl border-0 bg-gradient-to-br from-surface via-surface/95 to-background p-2 sm:p-4 shadow-xl">
+              <div className="pointer-events-none absolute inset-px rounded-[1rem] bg-gradient-to-br from-emerald-500/15 via-transparent to-amber-400/10 opacity-90" />
+              <CardHeader className="relative z-10 pb-3 border-b border-border/40">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <CardTitle className="text-sm font-semibold">
+                        {getTabTitle()}
+                      </CardTitle>
+                      <p className="text-xs text-text-muted mt-0.5">
+                        Contas que você ainda tem para receber.
+                      </p>
+                    </div>
                     <button
                       onClick={() => setIsFormOpen(true)}
-                      className="hidden sm:inline-flex group relative items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] px-3 py-1.5 text-xs sm:text-sm font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                      className="hidden sm:inline-flex group relative items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] px-3 py-1.5 text-xs sm:text-[13px] font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg"
                     >
-                      <span className="relative z-10 flex items-center">
-                        <Plus className="mr-1.5 h-3 w-3 transition-transform group-hover:scale-110 group-hover:rotate-90" />
+                      <span className="relative z-10 flex items-center gap-1.5">
+                        <Plus className="h-3.5 w-3.5 transition-transform group-hover:scale-110 group-hover:rotate-90" />
                         <span>Nova Transação</span>
                       </span>
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                     </button>
                   </div>
-                  <p className="text-sm text-text-muted">
-                    Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
+                  <p className="text-xs text-text-muted">
+                    Total desta lista:{' '}
+                    <span className="font-semibold text-emerald-400">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
+                    </span>
                   </p>
                 </div>
               </CardHeader>
-              <CardContent className="p-4 sm:p-6">
+              <CardContent className="relative z-10 p-4 sm:p-6">
                 {renderContent()}
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="pagas">
-            <Card className="relative rounded-xl border-2 border-border/40 bg-surface p-2 sm:p-4 transition-all duration-300 hover:shadow-lg">
-              <CardHeader>
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <CardTitle>{getTabTitle()}</CardTitle>
+            <Card className="relative rounded-2xl border-0 bg-gradient-to-br from-surface via-surface/95 to-background p-2 sm:p-4 shadow-xl">
+              <div className="pointer-events-none absolute inset-px rounded-[1rem] bg-gradient-to-br from-emerald-500/15 via-transparent to-primary/10 opacity-90" />
+              <CardHeader className="relative z-10 pb-3 border-b border-border/40">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <CardTitle className="text-sm font-semibold">
+                        {getTabTitle()}
+                      </CardTitle>
+                      <p className="text-xs text-text-muted mt-0.5">
+                        Histórico de contas já quitadas.
+                      </p>
+                    </div>
                     <button
                       onClick={() => setIsFormOpen(true)}
-                      className="hidden sm:inline-flex group relative items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] px-3 py-1.5 text-xs sm:text-sm font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                      className="hidden sm:inline-flex group relative items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] px-3 py-1.5 text-xs sm:text-[13px] font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg"
                     >
-                      <span className="relative z-10 flex items-center">
-                        <Plus className="mr-1.5 h-3 w-3 transition-transform group-hover:scale-110 group-hover:rotate-90" />
+                      <span className="relative z-10 flex items-center gap-1.5">
+                        <Plus className="h-3.5 w-3.5 transition-transform group-hover:scale-110 group-hover:rotate-90" />
                         <span>Nova Transação</span>
                       </span>
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                     </button>
                   </div>
-                  <p className="text-sm text-text-muted">
-                    Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
+                  <p className="text-xs text-text-muted">
+                    Total desta lista:{' '}
+                    <span className="font-semibold text-emerald-400">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
+                    </span>
                   </p>
                 </div>
               </CardHeader>
-              <CardContent className="p-4 sm:p-6">
+              <CardContent className="relative z-10 p-4 sm:p-6">
                 {renderContent()}
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="recebidas">
-            <Card className="relative rounded-xl border-2 border-border/40 bg-surface p-2 sm:p-4 transition-all duration-300 hover:shadow-lg">
-              <CardHeader>
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <CardTitle>{getTabTitle()}</CardTitle>
+            <Card className="relative rounded-2xl border-0 bg-gradient-to-br from-surface via-surface/95 to-background p-2 sm:p-4 shadow-xl">
+              <div className="pointer-events-none absolute inset-px rounded-[1rem] bg-gradient-to-br from-emerald-400/15 via-transparent to-sky-500/10 opacity-90" />
+              <CardHeader className="relative z-10 pb-3 border-b border-border/40">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <CardTitle className="text-sm font-semibold">
+                        {getTabTitle()}
+                      </CardTitle>
+                      <p className="text-xs text-text-muted mt-0.5">
+                        Histórico de receitas já recebidas.
+                      </p>
+                    </div>
                     <button
                       onClick={() => setIsFormOpen(true)}
-                      className="hidden sm:inline-flex group relative items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] px-3 py-1.5 text-xs sm:text-sm font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                      className="hidden sm:inline-flex group relative items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] px-3 py-1.5 text-xs sm:text-[13px] font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg"
                     >
-                      <span className="relative z-10 flex items-center">
-                        <Plus className="mr-1.5 h-3 w-3 transition-transform group-hover:scale-110 group-hover:rotate-90" />
+                      <span className="relative z-10 flex items-center gap-1.5">
+                        <Plus className="h-3.5 w-3.5 transition-transform group-hover:scale-110 group-hover:rotate-90" />
                         <span>Nova Transação</span>
                       </span>
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                     </button>
                   </div>
-                  <p className="text-sm text-text-muted">
-                    Total: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
+                  <p className="text-xs text-text-muted">
+                    Total desta lista:{' '}
+                    <span className="font-semibold text-emerald-400">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue)}
+                    </span>
                   </p>
                 </div>
               </CardHeader>
-              <CardContent className="p-4 sm:p-6">
+              <CardContent className="relative z-10 p-4 sm:p-6">
                 {renderContent()}
               </CardContent>
             </Card>

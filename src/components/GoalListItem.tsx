@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/context-menu';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
 
 interface GoalListItemProps {
   goal: Goal;
@@ -103,23 +104,42 @@ export function GoalListItem({ goal, onDelete, onUpdate }: GoalListItemProps) {
       <ContextMenu>
         <ContextMenuTrigger asChild>
           <Card 
-            className="p-4 group relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-primary/10 hover:ring-2 hover:ring-primary/20 hover:-translate-y-1 cursor-pointer"
+            className={cn(
+              "p-4 sm:p-5 group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl transition-all duration-300 cursor-pointer",
+              "hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/10",
+              goal.meta_principal && "ring-1 ring-primary/40"
+            )}
             onClick={handleSingleClick}
             onDoubleClick={handleDoubleClick}
           >
+            <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-primary/12 via-transparent to-emerald-500/10 opacity-90" />
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none z-10" />
             <div className="flex flex-col sm:flex-row gap-4 relative z-20">
               <div className="flex-1 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    {goal.icone && <GoalIcon name={goal.icone} className="h-8 w-8 text-primary" />}
+                    {goal.icone && (
+                      <div className="h-10 w-10 rounded-full border border-primary/30 bg-primary/10 flex items-center justify-center text-primary shadow-sm">
+                        <GoalIcon name={goal.icone} className="h-5 w-5" />
+                      </div>
+                    )}
                     <div>
-                      <h3 className="text-lg font-bold">{goal.titulo}</h3>
-                      {goal.prazo_meses && <p className="text-xs text-text-muted">{goal.prazo_meses} meses restantes</p>}
+                      <h3 className="text-base sm:text-lg font-semibold tracking-tight">
+                        {goal.titulo}
+                      </h3>
+                      {goal.prazo_meses && (
+                        <p className="text-[11px] uppercase tracking-wide text-text-muted">
+                          {goal.prazo_meses} meses restantes
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {goal.meta_principal && <Badge>Principal</Badge>}
+                    {goal.meta_principal && (
+                      <Badge className="text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/30">
+                        Principal
+                      </Badge>
+                    )}
                     <ActionMenu items={actionMenuItems}>
                       <button className="p-1 hover:bg-muted rounded-md transition-colors">
                         <MoreHorizontal className="h-4 w-4" />
@@ -128,11 +148,11 @@ export function GoalListItem({ goal, onDelete, onUpdate }: GoalListItemProps) {
                   </div>
                 </div>
                 <div>
-                  <div className="flex justify-between items-center mb-1 text-sm">
-                    <span>Progresso</span>
-                    <span className="font-semibold">{progress.toFixed(0)}%</span>
+                  <div className="flex justify-between items-center mb-1 text-xs sm:text-sm text-text-muted">
+                    <span className="uppercase tracking-wide">Progresso</span>
+                    <span className="font-semibold text-foreground">{progress.toFixed(0)}%</span>
                   </div>
-                  <Progress value={progress} />
+                  <Progress value={progress} className="h-2 bg-muted/60" />
                 </div>
                 <div className="flex justify-between items-baseline text-sm">
                   <div>

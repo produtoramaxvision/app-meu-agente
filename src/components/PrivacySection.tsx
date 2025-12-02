@@ -258,17 +258,20 @@ export function PrivacySection() {
   return (
     <div className="space-y-6">
       {/* Status de Conformidade */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-green-600" />
+      <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl">
+        <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-green-500/10 via-transparent to-emerald-500/10 opacity-90" />
+        <CardHeader className="relative z-10 pb-2">
+          <CardTitle className="flex items-center gap-3 text-base font-semibold tracking-tight">
+            <div className="h-9 w-9 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+            </div>
             Status de Conformidade LGPD
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <Badge variant="outline" className="text-green-600 border-green-600">
-              <CheckCircle className="h-3 w-3 mr-1" />
+        <CardContent className="relative z-10">
+          <div className="flex items-center gap-4 p-4 rounded-xl bg-surface-elevated/50 border border-border/50 backdrop-blur-sm">
+            <Badge variant="outline" className="text-green-600 border-green-600/30 bg-green-500/10 px-3 py-1">
+              <CheckCircle className="h-3 w-3 mr-1.5" />
               Conforme
             </Badge>
             <span className="text-sm text-text-muted">
@@ -279,14 +282,17 @@ export function PrivacySection() {
       </Card>
 
       {/* Configurações de Consentimento */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5 text-brand-600" />
+      <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl">
+        <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-primary/12 via-transparent to-sky-500/10 opacity-90" />
+        <CardHeader className="relative z-10 pb-2">
+          <CardTitle className="flex items-center gap-3 text-base font-semibold tracking-tight">
+            <div className="h-9 w-9 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
+              <Settings className="h-4 w-4 text-primary" />
+            </div>
             Consentimento e Preferências
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 relative z-10">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
@@ -420,14 +426,17 @@ export function PrivacySection() {
       </Card>
 
       {/* Direitos do Titular */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5 text-brand-600" />
+      <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl">
+        <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-purple-500/10 via-transparent to-primary/10 opacity-90" />
+        <CardHeader className="relative z-10 pb-2">
+          <CardTitle className="flex items-center gap-3 text-base font-semibold tracking-tight">
+            <div className="h-9 w-9 rounded-full bg-purple-500/10 border border-purple-500/30 flex items-center justify-center">
+              <User className="h-4 w-4 text-purple-600" />
+            </div>
             Direitos do Titular de Dados
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 relative z-10">
           <Alert>
             <FileText className="h-4 w-4" />
             <AlertDescription>
@@ -516,14 +525,17 @@ export function PrivacySection() {
 
       {/* Informações sobre Retenção */}
       {settings.lastUpdated && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5 text-brand-600" />
+        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl">
+          <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-orange-500/10 via-transparent to-primary/10 opacity-90" />
+          <CardHeader className="relative z-10 pb-2">
+            <CardTitle className="flex items-center gap-3 text-base font-semibold tracking-tight">
+              <div className="h-9 w-9 rounded-full bg-orange-500/10 border border-orange-500/30 flex items-center justify-center">
+                <Database className="h-4 w-4 text-orange-600" />
+              </div>
               Informações de Retenção
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative z-10">
             <div className="space-y-2">
               <p className="text-sm text-text-muted">
                 <strong>Última atualização:</strong> {new Date(settings.lastUpdated).toLocaleString('pt-BR')}
@@ -542,14 +554,17 @@ export function PrivacySection() {
       )}
 
       {/* Informações de Contato */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-brand-600" />
+      <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl">
+        <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-blue-500/10 via-transparent to-sky-500/10 opacity-90" />
+        <CardHeader className="relative z-10 pb-2">
+          <CardTitle className="flex items-center gap-3 text-base font-semibold tracking-tight">
+            <div className="h-9 w-9 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
+              <MessageSquare className="h-4 w-4 text-blue-600" />
+            </div>
             Contato e Suporte
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative z-10">
           <div className="space-y-2">
             <p className="text-sm text-text-muted">
               Para questões sobre privacidade e proteção de dados, entre em contato:

@@ -106,14 +106,24 @@ export function UpcomingTasksCard() {
 
   if (isLoading) {
     return (
-      <Card className="animate-fade-in">
+      <Card className="animate-fade-in group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl h-[515px] flex flex-col">
+        <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-amber-500/12 via-transparent to-red-500/10 opacity-90" />
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 leading-normal">
-            <Clock className="h-5 w-5" />
-            Tarefas Urgentes
+          <CardTitle className="flex items-center gap-2 leading-normal relative z-10">
+            <div className="h-8 w-8 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center">
+              <Clock className="h-4 w-4 text-amber-400" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[11px] font-medium tracking-wide text-text-muted uppercase">
+                Tarefas Urgentes
+              </span>
+              <span className="text-xs text-text-muted/80">
+                Carregando próximos prazos...
+              </span>
+            </div>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative z-10">
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-16 bg-muted/50 rounded-lg animate-pulse" />
@@ -125,23 +135,34 @@ export function UpcomingTasksCard() {
   }
 
   return (
-    <Card className="animate-fade-in hover:shadow-lg transition-all duration-300 border-border/40 h-[515px] flex flex-col">
-      <CardHeader className="pb-3">
+    <Card className="animate-fade-in group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl h-[515px] flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/10">
+      <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-amber-500/12 via-transparent to-red-500/10 opacity-90" />
+      <CardHeader className="pb-3 relative z-10">
         <CardTitle className="flex items-center justify-between leading-normal">
-          <div className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-brand-700" />
-            <span className="bg-gradient-to-br from-text via-brand-700 to-brand-500 bg-clip-text text-transparent">
-              Tarefas Urgentes
-            </span>
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center">
+              <Clock className="h-4 w-4 text-amber-400" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[11px] font-medium tracking-wide text-text-muted uppercase">
+                Tarefas Urgentes
+              </span>
+              <span className="text-xs text-text-muted/80">
+                Próximos prazos e itens críticos
+              </span>
+            </div>
           </div>
           {urgentTasks.length > 0 && (
-            <Badge variant="secondary" className="text-xs">
-              {urgentTasks.length}
+            <Badge
+              variant="outline"
+              className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 hover:text-amber-300 hover:border-amber-400/70 transition-colors"
+            >
+              {urgentTasks.length} tarefa{urgentTasks.length > 1 && 's'}
             </Badge>
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col">
+      <CardContent className="flex-1 flex flex-col relative z-10">
         {urgentTasks.length === 0 ? (
           <div className="text-center py-8">
             <CheckCircle2 className="h-12 w-12 mx-auto text-green-500/70 mb-3" />
@@ -174,7 +195,7 @@ export function UpcomingTasksCard() {
             </div>
             <Button
               variant="ghost"
-              className="w-full mt-2 group hover:bg-primary/5"
+              className="w-full mt-2 group hover:bg-amber-500/10 hover:text-amber-400"
               onClick={() => navigate('/tarefas')}
             >
               <span className="flex items-center gap-2 text-sm">

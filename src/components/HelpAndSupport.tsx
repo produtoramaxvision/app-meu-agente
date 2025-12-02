@@ -98,54 +98,65 @@ export function HelpAndSupport({ collapsed = false, mode }: HelpAndSupportProps)
       <Dialog open={open} onOpenChange={setOpen}>
         {trigger}
         <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">Precisa de ajuda?</DialogTitle>
-          <DialogDescription className="pt-2">
-            Se precisar de ajuda ou quiser relatar um problema, aqui estão algumas opções:
-          </DialogDescription>
-        </DialogHeader>
-          <div className="grid gap-4 py-4">
-            {supportOptions.map((option) => {
-              if (option.type === 'support') {
+          <div className="relative z-10">
+            <DialogHeader className="relative z-10">
+              <DialogTitle className="text-2xl flex items-center gap-2">
+                <HelpCircle className="h-6 w-6 text-primary" />
+                Precisa de ajuda?
+              </DialogTitle>
+              <DialogDescription className="pt-2">
+                Se precisar de ajuda ou quiser relatar um problema, aqui estão algumas opções:
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4 relative z-10">
+              {supportOptions.map((option) => {
+                if (option.type === 'support') {
+                  return (
+                    <button
+                      key={option.label}
+                      onClick={() => {
+                        setShowSupport(true);
+                        setOpen(false); // Fechar o modal principal
+                      }}
+                      className="group relative overflow-hidden rounded-xl border-0 bg-surface-elevated/50 p-4 transition-all duration-300 hover:bg-surface-elevated/80 hover:shadow-lg hover:scale-[1.02]"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <div className="relative z-10 flex flex-col items-center text-center gap-3">
+                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                          <option.icon className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-base text-foreground">{option.label}</h3>
+                          <p className="text-sm text-muted-foreground mt-1 px-2">{option.description}</p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                }
+
                 return (
-                  <button
+                  <a
                     key={option.label}
-                    onClick={() => {
-                      setShowSupport(true);
-                      setOpen(false); // Fechar o modal principal
-                    }}
-                    className="group block rounded-lg border bg-surface p-4 transition-all duration-200 hover:bg-surface-hover hover:shadow-md hover:border-primary/30 w-full"
+                    href={option.href!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group relative overflow-hidden rounded-xl border-0 bg-surface-elevated/50 p-4 transition-all duration-300 hover:bg-surface-elevated/80 hover:shadow-lg hover:scale-[1.02]"
+                    onClick={() => setOpen(false)}
                   >
-                    <div className="flex flex-col items-center text-center gap-3">
-                      <option.icon className="h-7 w-7 flex-shrink-0 text-primary transition-transform group-hover:scale-110" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="relative z-10 flex flex-col items-center text-center gap-3">
+                      <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                        <option.icon className="h-6 w-6 text-primary" />
+                      </div>
                       <div>
-                        <h3 className="font-semibold text-base text-text">{option.label}</h3>
-                        <p className="text-sm text-text-muted mt-1 px-2">{option.description}</p>
+                        <h3 className="font-semibold text-base text-foreground">{option.label}</h3>
+                        <p className="text-sm text-muted-foreground mt-1 px-2">{option.description}</p>
                       </div>
                     </div>
-                  </button>
+                  </a>
                 );
-              }
-
-              return (
-                <a
-                  key={option.label}
-                  href={option.href!}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group block rounded-lg border bg-surface p-4 transition-all duration-200 hover:bg-surface-hover hover:shadow-md hover:border-primary/30"
-                  onClick={() => setOpen(false)}
-                >
-                  <div className="flex flex-col items-center text-center gap-3">
-                    <option.icon className="h-7 w-7 flex-shrink-0 text-primary transition-transform group-hover:scale-110" />
-                    <div>
-                      <h3 className="font-semibold text-base text-text">{option.label}</h3>
-                      <p className="text-sm text-text-muted mt-1 px-2">{option.description}</p>
-                    </div>
-                  </div>
-                </a>
-              );
-            })}
+              })}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

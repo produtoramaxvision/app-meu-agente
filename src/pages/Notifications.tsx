@@ -74,11 +74,36 @@ export default function Notifications() {
           </TabsList>
 
           <TabsContent value="notifications" className="space-y-6">
-            <Card className="group relative overflow-hidden hover:scale-[1.01] transition-all duration-200 animate-fade-in hover:shadow-lg hover:shadow-primary/5 before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100" style={{ animationDelay: '0ms' }}>
-              <CardHeader className="relative z-10">
-                <div className="flex items-center justify-between">
+            <Card
+              className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl animate-fade-in"
+              style={{ animationDelay: '0ms' }}
+            >
+              <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-primary/12 via-transparent to-sky-500/10 opacity-90" />
+              <CardHeader className="relative z-10 pb-3">
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
+                        <Bell className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex flex-col">
+                        <CardTitle className="text-sm font-semibold tracking-tight">
+                          Caixa de entrada
+                        </CardTitle>
+                        <p className="text-[11px] text-text-muted">
+                          Visualize todas as notificações e não lidas em um só lugar
+                        </p>
+                      </div>
+                    </div>
+                    {unreadCount > 0 && (
+                      <Badge className="text-[11px] px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30">
+                        {unreadCount} nova{unreadCount > 1 && 's'}
+                      </Badge>
+                    )}
+                  </div>
+
                   <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
-                    <TabsList className="grid grid-cols-2 gap-1 p-1 h-auto max-w-sm">
+                    <TabsList className="grid grid-cols-2 gap-1 p-1 h-auto max-w-sm bg-background/70">
                       <TabsTrigger value="all" className={triggerClasses}>
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
                         <span className="relative z-10">Todas</span>
@@ -96,7 +121,6 @@ export default function Notifications() {
                       </TabsTrigger>
                     </TabsList>
                   </Tabs>
-                  
                 </div>
               </CardHeader>
               <CardContent className="relative z-10">
@@ -109,7 +133,11 @@ export default function Notifications() {
                 ) : filteredNotifications.length > 0 ? (
                   <div className="space-y-3">
                     {filteredNotifications.map((n, index) => (
-                      <div key={n.id} className="animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
+                      <div
+                        key={n.id}
+                        className="animate-fade-in"
+                        style={{ animationDelay: `${index * 50}ms` }}
+                      >
                         <NotificationItem
                           notification={n}
                           onMarkRead={markAsRead}
@@ -149,12 +177,12 @@ export default function Notifications() {
       {/* Empty State Alert */}
       {!loading && notifications.length === 0 && (
         <div className="animate-fade-in" style={{ animationDelay: '400ms' }}>
-          <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/50 dark:border-blue-800">
-            <Bell className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <AlertTitle className="text-blue-900 dark:text-blue-100">
+          <Alert className="border-sky-500/30 bg-gradient-to-br from-sky-500/10 via-surface to-background shadow-sm">
+            <Bell className="h-4 w-4 text-sky-600 dark:text-sky-400" />
+            <AlertTitle className="text-sky-900 dark:text-sky-100">
               Bem-vindo ao sistema de notificações!
             </AlertTitle>
-            <AlertDescription className="text-blue-700 dark:text-blue-300">
+            <AlertDescription className="text-sky-800 dark:text-sky-200">
               Quando você receber notificações importantes sobre sua conta, sistema ou finanças, elas aparecerão aqui. 
               Você pode marcar como lidas, arquivar ou excluir conforme necessário.
             </AlertDescription>

@@ -74,6 +74,7 @@ export function usePlanInfo() {
     color: 'blue',
     features: [
       'Tudo do plano Free',
+      'Agente de Agendamento',
       'Suporte por email',
       'Recursos avançados de relatórios',
       'Backup automático'

@@ -136,17 +136,27 @@ export default function Tasks() {
       />
 
       {/* Tasks List */}
-      <Card className="relative rounded-xl border-2 border-border/40 bg-surface p-2 sm:p-4 transition-all duration-300 hover:shadow-lg">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2">
-            <ListTodo className="h-5 w-5" />
-            {statusFilter === 'all' && 'Todas as Tarefas'}
-            {statusFilter === 'pending' && 'Tarefas Pendentes'}
-            {statusFilter === 'done' && 'Tarefas Concluídas'}
-            {statusFilter === 'overdue' && 'Tarefas Vencidas'}
-          </CardTitle>
+      <Card className="relative rounded-2xl border-0 bg-gradient-to-br from-surface via-surface/95 to-background p-2 sm:p-4 shadow-xl">
+        <div className="pointer-events-none absolute inset-px rounded-[1.25rem] bg-gradient-to-br from-primary/12 via-transparent to-sky-500/10 opacity-90" />
+        <CardHeader className="relative z-10 pb-3 border-b border-border/40">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-semibold">
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 border border-primary/40">
+                  <ListTodo className="h-4 w-4 text-primary" />
+                </span>
+                {statusFilter === 'all' && 'Todas as Tarefas'}
+                {statusFilter === 'pending' && 'Tarefas Pendentes'}
+                {statusFilter === 'done' && 'Tarefas Concluídas'}
+                {statusFilter === 'overdue' && 'Tarefas Vencidas'}
+              </CardTitle>
+              <p className="mt-1 text-xs sm:text-[13px] text-text-muted">
+                Visualize, priorize e atualize suas tarefas em um só lugar.
+              </p>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative z-10 pt-4">
           {isLoading ? (
             <div className="space-y-4">
               <Skeleton className="h-24 w-full" />

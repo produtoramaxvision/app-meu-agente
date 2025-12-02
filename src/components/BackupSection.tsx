@@ -168,44 +168,47 @@ export function BackupSection() {
     <div className="space-y-6">
       {/* Status Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Backups</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
+        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl">
+          <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-primary/12 via-transparent to-sky-500/10 opacity-90" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <CardTitle className="text-xs font-medium text-text-muted uppercase tracking-wide">Total de Backups</CardTitle>
+            <Database className="h-4 w-4 text-primary" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative z-10">
             <div className="text-2xl font-bold">{backups.length}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-muted mt-1">
               {backups.filter(b => b.status === 'completed').length} concluídos
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Último Backup</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl">
+          <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-green-500/10 via-transparent to-emerald-500/10 opacity-90" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <CardTitle className="text-xs font-medium text-text-muted uppercase tracking-wide">Último Backup</CardTitle>
+            <Clock className="h-4 w-4 text-green-600" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative z-10">
             <div className="text-2xl font-bold">
               {backups.length > 0 ? format(new Date(backups[0].created_at), 'dd/MM', { locale: ptBR }) : '--'}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-muted mt-1">
               {backups.length > 0 ? format(new Date(backups[0].created_at), 'HH:mm', { locale: ptBR }) : 'Nenhum backup'}
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Espaço Usado</CardTitle>
-            <HardDrive className="h-4 w-4 text-muted-foreground" />
+        <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl">
+          <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-blue-500/10 via-transparent to-indigo-500/10 opacity-90" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+            <CardTitle className="text-xs font-medium text-text-muted uppercase tracking-wide">Espaço Usado</CardTitle>
+            <HardDrive className="h-4 w-4 text-blue-600" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative z-10">
             <div className="text-2xl font-bold">
               {formatFileSize(backups.reduce((acc, b) => acc + b.size, 0))}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-muted mt-1">
               Total de todos os backups
             </p>
           </CardContent>
@@ -213,14 +216,17 @@ export function BackupSection() {
       </div>
 
       {/* Botão Criar Backup */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5 text-brand-600" />
+      <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl">
+        <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-primary/12 via-transparent to-sky-500/10 opacity-90" />
+        <CardHeader className="relative z-10">
+          <CardTitle className="flex items-center gap-3 text-base font-semibold tracking-tight">
+            <div className="h-9 w-9 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center">
+              <Database className="h-4 w-4 text-primary" />
+            </div>
             Criar Backup
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative z-10">
           <Button
             onClick={handleCreateBackup}
             disabled={creatingBackup}
@@ -237,12 +243,12 @@ export function BackupSection() {
 
       {/* Backup Progress */}
       {creatingBackup && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
+        <Alert className="border-primary/20 bg-primary/5 animate-fade-in">
+          <AlertCircle className="h-4 w-4 text-primary" />
           <AlertDescription>
             <div className="space-y-2">
-              <p>Criando backup dos seus dados...</p>
-              <Progress value={66} className="w-full" />
+              <p className="text-primary font-medium">Criando backup dos seus dados...</p>
+              <Progress value={66} className="w-full h-2 bg-primary/10" />
             </div>
           </AlertDescription>
         </Alert>
@@ -250,38 +256,41 @@ export function BackupSection() {
 
       {/* Restore Progress */}
       {restoring && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
+        <Alert className="border-blue-500/20 bg-blue-500/5 animate-fade-in">
+          <AlertCircle className="h-4 w-4 text-blue-600" />
           <AlertDescription>
             <div className="space-y-2">
-              <p>Restaurando backup selecionado...</p>
-              <Progress value={75} className="w-full" />
+              <p className="text-blue-700 font-medium">Restaurando backup selecionado...</p>
+              <Progress value={75} className="w-full h-2 bg-blue-500/10" />
             </div>
           </AlertDescription>
         </Alert>
       )}
 
       {/* Backups List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
+      <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl">
+        <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-gray-500/10 via-transparent to-slate-500/10 opacity-90" />
+        <CardHeader className="relative z-10">
+          <CardTitle className="flex items-center gap-3 text-base font-semibold tracking-tight">
+            <div className="h-9 w-9 rounded-full bg-gray-500/10 border border-gray-500/30 flex items-center justify-center">
+              <FileText className="h-4 w-4 text-gray-600" />
+            </div>
             Histórico de Backups
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="relative z-10">
           {loading ? (
             <div className="space-y-4">
-              <div className="h-16 bg-gray-100 rounded animate-pulse" />
-              <div className="h-16 bg-gray-100 rounded animate-pulse" />
-              <div className="h-16 bg-gray-100 rounded animate-pulse" />
+              <div className="h-16 bg-muted/50 rounded-xl animate-pulse" />
+              <div className="h-16 bg-muted/50 rounded-xl animate-pulse" />
+              <div className="h-16 bg-muted/50 rounded-xl animate-pulse" />
             </div>
           ) : backups.length > 0 ? (
             <div className="space-y-4">
               {backups.map((backup, index) => (
                 <Card 
                   key={backup.id} 
-                  className="overflow-hidden transition-all duration-200 hover:shadow-md"
+                  className="overflow-hidden transition-all duration-300 hover:shadow-md border border-border/40 hover:border-primary/20 bg-surface-elevated/30 backdrop-blur-sm"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <CardContent className="p-4">
@@ -299,7 +308,7 @@ export function BackupSection() {
                               <h3 className="font-medium text-sm truncate">{backup.description}</h3>
                               {getStatusBadge(backup.status)}
                             </div>
-                            <Badge variant="outline" className="text-xs w-fit">
+                            <Badge variant="outline" className="text-xs w-fit border-primary/20 bg-primary/5 text-primary">
                               {backup.type === 'automatic' ? 'Automático' : 'Manual'}
                             </Badge>
                           </div>
@@ -319,30 +328,30 @@ export function BackupSection() {
                       </div>
                       
                       {/* Ações - Layout Responsivo */}
-                      <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
+                      <div className="flex flex-col sm:flex-row gap-2 sm:justify-end pt-2 border-t border-border/30">
                         <ButtonGroup 
                           className="w-full sm:w-auto" 
                           aria-label={`Ações para backup ${backup.description}`}
                         >
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
                             onClick={() => handleDownloadBackup(backup.id)}
                             disabled={backup.status !== 'completed'}
-                            className="flex-1 sm:flex-none"
+                            className="flex-1 sm:flex-none hover:bg-primary/10 hover:text-primary text-xs h-8"
                           >
-                            <Download className="h-4 w-4 mr-2" />
+                            <Download className="h-3.5 w-3.5 mr-2" />
                             Baixar
                           </Button>
-                          <ButtonGroupSeparator />
+                          <ButtonGroupSeparator className="bg-border/40" />
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
                             onClick={() => handleRestoreBackup(backup.id)}
                             disabled={backup.status !== 'completed' || restoring}
-                            className="flex-1 sm:flex-none"
+                            className="flex-1 sm:flex-none hover:bg-blue-500/10 hover:text-blue-600 text-xs h-8"
                           >
-                            <Upload className="h-4 w-4 mr-2" />
+                            <Upload className="h-3.5 w-3.5 mr-2" />
                             Restaurar
                           </Button>
                         </ButtonGroup>
@@ -354,7 +363,9 @@ export function BackupSection() {
             </div>
           ) : (
             <div className="text-center py-12">
-              <Database className="h-12 w-12 mx-auto text-text-muted mb-4 opacity-50" />
+              <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                <Database className="h-8 w-8 text-muted-foreground/50" />
+              </div>
               <h3 className="text-lg font-medium mb-2">Nenhum backup encontrado</h3>
               <p className="text-sm text-text-muted mb-6">
                 Crie seu primeiro backup para proteger seus dados
@@ -369,37 +380,52 @@ export function BackupSection() {
       </Card>
 
       {/* Info Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
+      <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl">
+        <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-purple-500/10 via-transparent to-indigo-500/10 opacity-90" />
+        <CardHeader className="relative z-10">
+          <CardTitle className="flex items-center gap-3 text-base font-semibold tracking-tight">
+            <div className="h-9 w-9 rounded-full bg-purple-500/10 border border-purple-500/30 flex items-center justify-center">
+              <Settings className="h-4 w-4 text-purple-600" />
+            </div>
             Informações sobre Backup
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-medium mb-2">Backups Automáticos</h4>
-              <p className="text-sm text-muted-foreground">
-                Backups automáticos são criados diariamente às 02:00 para proteger seus dados.
+        <CardContent className="relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-4 rounded-xl bg-surface-elevated/50 border border-border/50">
+              <h4 className="font-medium mb-2 text-sm flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                Backups Automáticos
+              </h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Backups automáticos são criados diariamente às 02:00 para proteger seus dados sem que você precise se preocupar.
               </p>
             </div>
-            <div>
-              <h4 className="font-medium mb-2">Retenção de Dados</h4>
-              <p className="text-sm text-muted-foreground">
-                Mantemos os últimos 30 backups automaticamente. Backups manuais são mantidos indefinidamente.
+            <div className="p-4 rounded-xl bg-surface-elevated/50 border border-border/50">
+              <h4 className="font-medium mb-2 text-sm flex items-center gap-2">
+                <Database className="h-4 w-4 text-primary" />
+                Retenção de Dados
+              </h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Mantemos os últimos 30 backups automaticamente. Backups manuais são mantidos indefinidamente até que você os exclua.
               </p>
             </div>
-            <div>
-              <h4 className="font-medium mb-2">O que é Incluído</h4>
-              <p className="text-sm text-muted-foreground">
-                Todos os seus dados financeiros, tarefas, agenda e configurações são incluídos no backup.
+            <div className="p-4 rounded-xl bg-surface-elevated/50 border border-border/50">
+              <h4 className="font-medium mb-2 text-sm flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-primary" />
+                O que é Incluído
+              </h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Todos os seus dados financeiros, tarefas, agenda e configurações são incluídos no arquivo de backup criptografado.
               </p>
             </div>
-            <div>
-              <h4 className="font-medium mb-2">Restauração</h4>
-              <p className="text-sm text-muted-foreground">
-                A restauração substitui todos os dados atuais pelos dados do backup selecionado.
+            <div className="p-4 rounded-xl bg-surface-elevated/50 border border-border/50">
+              <h4 className="font-medium mb-2 text-sm flex items-center gap-2">
+                <Upload className="h-4 w-4 text-primary" />
+                Restauração
+              </h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                A restauração substitui todos os dados atuais pelos dados do backup selecionado. Esta ação não pode ser desfeita.
               </p>
             </div>
           </div>

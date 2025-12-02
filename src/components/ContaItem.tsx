@@ -39,15 +39,39 @@ const contaVisualConfig: Record<ContaVisualKey, { color: string; glow: string }>
   },
   // Contas a receber pendentes - azul, alinhado com pendente de tarefas
   pendente_entrada: {
-    color: 'bg-blue-500/10 border-blue-500/30 text-blue-700 dark:text-blue-300',
+    // Ajuste de contraste: mantém o halo azul, mas usa texto neutro de alto contraste
+    color: 'bg-blue-500/10 border-blue-500/30 text-text dark:text-white',
     glow: 'shadow-blue-500/20',
   },
   // Contas a pagar pendentes - âmbar, destacando atenção necessária
+  // Ajuste de contraste: mantém o halo âmbar, mas usa texto neutro de alto contraste
   pendente_saida: {
-    color: 'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300',
+    color: 'bg-amber-500/10 border-amber-500/40 text-text dark:text-white',
     glow: 'shadow-amber-500/20',
   },
 };
+
+const categoryColorMap: Record<string, string> = {
+  'alimentação': 'bg-rose-500/10 border-rose-500/40 text-rose-200',
+  'transporte': 'bg-sky-500/10 border-sky-500/40 text-sky-200',
+  'saúde': 'bg-emerald-500/10 border-emerald-500/40 text-emerald-200',
+  'educação': 'bg-indigo-500/10 border-indigo-500/40 text-indigo-200',
+  'lazer': 'bg-purple-500/10 border-purple-500/40 text-purple-200',
+  'moradia': 'bg-amber-500/10 border-amber-500/40 text-amber-200',
+  'viagem': 'bg-cyan-500/10 border-cyan-500/40 text-cyan-200',
+  'freelance': 'bg-green-500/10 border-green-500/40 text-green-200',
+  'trabalho': 'bg-blue-500/10 border-blue-500/40 text-blue-200',
+  'salário': 'bg-emerald-500/10 border-emerald-500/40 text-emerald-200',
+  'salario': 'bg-emerald-500/10 border-emerald-500/40 text-emerald-200',
+};
+
+function getCategoryBadgeClass(category?: string | null) {
+  if (!category) {
+    return 'bg-slate-500/10 border-slate-500/40 text-slate-200';
+  }
+  const key = category.trim().toLowerCase();
+  return categoryColorMap[key] ?? 'bg-slate-500/10 border-slate-500/40 text-slate-200';
+}
 
 export function ContaItem({ conta, onStatusChange }: ContaItemProps) {
   const [isPaying, setIsPaying] = useState(false);
@@ -194,6 +218,15 @@ export function ContaItem({ conta, onStatusChange }: ContaItemProps) {
     },
   ];
 
+  if (conta.status !== 'pago') {
+    actionMenuItems.unshift({
+      label: conta.tipo === 'entrada' ? 'Marcar como recebido' : 'Marcar como pago',
+      icon: <Check className="mr-2 h-4 w-4" />,
+      onClick: handleMarkAsPaid,
+      disabled: isPaying,
+    });
+  }
+
   return (
     <>
       <ContextMenu>
@@ -247,7 +280,13 @@ export function ContaItem({ conta, onStatusChange }: ContaItemProps) {
                       <Calendar className="h-3 w-3 mr-1.5" />
                       {format(dueDate, 'dd/MM/yyyy')}
                     </Badge>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        'text-[11px] px-2.5 py-0.5 rounded-full border',
+                        getCategoryBadgeClass(conta.categoria)
+                      )}
+                    >
                       <Tag className="h-3 w-3 mr-1.5" />
                       {conta.categoria}
                     </Badge>
@@ -260,7 +299,7 @@ export function ContaItem({ conta, onStatusChange }: ContaItemProps) {
                   </div>
                 </div>
 
-                {/* Value, Actions e Menu alinhados à direita */}
+                {/* Valor alinhado à direita (ações de pagamento via menus) */}
                 <div className="flex items-baseline justify-between md:justify-end gap-3 sm:gap-4 md:gap-6 pr-2 sm:pr-4 md:pr-10">
                   <div
                     className={cn(
@@ -270,42 +309,8 @@ export function ContaItem({ conta, onStatusChange }: ContaItemProps) {
                   >
                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(conta.valor)}
                   </div>
-                  
-                  <div className="flex items-center gap-2">
-                    {conta.status !== 'pago' && (
-                      <Button 
-                        onClick={handleMarkAsPaid} 
-                        disabled={isPaying} 
-                        size="sm" 
-                        className="w-28 hidden md:flex group/btn relative overflow-hidden bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white hover:from-[hsl(var(--brand-900))] hover:to-[hsl(var(--brand-700))] hover:scale-105 hover:shadow-lg transition-all duration-200"
-                      >
-                        <span className="relative z-10 flex items-center">
-                          <Check className="mr-2 h-4 w-4" />
-                          {getButtonShortText()}
-                        </span>
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700" />
-                      </Button>
-                    )}
-                  </div>
                 </div>
               </div>
-
-              {/* Mobile Action Button */}
-              {conta.status !== 'pago' && (
-                <div className="md:hidden pt-4 mt-4 border-t border-border/50">
-                  <Button 
-                    onClick={handleMarkAsPaid} 
-                    disabled={isPaying} 
-                    className="w-full group/btn relative overflow-hidden bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white hover:from-[hsl(var(--brand-900))] hover:to-[hsl(var(--brand-700))] hover:scale-105 hover:shadow-lg transition-all duration-200"
-                  >
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                      <Check className="h-4 w-4" />
-                      <span>{getButtonText()}</span>
-                    </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700" />
-                  </Button>
-                </div>
-              )}
             </motion.div>
         </ContextMenuTrigger>
         <ContextMenuContent className="w-48">

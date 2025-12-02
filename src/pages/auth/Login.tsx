@@ -6,15 +6,16 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Phone, Lock, User, Mail, ArrowLeft } from 'lucide-react';
-import { Logo } from '@/components/Logo';
 import { HelpAndSupport } from '@/components/HelpAndSupport';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from '@/contexts/ThemeContext';
 
 type AuthStep = 'phone' | 'password' | 'signup';
 
 export default function Login() {
   const { login, signup, checkPhoneExists } = useAuth();
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [step, setStep] = useState<AuthStep>('phone');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -188,12 +189,21 @@ export default function Login() {
     }
   };
 
+  const logoSrc =
+    theme === 'dark'
+      ? '/logo-horizontal-branco.png'
+      : '/logo-horizontal-preto.png';
+
   return (
     <div className="p-8 space-y-8">
       {/* Header */}
       <div className="animate-fade-in">
         <div className="flex justify-center mb-6">
-          <Logo size="2xl" showText={false} />
+          <img
+            src={logoSrc}
+            alt="Meu Agente"
+            className="h-24 sm:h-28 md:h-32 object-contain"
+          />
         </div>
         <h1 className="text-4xl font-extrabold bg-gradient-to-br from-text via-brand-700 to-brand-500 bg-clip-text text-transparent drop-shadow-sm text-center">
           {step === 'phone' && 'Entrar'}
@@ -453,7 +463,24 @@ export default function Login() {
         </div>
 
         <p className="text-center text-xs text-text-muted mt-6">
-          Ao continuar, você concorda com nossos Termos de Serviço e Política de Privacidade
+          Ao continuar, você concorda com nossos{' '}
+          <a
+            href="https://site.meuagente.api.br/termos-de-uso"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand hover:underline"
+          >
+            Termos de Serviço
+          </a>{' '}
+          e{' '}
+          <a
+            href="https://site.meuagente.api.br/politica-de-privacidade"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand hover:underline"
+          >
+            Política de Privacidade
+          </a>
         </p>
       </div>
       <HelpAndSupport mode="floatingAuth" />

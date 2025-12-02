@@ -1,7 +1,7 @@
 import { usePlanInfo } from '@/hooks/usePlanInfo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, Star, Zap, Shield, Users } from 'lucide-react';
+import { CheckCircle, XCircle, Star, Zap, Shield, Users, Crown } from 'lucide-react';
 
 export function PlanInfoCard() {
   const { planInfo, getPlanFeatures, getPlanLimits } = usePlanInfo();
@@ -30,23 +30,27 @@ export function PlanInfoCard() {
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl">
+      <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-amber-500/10 via-transparent to-orange-500/10 opacity-90" />
+      <CardHeader className="relative z-10 pb-2">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-3 text-base font-semibold tracking-tight">
+              <div className="h-9 w-9 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+                <Crown className="h-4 w-4 text-amber-600" />
+              </div>
               Informações do Plano
-              <Badge className={getPlanBadgeColor()}>
+              <Badge className={getPlanBadgeColor() + " ml-2"}>
                 {planInfo.displayName}
               </Badge>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="pl-12 mt-1">
               Recursos e limitações do seu plano atual
             </CardDescription>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 relative z-10">
         <div className="space-y-3">
           <h4 className="font-medium text-sm">Recursos Incluídos:</h4>
           <div className="grid gap-2">

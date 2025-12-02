@@ -562,24 +562,41 @@ export default function Agenda() {
       </div>
 
       {/* Filtros */}
-      <Card className="group relative overflow-hidden hover:scale-105 transition-all duration-200 animate-fade-in hover:shadow-lg hover:shadow-primary/5 before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100" style={{ animationDelay: '150ms' }}>
+      <Card
+        className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl animate-fade-in"
+        style={{ animationDelay: '150ms' }}
+      >
+        <div className="pointer-events-none absolute inset-px rounded-[1.1rem] bg-gradient-to-br from-primary/12 via-transparent to-sky-500/10 opacity-90" />
         <CardHeader className="flex flex-row items-center justify-between relative z-10 pb-3">
-          <CardTitle className="text-lg">Filtros</CardTitle>
-          {/* Botão de Refresh - todas as telas (canto superior direito do card de filtros) */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isRefreshing || isLoading}
-            className="h-8 w-8 p-0 hover:bg-primary/10 hover:text-primary transition-all duration-200 hover:scale-110"
-            aria-label="Atualizar agenda"
-            title="Atualizar agenda"
-          >
-            <RefreshCw className={cn(
-              "h-4 w-4 transition-transform duration-200",
-              isRefreshing && "animate-spin"
-            )} />
-          </Button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={isRefreshing || isLoading}
+              className={cn(
+                "h-8 w-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center transition-all duration-200",
+                !(isRefreshing || isLoading) && "hover:bg-primary/15 hover:scale-110 hover:shadow-sm",
+                (isRefreshing || isLoading) && "opacity-60 cursor-not-allowed"
+              )}
+              aria-label="Atualizar agenda"
+              title="Atualizar agenda"
+            >
+              <RefreshCw
+                className={cn(
+                  "h-4 w-4 text-primary transition-transform duration-200",
+                  isRefreshing && "animate-spin"
+                )}
+              />
+            </button>
+            <div className="flex flex-col">
+              <CardTitle className="text-sm font-semibold tracking-tight">
+                Filtros
+              </CardTitle>
+              <p className="text-[11px] text-text-muted">
+                Refine sua agenda por texto, agenda, categoria, prioridade e status
+              </p>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="relative z-10 pt-0">
           <AgendaFilters
