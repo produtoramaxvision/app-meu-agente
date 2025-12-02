@@ -63,7 +63,8 @@ const timelinePriorityConfig = {
   low: {
     color: 'bg-blue-500/10 border-blue-500/30 text-blue-700 dark:text-blue-300',
     glow: 'shadow-blue-500/20',
-    Icon: Circle,
+    // Troca o ícone de círculo para bandeira para não confundir com o checkbox
+    Icon: Flag,
     iconColor: 'text-blue-500 dark:text-blue-300',
   },
 } as const;
@@ -238,6 +239,12 @@ const timelinePriorityConfig = {
             <Copy className="mr-2 h-4 w-4" />
             Duplicar
           </ContextMenuItem>
+          {!isDone && (
+            <ContextMenuItem onClick={() => onToggleComplete(task)}>
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Marcar como concluída
+            </ContextMenuItem>
+          )}
           {isDone && onMarkIncomplete && (
             <ContextMenuItem onClick={() => onMarkIncomplete(task)}>
               <Undo2 className="mr-2 h-4 w-4" />

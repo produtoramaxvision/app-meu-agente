@@ -12,13 +12,14 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Sector, ResponsiveContainer } from 'recharts';
-import { Download, ArrowUpIcon, ArrowDownIcon, TrendingUp, FileText, CalendarIcon, X, ArrowUpDown, Trash2, Copy, Edit, CheckCircle, Clock, Search, ChevronDown } from 'lucide-react';
+import { Download, ArrowUpIcon, ArrowDownIcon, TrendingUp, FileText, CalendarIcon, X, ArrowUpDown, Trash2, Copy, Edit, CheckCircle, Clock, Search, ChevronDown, Car, Home, Utensils, ShoppingBag, PartyPopper, Briefcase, Gift, Plane, Smartphone, Zap, Wifi, Shield, Heart, MoreHorizontal, Undo2, Tag } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { DeleteRecordDialog } from '@/components/DeleteRecordDialog';
 import { BulkDeleteDialog } from '@/components/BulkDeleteDialog';
 import { EditRecordDialog } from '@/components/EditRecordDialog';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { DespesasPorCategoriaChart } from '@/components/DespesasPorCategoriaChart';
 import { StatusTimelineChart } from '@/components/StatusTimelineChart';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -26,6 +27,23 @@ import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, C
 import { toast } from 'sonner';
 import { sanitizeText } from '@/lib/sanitize';
 import { supabase } from '@/integrations/supabase/client';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const getCategoryIcon = (category: string) => {
+  const normalized = category?.toLowerCase() || '';
+  if (normalized.includes('transporte') || normalized.includes('uber') || normalized.includes('combustível') || normalized.includes('carro')) return Car;
+  if (normalized.includes('alimentação') || normalized.includes('restaurante') || normalized.includes('mercado') || normalized.includes('ifood')) return Utensils;
+  if (normalized.includes('moradia') || normalized.includes('casa') || normalized.includes('aluguel') || normalized.includes('condomínio') || normalized.includes('luz') || normalized.includes('água')) return Home;
+  if (normalized.includes('viagem') || normalized.includes('férias')) return Plane;
+  if (normalized.includes('lazer') || normalized.includes('cinema') || normalized.includes('jogos')) return PartyPopper;
+  if (normalized.includes('saúde') || normalized.includes('médico') || normalized.includes('farmácia')) return Heart;
+  if (normalized.includes('trabalho') || normalized.includes('salário') || normalized.includes('freela')) return Briefcase;
+  if (normalized.includes('compra') || normalized.includes('vestuário') || normalized.includes('shopping')) return ShoppingBag;
+  if (normalized.includes('presente')) return Gift;
+  if (normalized.includes('tecnologia') || normalized.includes('internet') || normalized.includes('celular')) return Smartphone;
+  if (normalized.includes('contas') || normalized.includes('serviços')) return Zap;
+  return FileText;
+};
 
 const EXPENSE_COLORS = [
   { start: '#FF6B6B', end: '#fa5252' }, // Red
@@ -151,6 +169,24 @@ export default function Reports() {
       newSelected.delete(id);
     }
     setSelectedRecords(newSelected);
+  };
+
+  const handleToggleStatus = async (record: any) => {
+    try {
+      const newStatus = record.status === 'pago' ? 'pendente' : 'pago';
+      const { error } = await supabase
+        .from('financeiro_registros')
+        .update({ status: newStatus })
+        .eq('id', record.id);
+
+      if (error) throw error;
+
+      toast.success(`Status alterado para ${newStatus === 'pago' ? 'Pago' : 'Pendente'}`);
+      refetch();
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast.error('Erro ao atualizar status');
+    }
   };
 
   const handleBulkDelete = async () => {
@@ -963,20 +999,65 @@ export default function Reports() {
         </div>
       </div>
 
-      {/* Transactions Table */}
-      <Card ref={transactionsTableRef} className="overflow-x-auto">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Todas as Transações</CardTitle>
-            <span className="text-sm text-text-muted">
-              {filteredAndSortedRecords.length} {filteredAndSortedRecords.length === 1 ? 'transação' : 'transações'}
-            </span>
+      {/* Transactions List - Refactored */}
+      <Card ref={transactionsTableRef} className="bg-transparent border-none shadow-none">
+        <CardHeader className="px-0 pt-0 pb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+                Todas as Transações
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {filteredAndSortedRecords.length} {filteredAndSortedRecords.length === 1 ? 'transação encontrada' : 'transações encontradas'}
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              {selectedRecords.size > 0 && (
+                <Button size="sm" variant="destructive" onClick={() => setBulkDeleteDialogOpen(true)} className="shadow-sm">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Excluir ({selectedRecords.size})
+                </Button>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2 bg-card/50 backdrop-blur-sm">
+                    <ArrowUpDown className="w-4 h-4" />
+                    Ordenar
+                    <ChevronDown className="w-3 h-3 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuItem onClick={() => handleSort('data_hora')}>
+                    <CalendarIcon className="mr-2 h-4 w-4" /> Data
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSort('valor')}>
+                    <TrendingUp className="mr-2 h-4 w-4" /> Valor
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSort('categoria')}>
+                    <Tag className="mr-2 h-4 w-4" /> Categoria
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <div className="flex items-center px-2">
+                 <Checkbox
+                    checked={paginatedRecords.length > 0 && paginatedRecords.every(r => selectedRecords.has(r.id))}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Selecionar todos"
+                  />
+              </div>
+            </div>
           </div>
         </CardHeader>
-        <CardContent>
-          {/* Empty search state */}
+
+        <CardContent className="px-0">
           {searchQuery && filteredAndSortedRecords.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 px-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center justify-center py-16 px-4 bg-card/30 rounded-xl border border-dashed"
+            >
               <div className="h-16 w-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
                 <Search className="h-8 w-8 text-red-500/70" />
               </div>
@@ -1004,130 +1085,119 @@ export default function Reports() {
                   Limpar todos os filtros
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground mt-6 text-center">
-                Dica: Verifique a ortografia ou tente termos mais genéricos
-              </p>
-            </div>
+            </motion.div>
           ) : filteredAndSortedRecords.length > 0 ? (
-            <>
-              <div className="space-y-2 min-w-[800px]">
-                {/* Header - Hidden on mobile */}
-                <div className="hidden md:grid grid-cols-[auto_1fr_1fr_1fr_1.5fr_2fr_1fr] items-center gap-4 px-4 py-2 font-medium text-muted-foreground border-b">
-                  <div className="flex items-center">
-                    <Checkbox
-                      checked={paginatedRecords.length > 0 && paginatedRecords.every(r => selectedRecords.has(r.id))}
-                      onCheckedChange={handleSelectAll}
-                      aria-label="Selecionar todos"
-                    />
-                  </div>
-                  <Button variant="ghost" size="sm" className="h-8 gap-1 -ml-3 justify-start" onClick={() => handleSort('data_hora')}>
-                    Data <ArrowUpDown className="h-3 w-3" />
-                  </Button>
-                  <div>Tipo</div>
-                  <div>Status</div>
-                  <Button variant="ghost" size="sm" className="h-8 gap-1 -ml-3 justify-start" onClick={() => handleSort('categoria')}>
-                    Categoria <ArrowUpDown className="h-3 w-3" />
-                  </Button>
-                  <div>Descrição</div>
-                  <Button variant="ghost" size="sm" className="h-8 gap-1 justify-end w-full" onClick={() => handleSort('valor')}>
-                    Valor <ArrowUpDown className="h-3 w-3" />
-                  </Button>
-                </div>
+            <div className="space-y-3">
+              <AnimatePresence mode="popLayout">
+                {paginatedRecords.map((record) => {
+                  const isSelected = selectedRecords.has(record.id);
+                  const handleCheckedChange = (checked: boolean) => handleSelectRecord(record.id, checked);
+                  const CategoryIcon = getCategoryIcon(record.categoria);
+                  const isExpense = record.tipo === 'saida';
 
-                {/* Body */}
-                <div className="space-y-2">
-                  {paginatedRecords.map((record, index) => {
-                    const isSelected = selectedRecords.has(record.id);
-                    const handleCheckedChange = (checked: boolean) => handleSelectRecord(record.id, checked);
+                  return (
+                    <ContextMenu key={record.id}>
+                      <ContextMenuTrigger asChild>
+                        <motion.div
+                          layout
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ duration: 0.2 }}
+                          className={cn(
+                            "group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border bg-card/80 backdrop-blur-sm hover:bg-card hover:shadow-md transition-all duration-200 hover:scale-[1.005] cursor-context-menu relative overflow-hidden",
+                            isSelected && "border-primary/50 bg-primary/5"
+                          )}
+                        >
+                           <div className={cn(
+                              "absolute left-0 top-0 bottom-0 w-1 bg-transparent transition-colors duration-200",
+                              isExpense ? "group-hover:bg-red-500/50" : "group-hover:bg-green-500/50",
+                              isSelected && (isExpense ? "bg-red-500" : "bg-green-500")
+                           )} />
 
-                    return (
-                      <ContextMenu key={record.id}>
-                        <ContextMenuTrigger asChild>
-                          <div
-                            className={cn(
-                              "cursor-context-menu group relative overflow-hidden rounded-lg bg-surface-elevated hover:bg-surface-hover transition-all duration-200 border",
-                              isSelected && "bg-primary/5 border-primary/20"
-                            )}
-                          >
-                            {/* Mobile View */}
-                            <div className="md:hidden p-3 space-y-3">
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="flex items-start gap-3">
-                                  <Checkbox checked={isSelected} onCheckedChange={handleCheckedChange} aria-label={`Selecionar registro ${record.id}`} onClick={(e) => e.stopPropagation()} />
-                                  <div>
-                                    <div className="font-semibold">{record.descricao || record.categoria}</div>
-                                    <div className="text-sm text-muted-foreground">{new Date(record.data_hora).toLocaleDateString('pt-BR')}</div>
-                                  </div>
+                           <div className="flex items-start sm:items-center gap-4 z-10 w-full sm:w-auto">
+                              <div onClick={(e) => e.stopPropagation()} className="pt-1 sm:pt-0">
+                                <Checkbox checked={isSelected} onCheckedChange={handleCheckedChange} />
+                              </div>
+                              
+                              <div className={cn(
+                                "h-10 w-10 rounded-full flex items-center justify-center shrink-0 border",
+                                isExpense ? "bg-red-500/10 border-red-500/20 text-red-600" : "bg-green-500/10 border-green-500/20 text-green-600"
+                              )}>
+                                <CategoryIcon className="h-5 w-5" />
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <h4 className="font-semibold text-sm sm:text-base truncate pr-4">
+                                  {record.descricao || record.categoria}
+                                </h4>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                                  <span className="flex items-center gap-1">
+                                    <CalendarIcon className="h-3 w-3" />
+                                    {format(new Date(record.data_hora), 'dd/MM/yyyy')}
+                                  </span>
+                                  <span className="hidden sm:inline">•</span>
+                                  <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-normal bg-background/50 hidden sm:flex">
+                                    {record.categoria}
+                                  </Badge>
                                 </div>
-                                <div className={`font-semibold text-right ${record.tipo === 'entrada' ? 'text-[#39a85b]' : 'text-[#a93838]'}`}>
-                                  {record.tipo === 'entrada' ? '+' : '-'}
+                              </div>
+                           </div>
+
+                           <div className="flex items-center justify-between sm:justify-end gap-4 mt-3 sm:mt-0 pl-10 sm:pl-0 w-full sm:w-auto">
+                              <div className="flex items-center gap-2">
+                                <Badge 
+                                  variant={record.status === 'pago' ? 'default' : 'secondary'} 
+                                  className={cn(
+                                    "text-xs font-medium capitalize shadow-none border-0",
+                                    record.status === 'pago' 
+                                      ? "bg-green-500/15 text-green-600 hover:bg-green-500/25 dark:bg-green-500/20 dark:text-green-400" 
+                                      : "bg-yellow-500/15 text-yellow-600 hover:bg-yellow-500/25 dark:bg-yellow-500/20 dark:text-yellow-400"
+                                  )}
+                                >
+                                  {record.status === 'pago' ? 'Pago' : 'Pendente'}
+                                </Badge>
+                              </div>
+
+                              <div className="text-right min-w-[100px]">
+                                <span className={cn(
+                                  "text-lg font-bold tracking-tight",
+                                  isExpense ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"
+                                )}>
+                                  {isExpense ? '-' : '+'}
                                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(record.valor))}
-                                </div>
+                                </span>
                               </div>
-                              <div className="pt-3 border-t grid grid-cols-3 gap-2 text-sm">
-                                <div>
-                                  <div className="text-muted-foreground text-xs mb-1">Tipo</div>
-                                  <div className="flex items-center gap-1">
-                                    {record.tipo === 'entrada' ? <ArrowUpIcon className="h-3 w-3 text-[#39a85b]" /> : <ArrowDownIcon className="h-3 w-3 text-[#a93838]" />}
-                                    {record.tipo === 'entrada' ? 'Entrada' : 'Saída'}
-                                  </div>
-                                </div>
-                                <div>
-                                  <div className="text-muted-foreground text-xs mb-1">Status</div>
-                                  <div className="flex items-center gap-1">
-                                    {record.status === 'pago' ? <CheckCircle className="h-3 w-3 text-green-500" /> : <Clock className="h-3 w-3 text-yellow-500" />}
-                                    {record.status === 'pago' ? 'Pago' : 'Pendente'}
-                                  </div>
-                                </div>
-                                <div>
-                                  <div className="text-muted-foreground text-xs mb-1">Categoria</div>
-                                  <div>{record.categoria}</div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Desktop View */}
-                            <div className="hidden md:grid md:grid-cols-[auto_1fr_1fr_1fr_1.5fr_2fr_1fr] items-center gap-4 px-4 py-3">
-                              <Checkbox checked={isSelected} onCheckedChange={handleCheckedChange} aria-label={`Selecionar registro ${record.id}`} onClick={(e) => e.stopPropagation()} />
-                              <div className="font-medium text-sm">{new Date(record.data_hora).toLocaleDateString('pt-BR')}</div>
-                              <div className="flex items-center gap-2 text-sm">
-                                {record.tipo === 'entrada' ? <ArrowUpIcon className="h-4 w-4 text-[#39a85b]" /> : <ArrowDownIcon className="h-4 w-4 text-[#a93838]" />}
-                                <span>{record.tipo === 'entrada' ? 'Entrada' : 'Saída'}</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm">
-                                {record.status === 'pago' ? (<><CheckCircle className="h-4 w-4 text-green-500" /><span className="text-green-500">Pago</span></>) : (<><Clock className="h-4 w-4 text-yellow-500" /><span className="text-yellow-500">Pendente</span></>)}
-                              </div>
-                              <div className="text-sm">{record.categoria}</div>
-                              <div className="text-sm text-muted-foreground truncate">{sanitizeText(record.descricao) || '-'}</div>
-                              <div className={`text-right font-semibold ${record.tipo === 'entrada' ? 'text-[#39a85b]' : 'text-[#a93838]'}`}>
-                                {record.tipo === 'entrada' ? '+' : '-'}
-                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(record.valor))}
-                              </div>
-                            </div>
-                          </div>
-                        </ContextMenuTrigger>
-                        <ContextMenuContent className="w-48">
-                          <ContextMenuItem onClick={() => { setRecordToEdit(record); setEditDialogOpen(true); }} className="cursor-pointer">
+                           </div>
+                        </motion.div>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent className="w-48">
+                          <ContextMenuItem onClick={() => { setRecordToEdit(record); setEditDialogOpen(true); }}>
                             <Edit className="mr-2 h-4 w-4" /><span>Editar</span>
                           </ContextMenuItem>
-                          <ContextMenuItem onClick={() => handleDuplicateRecord(record)} className="cursor-pointer">
+                          <ContextMenuItem onClick={() => handleDuplicateRecord(record)}>
                             <Copy className="mr-2 h-4 w-4" /><span>Duplicar</span>
                           </ContextMenuItem>
+                          <ContextMenuItem onClick={() => handleToggleStatus(record)}>
+                             {record.status === 'pago' ? (
+                               <><Undo2 className="mr-2 h-4 w-4" /><span>Marcar como Pendente</span></>
+                             ) : (
+                               <><CheckCircle className="mr-2 h-4 w-4" /><span>Marcar como Pago</span></>
+                             )}
+                          </ContextMenuItem>
                           <ContextMenuSeparator />
-                          <ContextMenuItem onClick={() => { setRecordToDelete(record); setDeleteDialogOpen(true); }} className="cursor-pointer text-red-600 focus:text-red-600">
+                          <ContextMenuItem onClick={() => { setRecordToDelete(record); setDeleteDialogOpen(true); }} className="text-red-600 focus:text-red-600">
                             <Trash2 className="mr-2 h-4 w-4" /><span>Excluir</span>
                           </ContextMenuItem>
-                        </ContextMenuContent>
-                      </ContextMenu>
-                    );
-                  })}
-                </div>
-              </div>
+                      </ContextMenuContent>
+                    </ContextMenu>
+                  );
+                })}
+              </AnimatePresence>
 
-              {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4">
-                  <p className="text-sm text-text-muted">
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-border/40">
+                  <p className="text-sm text-muted-foreground">
                     Página {currentPage} de {totalPages}
                   </p>
                   <div className="flex gap-2">
@@ -1150,10 +1220,13 @@ export default function Reports() {
                   </div>
                 </div>
               )}
-            </>
+            </div>
           ) : (
-            <div className="py-12 text-center text-text-muted">
-              Nenhuma transação encontrada
+            <div className="py-16 text-center text-muted-foreground flex flex-col items-center">
+               <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+                  <Search className="h-6 w-6 opacity-50" />
+               </div>
+               <p>Nenhuma transação encontrada</p>
             </div>
           )}
         </CardContent>
