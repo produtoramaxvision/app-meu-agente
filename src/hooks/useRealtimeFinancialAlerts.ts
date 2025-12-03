@@ -8,7 +8,8 @@ import { toast } from 'sonner';
  * Hook para monitorar mudanças em tempo real nos registros financeiros
  * usando Supabase Realtime.
  * 
- * Monitora eventos UPDATE na tabela financeiro_registros para:
+ * Monitora eventos INSERT, UPDATE e DELETE na tabela financeiro_registros para:
+ * - Sincronizar novos registros criados via WhatsApp/n8n
  * - Alertar quando uma conta vence
  * - Sincronizar dados entre múltiplas abas/dispositivos
  * - Invalidar queries do React Query automaticamente
@@ -26,72 +27,151 @@ export const useRealtimeFinancialAlerts = (userPhone: string | undefined) => {
 
     console.log('💰 useRealtimeFinancialAlerts: Iniciando para:', userPhone);
 
+    /**
+     * Helper para invalidar todas as queries relacionadas a dados financeiros
+     * IMPORTANTE: As queryKeys devem corresponder exatamente às usadas nos hooks:
+     * - useFinancialRecords: ['financial-records-all', phone]
+     * - useAlertsData: ['alerts']
+     * - etc.
+     */
+    const invalidateFinancialQueries = () => {
+      // Query principal do useFinancialRecords (hook consolidado)
+      queryClient.invalidateQueries({ queryKey: ['financial-records-all', userPhone] });
+      // Outras queries relacionadas
+      queryClient.invalidateQueries({ queryKey: ['financial-records'] });
+      queryClient.invalidateQueries({ queryKey: ['alerts'] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-bills'] });
+      queryClient.invalidateQueries({ queryKey: ['financial-data'] });
+      queryClient.invalidateQueries({ queryKey: ['financial-data', userPhone] });
+    };
+
     // Configurar canal de Realtime para alertas financeiros
+    // ✅ Escutar INSERT e UPDATE com filtro por phone
     const channel: RealtimeChannel = supabase
       .channel(`financial-alerts:${userPhone}`)
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: 'INSERT', // INSERT com filtro
           schema: 'public',
           table: 'financeiro_registros',
           filter: `phone=eq.${userPhone}`
         },
         (payload) => {
-          console.log('💰 Mudança financeira detectada:', payload);
+          console.log('💰 INSERT financeiro detectado:', payload);
           
-          const oldRecord = payload.old as { status?: string; id?: number };
           const newRecord = payload.new as { 
             id: number;
             status: string;
             descricao: string;
             valor: number;
             tipo: 'entrada' | 'saida';
-            data_vencimento?: string;
             categoria: string;
           };
 
-          // Invalidar queries relacionadas para atualizar UI
-          queryClient.invalidateQueries({ queryKey: ['financial-records'] });
-          queryClient.invalidateQueries({ queryKey: ['alerts'] });
-          queryClient.invalidateQueries({ queryKey: ['upcoming-bills'] });
-          queryClient.invalidateQueries({ queryKey: ['financial-data'] });
-          
-          // Alerta crítico: Conta venceu
-          if (oldRecord.status !== 'vencido' && newRecord.status === 'vencido') {
-            console.log('🚨 ALERTA: Conta vencida!', newRecord);
-            
-            toast.error('Conta Vencida!', {
-              description: `${newRecord.descricao} - R$ ${newRecord.valor.toFixed(2)}`,
-              duration: 10000,
-              action: {
-                label: 'Ver Detalhes',
-                onClick: () => {
-                  window.location.href = '/contas';
-                }
-              }
+          // Invalidar queries para atualizar UI automaticamente
+          invalidateFinancialQueries();
+
+          // Notificar quando um novo registro é criado (via WhatsApp/n8n)
+          if (newRecord) {
+            console.log('✅ Novo registro financeiro criado:', newRecord);
+            const tipoLabel = newRecord.tipo === 'entrada' ? 'Receita' : 'Despesa';
+            toast.success(`${tipoLabel} Registrada!`, {
+              description: `${newRecord.descricao || newRecord.categoria} - R$ ${Number(newRecord.valor).toFixed(2)}`,
+              duration: 5000
             });
           }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE', // UPDATE com filtro
+          schema: 'public',
+          table: 'financeiro_registros',
+          filter: `phone=eq.${userPhone}`
+        },
+        (payload) => {
+          console.log('💰 UPDATE financeiro detectado:', payload);
           
-          // Alerta positivo: Conta foi paga
-          if (oldRecord.status === 'pendente' && newRecord.status === 'pago') {
-            console.log('✅ Conta paga:', newRecord);
+          const newRecord = payload.new as { 
+            id: number;
+            status: string;
+            descricao: string;
+            valor: number;
+            tipo: 'entrada' | 'saida';
+            categoria: string;
+          };
+          const oldRecord = payload.old as { status?: string; id?: number };
+
+          // Invalidar queries para atualizar UI automaticamente
+          invalidateFinancialQueries();
+          
+          // Alertas específicos para eventos UPDATE
+          if (oldRecord && newRecord) {
+            // Alerta crítico: Conta venceu
+            if (oldRecord.status !== 'vencido' && newRecord.status === 'vencido') {
+              console.log('🚨 ALERTA: Conta vencida!', newRecord);
+              
+              toast.error('Conta Vencida!', {
+                description: `${newRecord.descricao} - R$ ${Number(newRecord.valor).toFixed(2)}`,
+                duration: 10000,
+                action: {
+                  label: 'Ver Detalhes',
+                  onClick: () => {
+                    window.location.href = '/contas';
+                  }
+                }
+              });
+            }
             
-            if (newRecord.tipo === 'saida') {
-              toast.success('Pagamento Registrado!', {
-                description: `${newRecord.descricao} - R$ ${newRecord.valor.toFixed(2)}`,
+            // Alerta positivo: Conta foi paga
+            if (oldRecord.status === 'pendente' && newRecord.status === 'pago') {
+              console.log('✅ Conta paga:', newRecord);
+              
+              if (newRecord.tipo === 'saida') {
+                toast.success('Pagamento Registrado!', {
+                  description: `${newRecord.descricao} - R$ ${Number(newRecord.valor).toFixed(2)}`,
+                  duration: 5000
+                });
+              }
+            }
+            
+            // Alerta informativo: Conta recebida
+            if (oldRecord.status === 'pendente' && newRecord.status === 'recebido') {
+              console.log('💵 Receita recebida:', newRecord);
+              
+              toast.success('Receita Recebida!', {
+                description: `${newRecord.descricao} - R$ ${Number(newRecord.valor).toFixed(2)}`,
                 duration: 5000
               });
             }
           }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE', // ✅ DELETE SEM FILTRO (limitação do Supabase Realtime)
+          schema: 'public',
+          table: 'financeiro_registros'
+          // NOTA: Não é possível filtrar DELETE events no Supabase Realtime
+        },
+        (payload) => {
+          console.log('🗑️ DELETE financeiro detectado:', payload);
           
-          // Alerta informativo: Conta recebida
-          if (oldRecord.status === 'pendente' && newRecord.status === 'recebido') {
-            console.log('💵 Receita recebida:', newRecord);
+          const oldRecord = payload.old as { id?: number; phone?: string };
+          
+          // Verificar se o registro deletado pertence ao usuário atual
+          // NOTA: Em DELETE, o old record pode ter apenas o ID se replica identity não for FULL
+          if (oldRecord?.phone === userPhone || !oldRecord?.phone) {
+            console.log('🗑️ Registro financeiro deletado (usuário atual):', oldRecord);
+            // Invalidar queries para atualizar UI automaticamente
+            invalidateFinancialQueries();
             
-            toast.success('Receita Recebida!', {
-              description: `${newRecord.descricao} - R$ ${newRecord.valor.toFixed(2)}`,
-              duration: 5000
+            toast.info('Registro Removido', {
+              description: 'Um registro financeiro foi excluído',
+              duration: 3000
             });
           }
         }
