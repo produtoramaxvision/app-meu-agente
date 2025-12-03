@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, User, LogOut, Wallet, Target, Bell, CheckSquare, CalendarDays, X, Loader2 } from 'lucide-react';
+import { LayoutDashboard, FileText, User, LogOut, Wallet, Target, Bell, CheckSquare, CalendarDays, X, Loader2, MessageCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotificationsData } from '@/hooks/useNotificationsData';
 import { cn } from '@/lib/utils';
@@ -9,6 +9,7 @@ import { HelpAndSupport } from '@/components/HelpAndSupport';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Chat IA', href: '/chat', icon: MessageCircle },
   { name: 'Agenda', href: '/agenda', icon: CalendarDays },
   { name: 'Contas', href: '/contas', icon: Wallet },
   { name: 'Metas', href: '/metas', icon: Target },

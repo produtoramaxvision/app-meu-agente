@@ -32,6 +32,7 @@ const Goals = lazy(() => import("./pages/Goals"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Tasks = lazy(() => import("./pages/Tasks"));
 const Agenda = lazy(() => import("./pages/Agenda"));
+const Chat = lazy(() => import("./pages/Chat"));
 
 // Inicializar monitoramento de performance
 initPerformanceMonitoring();
@@ -118,6 +119,14 @@ const App = () => (
                     element={
                       <ProtectedRoute>
                         <AppLayout><Profile /></AppLayout>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/chat"
+                    element={
+                      <ProtectedRoute>
+                        <AppLayout><Chat /></AppLayout>
                       </ProtectedRoute>
                     }
                   />
