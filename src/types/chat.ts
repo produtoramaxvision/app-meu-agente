@@ -2,24 +2,71 @@
  * Chat Types - Agente de Scrape Interface
  * 
  * Tipos para a interface conversacional com o Agente de Scrape via webhook n8n.
+ * Persistência via Supabase nas tabelas chat_ia_sessions e chat_ia_messages.
  */
+
+import type { Tables, TablesInsert } from '@/integrations/supabase/types';
+
+// =====================================================
+// Tipos base do banco de dados
+// =====================================================
+
+export type DbChatSession = Tables<'chat_ia_sessions'>;
+export type DbChatMessage = Tables<'chat_ia_messages'>;
+export type DbChatSessionInsert = TablesInsert<'chat_ia_sessions'>;
+export type DbChatMessageInsert = TablesInsert<'chat_ia_messages'>;
+
+// =====================================================
+// Tipos da aplicação
+// =====================================================
 
 export type MessageRole = 'user' | 'assistant';
 export type MessageStatus = 'sending' | 'sent' | 'error';
 
 export interface ChatMessage {
   id: string;
+  sessionId?: string;
   content: string;
   role: MessageRole;
   timestamp: Date;
   status: MessageStatus;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ChatSession {
   id: string;
+  phone: string;
+  title: string | null;
   messages: ChatMessage[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+// =====================================================
+// Funções de conversão DB <-> App
+// =====================================================
+
+export function dbMessageToApp(dbMsg: DbChatMessage): ChatMessage {
+  return {
+    id: dbMsg.id,
+    sessionId: dbMsg.session_id,
+    content: dbMsg.content,
+    role: dbMsg.role as MessageRole,
+    timestamp: new Date(dbMsg.created_at || Date.now()),
+    status: dbMsg.status as MessageStatus,
+    metadata: dbMsg.metadata as Record<string, unknown> | undefined,
+  };
+}
+
+export function dbSessionToApp(dbSession: DbChatSession, messages: ChatMessage[] = []): ChatSession {
+  return {
+    id: dbSession.id,
+    phone: dbSession.phone,
+    title: dbSession.title,
+    messages,
+    createdAt: new Date(dbSession.created_at || Date.now()),
+    updatedAt: new Date(dbSession.updated_at || Date.now()),
+  };
 }
 
 export interface ClienteInfo {

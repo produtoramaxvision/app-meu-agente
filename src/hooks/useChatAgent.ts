@@ -1,169 +1,179 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-import type { ChatMessage, SendMessagePayload, WebhookResponse } from '@/types/chat';
+import { supabase } from '@/integrations/supabase/client';
+import type { 
+  ChatMessage, 
+  ChatSession,
+  SendMessagePayload, 
+  WebhookResponse 
+} from '@/types/chat';
 
 // Webhook URL from environment variable
 const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL;
 
-// LocalStorage key for chat history
-const CHAT_STORAGE_KEY = 'meu_agente_chat_history';
-const MAX_STORED_MESSAGES = 100;
-
-// Generate unique ID for messages
-const generateId = () => `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-// Parse stored messages (handle Date conversion)
-const parseStoredMessages = (stored: string): ChatMessage[] => {
-  try {
-    const parsed = JSON.parse(stored);
-    return parsed.map((msg: ChatMessage & { timestamp: string }) => ({
-      ...msg,
-      timestamp: new Date(msg.timestamp),
-    }));
-  } catch {
-    return [];
-  }
-};
-
-// Load messages from localStorage
-const loadFromLocalStorage = (userId: string): ChatMessage[] => {
-  try {
-    const stored = localStorage.getItem(`${CHAT_STORAGE_KEY}_${userId}`);
-    if (!stored) return [];
-    return parseStoredMessages(stored);
-  } catch (error) {
-    console.warn('Failed to load chat history from localStorage:', error);
-    return [];
-  }
-};
-
-// Save messages to localStorage
-const saveToLocalStorage = (userId: string, messages: ChatMessage[]) => {
-  try {
-    // Keep only the last MAX_STORED_MESSAGES messages
-    const messagesToStore = messages.slice(-MAX_STORED_MESSAGES);
-    localStorage.setItem(
-      `${CHAT_STORAGE_KEY}_${userId}`,
-      JSON.stringify(messagesToStore)
-    );
-  } catch (error) {
-    console.warn('Failed to save chat history to localStorage:', error);
-  }
-};
-
-// Clear chat history from localStorage
-const clearLocalStorage = (userId: string) => {
-  try {
-    localStorage.removeItem(`${CHAT_STORAGE_KEY}_${userId}`);
-  } catch (error) {
-    console.warn('Failed to clear chat history:', error);
-  }
-};
+// Generate unique ID for optimistic messages
+const generateTempId = () => `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
 export function useChatAgent() {
   const { cliente } = useAuth();
-  const userId = cliente?.phone || 'anonymous';
+  const queryClient = useQueryClient();
+  const phone = cliente?.phone || '';
   
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [optimisticMessages, setOptimisticMessages] = useState<ChatMessage[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load messages from localStorage on mount
-  useEffect(() => {
-    if (userId && !isInitialized) {
-      const storedMessages = loadFromLocalStorage(userId);
-      setMessages(storedMessages);
-      setIsInitialized(true);
-    }
-  }, [userId, isInitialized]);
+  // =====================================================
+  // Query: Buscar sessão ativa ou criar uma nova
+  // =====================================================
+  const { data: session, isLoading: isLoadingSession } = useQuery({
+    queryKey: ['chat-session', phone],
+    queryFn: async (): Promise<ChatSession | null> => {
+      if (!phone) return null;
 
-  // Save messages to localStorage when they change
-  useEffect(() => {
-    if (isInitialized && userId) {
-      saveToLocalStorage(userId, messages);
-    }
-  }, [messages, userId, isInitialized]);
+      // Buscar sessão mais recente do usuário
+      const { data: sessions, error } = await supabase
+        .from('chat_ia_sessions')
+        .select('*')
+        .eq('phone', phone)
+        .order('updated_at', { ascending: false })
+        .limit(1);
 
-  // Scroll to bottom when new messages arrive
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
-
-  // Send message mutation
-  const sendMessageMutation = useMutation({
-    mutationFn: async (payload: SendMessagePayload): Promise<WebhookResponse> => {
-      if (!N8N_WEBHOOK_URL) {
-        throw new Error('Webhook URL não configurada. Configure VITE_N8N_WEBHOOK_URL no arquivo .env');
-      }
-
-      console.log('🚀 Enviando para webhook:', N8N_WEBHOOK_URL);
-      console.log('📦 Payload:', JSON.stringify(payload, null, 2));
-
-      try {
-        const response = await fetch(N8N_WEBHOOK_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
-
-        console.log('📥 Response status:', response.status);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ Response error:', errorText);
-          throw new Error(`Erro na comunicação com o agente: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('✅ Response data:', data);
-        return data;
-      } catch (error) {
-        // Detectar erro de CORS
-        if (error instanceof TypeError && error.message.includes('fetch')) {
-          console.error('� Erro de CORS ou rede:', error);
-          throw new Error('NetworkError when attempting to fetch resource. Verifique se o CORS está habilitado no n8n e se o workflow está ativo.');
-        }
+      if (error) {
+        console.error('Error fetching session:', error);
         throw error;
       }
+
+      if (sessions && sessions.length > 0) {
+        const dbSession = sessions[0];
+        setCurrentSessionId(dbSession.id);
+        return {
+          id: dbSession.id,
+          phone: dbSession.phone,
+          title: dbSession.title,
+          messages: [],
+          createdAt: new Date(dbSession.created_at || Date.now()),
+          updatedAt: new Date(dbSession.updated_at || Date.now()),
+        };
+      }
+
+      return null;
     },
-    onError: (error: Error) => {
-      console.error('Chat webhook error:', error);
-      toast.error('Erro ao enviar mensagem', {
-        description: error.message || 'Não foi possível se comunicar com o agente. Tente novamente.',
-      });
+    enabled: !!phone,
+    staleTime: 1000 * 60 * 5, // 5 minutos
+  });
+
+  // =====================================================
+  // Query: Buscar mensagens da sessão atual
+  // =====================================================
+  const { data: dbMessages = [], isLoading: isLoadingMessages } = useQuery({
+    queryKey: ['chat-messages', currentSessionId],
+    queryFn: async (): Promise<ChatMessage[]> => {
+      if (!currentSessionId) return [];
+
+      const { data, error } = await supabase
+        .from('chat_ia_messages')
+        .select('*')
+        .eq('session_id', currentSessionId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching messages:', error);
+        throw error;
+      }
+
+      return (data || []).map((msg) => ({
+        id: msg.id,
+        sessionId: msg.session_id,
+        content: msg.content,
+        role: msg.role as 'user' | 'assistant',
+        timestamp: new Date(msg.created_at || Date.now()),
+        status: msg.status as 'sending' | 'sent' | 'error',
+        metadata: msg.metadata as Record<string, unknown> | undefined,
+      }));
+    },
+    enabled: !!currentSessionId,
+    staleTime: 1000 * 30, // 30 segundos
+  });
+
+  // Combinar mensagens do banco com otimistas
+  // Filtra mensagens otimistas que já existem no banco (comparando por conteúdo e role)
+  const messages = [...dbMessages, ...optimisticMessages.filter(
+    om => !dbMessages.some(dm => 
+      dm.content === om.content && 
+      dm.role === om.role &&
+      // Considera duplicada se foi criada nos últimos 30 segundos
+      Math.abs(new Date(dm.timestamp).getTime() - om.timestamp.getTime()) < 30000
+    )
+  )];
+
+  // =====================================================
+  // Mutation: Criar nova sessão
+  // =====================================================
+  const createSessionMutation = useMutation({
+    mutationFn: async (): Promise<string> => {
+      const { data, error } = await supabase
+        .from('chat_ia_sessions')
+        .insert({ phone })
+        .select('id')
+        .single();
+
+      if (error) throw error;
+      return data.id;
+    },
+    onSuccess: (sessionId) => {
+      setCurrentSessionId(sessionId);
+      queryClient.invalidateQueries({ queryKey: ['chat-session', phone] });
+    },
+    onError: (error) => {
+      console.error('Error creating session:', error);
+      toast.error('Erro ao criar sessão de chat');
     },
   });
 
-  // Add a user message and send to webhook
-  const sendMessage = useCallback(async (content: string) => {
-    if (!content.trim()) return;
+  // =====================================================
+  // Mutation: Enviar mensagem
+  // =====================================================
+  const sendMessageMutation = useMutation({
+    mutationFn: async ({ 
+      content, 
+      sessionId 
+    }: { 
+      content: string; 
+      sessionId: string;
+    }): Promise<{ userMessageId: string; assistantResponse: string }> => {
+      // Cancelar queries pendentes para evitar race conditions
+      await queryClient.cancelQueries({ queryKey: ['chat-messages', sessionId] });
 
-    const userMessageId = generateId();
-    const userMessage: ChatMessage = {
-      id: userMessageId,
-      content: content.trim(),
-      role: 'user',
-      timestamp: new Date(),
-      status: 'sending',
-    };
+      // 1. Inserir mensagem do usuário no banco
+      const { data: userMsg, error: userError } = await supabase
+        .from('chat_ia_messages')
+        .insert({
+          session_id: sessionId,
+          phone,
+          role: 'user',
+          content,
+          status: 'sent',
+        })
+        .select('id')
+        .single();
 
-    // Add user message optimistically
-    setMessages(prev => [...prev, userMessage]);
+      if (userError) throw userError;
 
-    try {
-      // Montar payload com todas as informações do cliente
+      // Limpar mensagem otimista do usuário imediatamente após inserir no banco
+      setOptimisticMessages(prev => prev.filter(m => m.content !== content || m.role !== 'user'));
+
+      // 2. Chamar webhook do n8n
+      if (!N8N_WEBHOOK_URL) {
+        throw new Error('Webhook URL não configurada');
+      }
+
       const payload: SendMessagePayload = {
-        message: content.trim(),
+        message: content,
         timestamp: new Date().toISOString(),
+        sessionId,
         cliente: {
           phone: cliente?.phone || '',
           name: cliente?.name || '',
@@ -177,64 +187,213 @@ export function useChatAgent() {
         },
       };
 
-      const response = await sendMessageMutation.mutateAsync(payload);
+      console.log('🚀 Enviando para webhook:', N8N_WEBHOOK_URL);
 
-      // Update user message status to sent
-      setMessages(prev =>
-        prev.map(msg =>
-          msg.id === userMessageId ? { ...msg, status: 'sent' as const } : msg
-        )
-      );
+      const response = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
 
-      // Add assistant response
-      if (response.success && response.data?.response) {
-        const assistantMessage: ChatMessage = {
-          id: generateId(),
-          content: response.data.response,
-          role: 'assistant',
-          timestamp: new Date(),
-          status: 'sent',
-        };
-        setMessages(prev => [...prev, assistantMessage]);
-      } else if (response.error) {
-        throw new Error(response.error);
+      if (!response.ok) {
+        throw new Error(`Erro na comunicação com o agente: ${response.status}`);
       }
-    } catch (error) {
-      // Update user message status to error
-      setMessages(prev =>
-        prev.map(msg =>
-          msg.id === userMessageId ? { ...msg, status: 'error' as const } : msg
+
+      const data: WebhookResponse = await response.json();
+      console.log('✅ Response data:', data);
+
+      if (!data.success || !data.data?.response) {
+        throw new Error(data.error || 'Resposta inválida do agente');
+      }
+
+      // 3. Inserir resposta do assistente no banco
+      const { error: assistantError } = await supabase
+        .from('chat_ia_messages')
+        .insert({
+          session_id: sessionId,
+          phone,
+          role: 'assistant',
+          content: data.data.response,
+          status: 'sent',
+          metadata: data.data.metadata || {},
+        });
+
+      if (assistantError) {
+        console.error('Error saving assistant message:', assistantError);
+      }
+
+      return {
+        userMessageId: userMsg.id,
+        assistantResponse: data.data.response,
+      };
+    },
+    onSuccess: () => {
+      // Limpar mensagens otimistas e recarregar do banco
+      setOptimisticMessages([]);
+      queryClient.invalidateQueries({ queryKey: ['chat-messages', currentSessionId] });
+    },
+    onError: (error: Error, variables) => {
+      console.error('Chat error:', error);
+      
+      // Atualizar mensagem otimista para status de erro
+      setOptimisticMessages(prev => 
+        prev.map(msg => 
+          msg.content === variables.content 
+            ? { ...msg, status: 'error' as const }
+            : msg
         )
       );
+
+      toast.error('Erro ao enviar mensagem', {
+        description: error.message || 'Não foi possível se comunicar com o agente.',
+      });
+    },
+  });
+
+  // =====================================================
+  // Mutation: Limpar histórico
+  // =====================================================
+  const clearHistoryMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentSessionId) return;
+
+      // Deletar todas as mensagens da sessão
+      const { error: messagesError } = await supabase
+        .from('chat_ia_messages')
+        .delete()
+        .eq('session_id', currentSessionId);
+
+      if (messagesError) throw messagesError;
+
+      // Deletar a sessão
+      const { error: sessionError } = await supabase
+        .from('chat_ia_sessions')
+        .delete()
+        .eq('id', currentSessionId);
+
+      if (sessionError) throw sessionError;
+    },
+    onSuccess: () => {
+      setCurrentSessionId(null);
+      setOptimisticMessages([]);
+      queryClient.invalidateQueries({ queryKey: ['chat-session', phone] });
+      queryClient.invalidateQueries({ queryKey: ['chat-messages'] });
+      toast.success('Histórico de chat limpo');
+    },
+    onError: (error) => {
+      console.error('Error clearing history:', error);
+      toast.error('Erro ao limpar histórico');
+    },
+  });
+
+  // =====================================================
+  // Scroll automático para novas mensagens
+  // =====================================================
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  // =====================================================
+  // Realtime subscription para mensagens
+  // =====================================================
+  useEffect(() => {
+    if (!currentSessionId) return;
+
+    const channel = supabase
+      .channel(`chat_messages_${currentSessionId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_ia_messages',
+          filter: `session_id=eq.${currentSessionId}`,
+        },
+        () => {
+          // Recarregar mensagens quando houver nova inserção
+          queryClient.invalidateQueries({ queryKey: ['chat-messages', currentSessionId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentSessionId, queryClient]);
+
+  // =====================================================
+  // Funções públicas
+  // =====================================================
+
+  const sendMessage = useCallback(async (content: string) => {
+    if (!content.trim() || !phone) return;
+
+    let sessionId = currentSessionId;
+
+    // Criar sessão se não existir
+    if (!sessionId) {
+      try {
+        sessionId = await createSessionMutation.mutateAsync();
+      } catch {
+        return;
+      }
     }
-  }, [userId, sendMessageMutation]);
 
-  // Retry sending a failed message
+    // Adicionar mensagem otimista
+    const tempMessage: ChatMessage = {
+      id: generateTempId(),
+      sessionId: sessionId!,
+      content: content.trim(),
+      role: 'user',
+      timestamp: new Date(),
+      status: 'sending',
+    };
+
+    setOptimisticMessages(prev => [...prev, tempMessage]);
+
+    // Enviar para o servidor
+    await sendMessageMutation.mutateAsync({
+      content: content.trim(),
+      sessionId: sessionId!,
+    });
+  }, [phone, currentSessionId, createSessionMutation, sendMessageMutation]);
+
   const retryMessage = useCallback(async (messageId: string) => {
-    const message = messages.find(m => m.id === messageId);
-    if (!message || message.status !== 'error') return;
+    // Buscar a mensagem com erro
+    const errorMessage = optimisticMessages.find(m => m.id === messageId && m.status === 'error');
+    if (!errorMessage) return;
 
-    // Remove the failed message
-    setMessages(prev => prev.filter(m => m.id !== messageId));
-    
-    // Resend
-    await sendMessage(message.content);
-  }, [messages, sendMessage]);
+    // Remover a mensagem com erro
+    setOptimisticMessages(prev => prev.filter(m => m.id !== messageId));
 
-  // Clear all messages
+    // Reenviar
+    await sendMessage(errorMessage.content);
+  }, [optimisticMessages, sendMessage]);
+
   const clearMessages = useCallback(() => {
-    setMessages([]);
-    clearLocalStorage(userId);
-    toast.success('Histórico de chat limpo');
-  }, [userId]);
+    clearHistoryMutation.mutate();
+  }, [clearHistoryMutation]);
+
+  // =====================================================
+  // Retorno do hook
+  // =====================================================
 
   return {
     messages,
+    session,
     sendMessage,
     retryMessage,
     clearMessages,
-    isLoading: sendMessageMutation.isPending,
+    isLoading: sendMessageMutation.isPending || isLoadingSession || isLoadingMessages,
     messagesEndRef,
     isWebhookConfigured: !!N8N_WEBHOOK_URL,
+    currentSessionId,
   };
 }
