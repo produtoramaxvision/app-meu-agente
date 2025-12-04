@@ -66,6 +66,7 @@ export function HelpAndSupport({ collapsed = false, mode }: HelpAndSupportProps)
       className={cn(
         'group relative overflow-hidden flex w-full items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200',
         mode === 'sidebar' && 'px-3 py-2.5 text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:scale-105 hover:shadow-lg',
+        mode === 'sidebar' && !collapsed && 'justify-start',
         mode === 'sidebar' && collapsed && 'justify-center',
         mode === 'floatingAuth' && 'fixed bottom-6 left-6 h-12 w-12 rounded-full bg-surface shadow-lg border hover:scale-110 hover:bg-surface-hover z-50'
       )}

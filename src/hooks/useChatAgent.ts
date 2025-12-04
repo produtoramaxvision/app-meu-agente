@@ -26,6 +26,40 @@ export function useChatAgent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // =====================================================
+  // Query: Buscar todas as sessões do usuário
+  // =====================================================
+  const { data: allSessions = [] } = useQuery({
+    queryKey: ['chat-sessions-all', phone],
+    queryFn: async (): Promise<ChatSession[]> => {
+      if (!phone) return [];
+
+      const { data: sessions, error } = await supabase
+        .from('chat_ia_sessions')
+        .select('*, chat_ia_messages(count)')
+        .eq('phone', phone)
+        .order('updated_at', { ascending: false })
+        .limit(20);
+
+      if (error) {
+        console.error('Error fetching all sessions:', error);
+        return [];
+      }
+
+      return (sessions || []).map((s) => ({
+        id: s.id,
+        phone: s.phone,
+        title: s.title || 'Nova conversa',
+        messages: [],
+        createdAt: new Date(s.created_at || Date.now()),
+        updatedAt: new Date(s.updated_at || Date.now()),
+        messageCount: (s.chat_ia_messages as any)?.[0]?.count || 0,
+      }));
+    },
+    enabled: !!phone,
+    staleTime: 1000 * 60, // 1 minuto
+  });
+
+  // =====================================================
   // Query: Buscar sessão ativa ou criar uma nova
   // =====================================================
   const { data: session, isLoading: isLoadingSession } = useQuery({
@@ -381,6 +415,13 @@ export function useChatAgent() {
     clearHistoryMutation.mutate();
   }, [clearHistoryMutation]);
 
+  const selectSession = useCallback((sessionId: string) => {
+    setCurrentSessionId(sessionId);
+    setOptimisticMessages([]);
+    // Invalidar mensagens para recarregar
+    queryClient.invalidateQueries({ queryKey: ['chat-messages', sessionId] });
+  }, [queryClient]);
+
   // =====================================================
   // Retorno do hook
   // =====================================================
@@ -388,9 +429,11 @@ export function useChatAgent() {
   return {
     messages,
     session,
+    allSessions,
     sendMessage,
     retryMessage,
     clearMessages,
+    selectSession,
     isLoading: sendMessageMutation.isPending || isLoadingSession || isLoadingMessages,
     messagesEndRef,
     isWebhookConfigured: !!N8N_WEBHOOK_URL,

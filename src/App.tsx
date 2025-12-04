@@ -53,7 +53,7 @@ const App = () => (
             <SearchProvider>
               <Suspense fallback={<PageLoadingFallback />}>
                 <Routes>
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/" element={<Navigate to="/chat" replace />} />
                   <Route path="/auth/login" element={<AuthLayout><Login /></AuthLayout>} />
                   <Route path="/auth/signup" element={<AuthLayout><Signup /></AuthLayout>} />
                   <Route path="/auth/forgot-password" element={<AuthLayout><ForgotPassword /></AuthLayout>} />

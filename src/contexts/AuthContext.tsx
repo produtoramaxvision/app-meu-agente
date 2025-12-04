@@ -375,7 +375,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Não precisamos mais buscar manualmente ou gerenciar sessionStorage
       
       toast.success('Login realizado com sucesso!');
-      navigate('/dashboard');
+      navigate('/chat');
     } catch (err: any) {
       // Log do erro para debugging (apenas em desenvolvimento)
       if (process.env.NODE_ENV === 'development') {

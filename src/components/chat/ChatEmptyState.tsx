@@ -1,5 +1,6 @@
 import { Bot, Users, Database, TrendingUp, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SplineScene } from '@/components/ui/spline-scene';
 import { SUGGESTED_PROMPTS } from '@/types/chat';
 import { cn } from '@/lib/utils';
 
@@ -19,15 +20,23 @@ interface ChatEmptyStateProps {
 export function ChatEmptyState({ onSelectPrompt, isLoading }: ChatEmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-      {/* Agent illustration */}
-      <div className="relative mb-6">
-        <div className="h-20 w-20 rounded-full bg-gradient-to-br from-brand-500/20 to-brand-700/20 flex items-center justify-center">
-          <div className="h-14 w-14 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-lg">
-            <Bot className="h-8 w-8 text-white" />
-          </div>
+      {/* 3D Spline Robot Agent */}
+      <div className="relative w-full max-w-md h-64 md:h-80 mb-4">
+        {/* Gradient glow background for emphasis */}
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-500/20 via-transparent to-sky-500/20 rounded-3xl blur-2xl" />
+        <div className="absolute inset-0 bg-gradient-radial from-brand-500/10 to-transparent opacity-60" />
+        
+        {/* Spline 3D Scene */}
+        <SplineScene 
+          scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
+          className="w-full h-full"
+        />
+        
+        {/* Decorative animated rings */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full border border-brand-500/20 animate-pulse" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full border border-brand-500/10 animate-[pulse_3s_ease-in-out_infinite]" />
         </div>
-        {/* Animated pulse */}
-        <div className="absolute inset-0 rounded-full bg-brand-500/10 animate-ping" />
       </div>
 
       {/* Welcome text */}
@@ -52,7 +61,7 @@ export function ChatEmptyState({ onSelectPrompt, isLoading }: ChatEmptyStateProp
                 key={index}
                 variant="outline"
                 className={cn(
-                  'h-auto p-4 flex flex-col items-start gap-2 text-left',
+                  'h-auto p-4 flex flex-col items-start gap-2 text-left whitespace-normal break-words',
                   'bg-surface-2/50 hover:bg-surface-2 border-border/50',
                   'hover:border-brand-500/30 hover:shadow-md',
                   'transition-all duration-200',
@@ -79,7 +88,16 @@ export function ChatEmptyState({ onSelectPrompt, isLoading }: ChatEmptyStateProp
       {/* Privacy note */}
       <p className="mt-8 text-[10px] text-text-muted/60 max-w-md">
         O Agente de Scrape opera apenas em fontes permitidas e APIs oficiais,
-        respeitando termos de uso e legislação vigente.
+        respeitando{' '}
+        <a
+          href="https://site.meuagente.api.br/termos-de-uso"
+          target="_blank"
+          rel="noreferrer"
+          className="underline text-brand-500 hover:text-brand-600"
+        >
+          termos de uso
+        </a>{' '}
+        e legislação vigente.
       </p>
     </div>
   );

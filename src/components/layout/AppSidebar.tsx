@@ -8,8 +8,8 @@ import { QuickActions } from '@/components/QuickActions';
 import { HelpAndSupport } from '@/components/HelpAndSupport';
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Chat IA', href: '/chat', icon: MessageCircle },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Agenda', href: '/agenda', icon: CalendarDays },
   { name: 'Contas', href: '/contas', icon: Wallet },
   { name: 'Metas', href: '/metas', icon: Target },
@@ -110,7 +110,7 @@ export function AppSidebar({ collapsed, onToggle, showCloseButton = false }: App
             <X className="h-5 w-5 text-[hsl(var(--sidebar-text))]" />
           </button>
           <NavLink 
-            to="/dashboard" 
+            to="/chat" 
             onClick={(e) => e.stopPropagation()}
             className="transition-transform hover:scale-105"
           >
@@ -126,7 +126,7 @@ export function AppSidebar({ collapsed, onToggle, showCloseButton = false }: App
           collapsed ? 'px-2 justify-center' : 'px-6'
         )}>
           <NavLink 
-            to="/dashboard" 
+            to="/chat" 
             onClick={(e) => e.stopPropagation()}
             className="transition-transform hover:scale-105"
           >

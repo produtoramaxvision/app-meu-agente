@@ -80,7 +80,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             isMenuOpen={sidebarOpen}
           />
           <main className="flex-1 overflow-y-auto">
-            <div className="px-4 sm:px-6 lg:px-8 max-w-[1920px] mx-auto">
+            <div className="px-4 sm:px-6 lg:px-8 max-w-[1920px] mx-auto h-full flex flex-col">
               {children}
             </div>
           </main>

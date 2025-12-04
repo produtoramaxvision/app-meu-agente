@@ -27,7 +27,7 @@ export function ChatHeader({
   isWebhookConfigured,
 }: ChatHeaderProps) {
   return (
-    <div className="flex items-center justify-between p-4 border-b border-border/50 bg-surface">
+    <div className="flex items-center justify-between px-4 py-2 border-b border-border/50 bg-bg">
       {/* Agent info */}
       <div className="flex items-center gap-3">
         <div className="relative">
