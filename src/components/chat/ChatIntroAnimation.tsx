@@ -73,7 +73,7 @@ export function ChatIntroAnimation({
   }, [onSelectSession]);
 
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center overflow-hidden bg-black">
+    <div className="fixed inset-0 flex flex-col items-center justify-center overflow-hidden bg-black pointer-events-none z-0">
       {/* Deep Space Background - All Black with subtle depth */}
       <div className="absolute inset-0 bg-gradient-to-b from-black via-[#050508] to-[#0a0a0f]" />
       
@@ -161,7 +161,7 @@ export function ChatIntroAnimation({
 
       {/* 3D Robot Scene - Full screen background */}
       <motion.div
-        className="absolute inset-0 flex items-center justify-center"
+        className="absolute top-16 left-0 right-0 bottom-0 flex items-center justify-center pointer-events-auto"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ 
           opacity: 1, 
@@ -182,7 +182,7 @@ export function ChatIntroAnimation({
       </motion.div>
 
       {/* Content overlay - Input box */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-8">
+      <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-8 pointer-events-auto">
         <AnimatePresence>
           {showInput && (
             <motion.div

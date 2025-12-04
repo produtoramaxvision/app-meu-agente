@@ -24,7 +24,11 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(({ classNa
 Textarea.displayName = "Textarea";
 
 // Tooltip Components
-const TooltipProvider = TooltipPrimitive.Provider;
+const TooltipProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <TooltipPrimitive.Provider delayDuration={200} skipDelayDuration={100}>
+    {children}
+  </TooltipPrimitive.Provider>
+);
 const Tooltip = TooltipPrimitive.Root;
 const TooltipTrigger = TooltipPrimitive.Trigger;
 const TooltipContent = React.forwardRef<
@@ -382,10 +386,9 @@ const PromptInputAction: React.FC<PromptInputActionProps> = ({
   side = "top",
   ...props
 }) => {
-  const { disabled } = usePromptInput();
   return (
     <Tooltip {...props}>
-      <TooltipTrigger asChild disabled={disabled}>
+      <TooltipTrigger asChild>
         {children}
       </TooltipTrigger>
       <TooltipContent side={side} className={className}>
@@ -722,6 +725,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                 disabled={isRecording || disabled}
               >
                 <motion.div
+                  className="pointer-events-none"
                   whileHover={{ scale: 1.1, rotate: 8 }}
                   whileTap={{ scale: 0.9 }}
                   transition={{ type: "spring", stiffness: 260, damping: 20 }}
@@ -753,10 +757,9 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                     : "bg-transparent border-transparent text-[#9CA3AF] hover:text-[#D1D5DB]"
                 )}
               >
-                <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                <div className="w-5 h-5 flex items-center justify-center flex-shrink-0 pointer-events-none">
                   <motion.div
                     animate={{ rotate: showSearch ? 360 : 0, scale: showSearch ? 1.1 : 1 }}
-                    whileHover={{ rotate: showSearch ? 360 : 15, scale: 1.1, transition: { type: "spring", stiffness: 300, damping: 10 } }}
                     transition={{ type: "spring", stiffness: 260, damping: 25 }}
                   >
                     <Globe className={cn("w-4 h-4", showSearch ? "text-[#1EAEDB]" : "text-inherit")} />
@@ -790,10 +793,9 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                     : "bg-transparent border-transparent text-[#9CA3AF] hover:text-[#D1D5DB]"
                 )}
               >
-                <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                <div className="w-5 h-5 flex items-center justify-center flex-shrink-0 pointer-events-none">
                   <motion.div
                     animate={{ rotate: showThink ? 360 : 0, scale: showThink ? 1.1 : 1 }}
-                    whileHover={{ rotate: showThink ? 360 : 15, scale: 1.1, transition: { type: "spring", stiffness: 300, damping: 10 } }}
                     transition={{ type: "spring", stiffness: 260, damping: 25 }}
                   >
                     <BrainCog className={cn("w-4 h-4", showThink ? "text-[#8B5CF6]" : "text-inherit")} />
@@ -827,10 +829,9 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                     : "bg-transparent border-transparent text-[#9CA3AF] hover:text-[#D1D5DB]"
                 )}
               >
-                <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                <div className="w-5 h-5 flex items-center justify-center flex-shrink-0 pointer-events-none">
                   <motion.div
                     animate={{ rotate: showCanvas ? 360 : 0, scale: showCanvas ? 1.1 : 1 }}
-                    whileHover={{ rotate: showCanvas ? 360 : 15, scale: 1.1, transition: { type: "spring", stiffness: 300, damping: 10 } }}
                     transition={{ type: "spring", stiffness: 260, damping: 25 }}
                   >
                     <FolderCode className={cn("w-4 h-4", showCanvas ? "text-[#F97316]" : "text-inherit")} />
@@ -865,10 +866,9 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                         : "bg-transparent border-transparent text-[#9CA3AF] hover:text-[#D1D5DB]"
                     )}
                   >
-                    <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                    <div className="w-5 h-5 flex items-center justify-center flex-shrink-0 pointer-events-none">
                       <motion.div
                         animate={{ rotate: showHistory ? 360 : 0, scale: showHistory ? 1.1 : 1 }}
-                        whileHover={{ rotate: showHistory ? 360 : 15, scale: 1.1, transition: { type: "spring", stiffness: 300, damping: 10 } }}
                         transition={{ type: "spring", stiffness: 260, damping: 25 }}
                       >
                         <History className={cn("w-4 h-4", showHistory ? "text-[#22D3EE]" : "text-inherit")} />
