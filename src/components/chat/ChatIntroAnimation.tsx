@@ -160,8 +160,10 @@ export function ChatIntroAnimation({
       </div>
 
       {/* 3D Robot Scene - Full screen background */}
+      {/* NOTA: Container com pointer-events-none, mas o Spline interno tem pointer-events-auto para interação */}
+      {/* O container é deslocado para a direita (md:left-64) para não sobrepor o sidebar no desktop */}
       <motion.div
-        className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center pointer-events-auto"
+        className="absolute top-0 left-0 md:left-64 right-0 bottom-0 flex items-center justify-center pointer-events-none"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ 
           opacity: 1, 
@@ -173,7 +175,8 @@ export function ChatIntroAnimation({
           ease: [0.4, 0, 0.2, 1],
         }}
       >
-        <div className="relative w-full h-full">
+        {/* Container interno com pointer-events-auto para permitir interação com o robô 3D */}
+        <div className="relative w-full h-full pointer-events-auto">
           <SplineScene 
             scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
             className="w-full h-full"
@@ -181,8 +184,8 @@ export function ChatIntroAnimation({
         </div>
       </motion.div>
 
-      {/* Content overlay - Input box */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-8 pointer-events-auto">
+      {/* Content overlay - Input box - Alinhado com o robô (após o sidebar no desktop) */}
+      <div className="absolute bottom-0 left-0 md:left-64 right-0 z-20 px-4 pb-8 pointer-events-auto">
         <AnimatePresence>
           {showInput && (
             <motion.div
