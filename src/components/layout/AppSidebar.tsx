@@ -163,16 +163,15 @@ export function AppSidebar({ collapsed, onToggle, showCloseButton = false }: App
             to={item.href}
             onClick={(e) => e.stopPropagation()}
             className={cn(
-              'group relative overflow-hidden flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+              'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
               isActive
                 ? 'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
-                : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:scale-105 hover:shadow-lg',
+                : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
               collapsed && 'justify-center'
             )}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
-            <div className="relative">
-              <item.icon className={cn('h-5 w-5 flex-shrink-0 relative z-10 transition-transform group-hover:scale-110', isActive && 'text-white')} />
+            <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
+              <item.icon className={cn('h-5 w-5 flex-shrink-0', isActive && 'text-white')} />
               {isNotifications && unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 flex h-2 w-2 z-20">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -180,7 +179,7 @@ export function AppSidebar({ collapsed, onToggle, showCloseButton = false }: App
                 </span>
               )}
             </div>
-            {!collapsed && <span className="relative z-10">{item.name}</span>}
+            {!collapsed && <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">{item.name}</span>}
           </NavLink>
           );
         })}

@@ -55,10 +55,18 @@
     --shadow-glow: 0 0 30px hsl(0deg 0% 0% / 15%);
 
     /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 0%;
+    --sidebar-primary: 0 0% 10%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 0 0% 88%;
+    --sidebar-ring: 210 80% 50%;
+    /* Sidebar legacy aliases */
     --sidebar-bg: 0 0% 100%;
     --sidebar-text: 0 0% 0%;
     --sidebar-text-muted: 0 0% 40%;
-    --sidebar-border: 0 0% 88%;
     --sidebar-hover: 0 0% 95%;
     --sidebar-active: 0 0% 10%;
 
@@ -140,10 +148,18 @@
     --shadow-glow: 0 0 40px hsl(0deg 0% 100% / 10%);
 
     /* Sidebar */
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 0 0% 85%;
+    --sidebar-primary-foreground: 0 0% 6%;
+    --sidebar-accent: 0 0% 14%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 16%;
+    --sidebar-ring: 269 91% 65%;
+    /* Sidebar legacy aliases */
     --sidebar-bg: 0 0% 6%;
     --sidebar-text: 0 0% 98%;
     --sidebar-text-muted: 0 0% 60%;
-    --sidebar-border: 0 0% 16%;
     --sidebar-hover: 0 0% 12%;
     --sidebar-active: 0 0% 85%;
 
