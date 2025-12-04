@@ -9,6 +9,7 @@ import { Phone, Lock, User, Mail, ArrowLeft } from 'lucide-react';
 import { HelpAndSupport } from '@/components/HelpAndSupport';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@/contexts/ThemeContext';
+import { PasswordStrengthMeter } from '@/components/ui/password-strength-meter';
 
 type AuthStep = 'phone' | 'password' | 'signup';
 
@@ -356,7 +357,7 @@ export default function Login() {
                 </Button>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
+                  <div>
                     <Label htmlFor="phone-display-signup">Telefone</Label>
                     <Input
                       id="phone-display-signup"
@@ -364,39 +365,6 @@ export default function Login() {
                       disabled
                       className="bg-muted"
                     />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="name">Nome Completo *</Label>
-                    <div className="relative mt-1">
-                      <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" />
-                      <Input
-                        id="name"
-                        type="text"
-                        placeholder="João Silva"
-                        value={signupData.name}
-                        onChange={(e) => setSignupData({ ...signupData, name: e.target.value })}
-                        className="pl-10"
-                        required
-                        autoFocus
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="email">E-mail *</Label>
-                    <div className="relative mt-1">
-                      <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="joao@example.com"
-                        value={signupData.email}
-                        onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
-                        className="pl-10"
-                        required
-                      />
-                    </div>
                   </div>
 
                   <div>
@@ -417,20 +385,56 @@ export default function Login() {
                   </div>
 
                   <div>
+                    <Label htmlFor="name">Nome Completo *</Label>
+                    <div className="relative mt-1">
+                      <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" />
+                      <Input
+                        id="name"
+                        type="text"
+                        placeholder="João Silva"
+                        value={signupData.name}
+                        onChange={(e) => setSignupData({ ...signupData, name: e.target.value })}
+                        className="pl-10"
+                        required
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="signup-email">E-mail *</Label>
+                    <div className="relative mt-1">
+                      <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" />
+                      <Input
+                        id="signup-email"
+                        name="signup-email"
+                        type="email"
+                        placeholder="joao@example.com"
+                        value={signupData.email}
+                        onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
+                        className="pl-10"
+                        autoComplete="off"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
                     <Label htmlFor="password-signup">Senha *</Label>
                     <div className="relative mt-1">
                       <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" />
                       <Input
                         id="password-signup"
+                        name="password-signup"
                         type="password"
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="pl-10"
+                        autoComplete="new-password"
                         required
                       />
                     </div>
-                    <p className="mt-1 text-xs text-text-muted">Mínimo 8 caracteres</p>
                   </div>
 
                   <div>
@@ -439,14 +443,21 @@ export default function Login() {
                       <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" />
                       <Input
                         id="confirmPassword"
+                        name="confirmPassword"
                         type="password"
                         placeholder="••••••••"
                         value={signupData.confirmPassword}
                         onChange={(e) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
                         className="pl-10"
+                        autoComplete="new-password"
                         required
                       />
                     </div>
+                  </div>
+
+                  {/* Componente visual de força da senha - ocupa 2 colunas */}
+                  <div className="md:col-span-2">
+                    <PasswordStrengthMeter password={password} />
                   </div>
                 </div>
 

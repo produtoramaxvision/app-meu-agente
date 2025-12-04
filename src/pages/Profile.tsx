@@ -49,6 +49,16 @@ const profileSchema = z.object({
   cpf: z.string().min(14, 'CPF é obrigatório e deve ter 14 caracteres.'),
 });
 
+// Função para formatar CPF com máscara
+const formatCpf = (value: string): string => {
+  const digits = value.replace(/\D/g, '');
+  return digits
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+    .replace(/(-\d{2})\d+?$/, '$1');
+};
+
 export default function Profile() {
   const { cliente, updateAvatar, updateCliente } = useAuth();
   const { planInfo, getPlanColor, getPlanDisplayName } = usePlanInfo();
@@ -152,15 +162,30 @@ export default function Profile() {
     const emailChanged = newEmailTrimmed !== currentEmailTrimmed;
 
     setIsSubmitting(true);
+    
+    let emailRequiresConfirmation = false;
+    let newEmailForConfirmation = '';
+
     try {
       // 1) Se o email mudou e não está vazio, atualizar primeiro no Supabase Auth
       if (emailChanged && newEmailTrimmed) {
-        const { error: authError } = await supabase.auth.updateUser({
+        console.log('[Profile] Atualizando email no Supabase Auth:', {
+          oldEmail: currentEmailTrimmed,
+          newEmail: newEmailTrimmed,
+        });
+
+        const { data: authData, error: authError } = await supabase.auth.updateUser({
           email: newEmailTrimmed,
         });
 
+        console.log('[Profile] Resposta do updateUser:', {
+          user: authData?.user,
+          userEmail: authData?.user?.email,
+          error: authError,
+        });
+
         if (authError) {
-          console.error('Error updating auth email:', authError);
+          console.error('[Profile] Error updating auth email:', authError);
 
           let message = 'Erro ao atualizar email no sistema de autenticação.';
           const lower = authError.message.toLowerCase();
@@ -184,33 +209,65 @@ export default function Profile() {
           setIsSubmitting(false);
           return;
         }
+
+        // Se não houve erro, o Supabase enviou email de confirmação
+        // O email SEMPRE requer confirmação em projetos hospedados
+        console.log('[Profile] Email de confirmação enviado para:', newEmailTrimmed);
+        emailRequiresConfirmation = true;
+        newEmailForConfirmation = newEmailTrimmed;
       }
 
-      // 2) Atualizar sempre os dados na tabela clientes (fonte de verdade do perfil)
-      const { error } = await supabase
+      // 2) Atualizar dados na tabela clientes
+      // IMPORTANTE: Se email requer confirmação, manter o email antigo até a confirmação
+      const updatePayload: {
+        name: string;
+        email?: string | null;
+        cpf?: string | null;
+      } = {
+        name: values.name,
+        cpf: values.cpf || null,
+      };
+
+      // Só atualizar email se NÃO requer confirmação
+      if (!emailRequiresConfirmation) {
+        updatePayload.email = newEmailTrimmed || null;
+      }
+
+      const { error, data: updateData } = await supabase
         .from('clientes')
-        .update({
-          name: values.name,
-          email: newEmailTrimmed || null,
-          cpf: values.cpf || null,
-        })
-        .eq('phone', cliente.phone);
+        .update(updatePayload)
+        .eq('auth_user_id', cliente.auth_user_id)
+        .select();
 
       if (error) {
         console.error('Error updating profile:', error);
-        toast.error("Ocorreu um erro ao salvar suas informações. Tente novamente.");
+        toast.error(`Erro ao salvar: ${error.message}`);
         return;
       }
 
-      // 3) Atualizar contexto com os novos dados
+      if (!updateData || updateData.length === 0) {
+        console.error('No rows updated - RLS policy may have blocked the update');
+        toast.error("Não foi possível atualizar o perfil. Verifique suas permissões.");
+        return;
+      }
+
+      // 3) Atualizar contexto com os novos dados (mantendo email antigo se requer confirmação)
       updateCliente({
         ...cliente,
         name: values.name,
-        email: newEmailTrimmed || undefined,
+        email: emailRequiresConfirmation ? cliente.email : (newEmailTrimmed || undefined),
         cpf: values.cpf || undefined,
       });
 
-      toast.success("Suas informações foram salvas com sucesso!");
+      // 4) Mostrar toast unificado com todas as informações
+      if (emailRequiresConfirmation) {
+        toast.success(
+          `Suas informações foram salvas! Um email de confirmação foi enviado para ${newEmailForConfirmation}. Clique no link para confirmar a alteração.`,
+          { duration: 6000 }
+        );
+      } else {
+        toast.success("Suas informações foram salvas com sucesso!");
+      }
 
       await refreshUserData();
     } catch (error) {
@@ -335,7 +392,13 @@ export default function Profile() {
                       <FormItem>
                         <FormLabel>CPF</FormLabel>
                         <FormControl>
-                          <Input placeholder="000.000.000-00" {...field} />
+                          <Input 
+                            placeholder="000.000.000-00" 
+                            {...field}
+                            value={formatCpf(field.value || '')}
+                            onChange={(e) => field.onChange(formatCpf(e.target.value))}
+                            maxLength={14}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

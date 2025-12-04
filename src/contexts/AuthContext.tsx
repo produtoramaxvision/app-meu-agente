@@ -456,28 +456,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const errorCode = error.status || error.message;
         const errorMsgLower = error.message.toLowerCase();
         
-        // Erros relacionados a email duplicado
+        // Log para debugging (sempre, para facilitar diagnóstico)
+        console.error('Signup error:', {
+          message: error.message,
+          status: error.status,
+          code: errorCode,
+          fullError: error,
+        });
+        
+        // Erros relacionados a senha (verificar PRIMEIRO pois também retornam 422)
         if (
+          errorMsgLower.includes('password should contain') ||
+          errorMsgLower.includes('password should be at least') ||
+          errorMsgLower.includes('password is too short') ||
+          errorMsgLower.includes('password_length') ||
+          errorMsgLower.includes('weak password') ||
+          errorMsgLower.includes('password is too weak') ||
+          error.name === 'AuthWeakPasswordError'
+        ) {
+          errorMessage = 'Senha fraca. Use uma senha com pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas, números e símbolos (ex: @, #, $).';
+        }
+        // Erros relacionados a email duplicado
+        else if (
           errorMsgLower.includes('user already registered') ||
           errorMsgLower.includes('email already registered') ||
-          errorMsgLower.includes('already exists') ||
-          errorCode === 422
+          errorMsgLower.includes('already exists')
         ) {
           errorMessage = 'Este email já está cadastrado. Use outro email ou faça login.';
         }
-        // Erros relacionados a senha
-        else if (
-          errorMsgLower.includes('password should be at least') ||
-          errorMsgLower.includes('password is too short') ||
-          errorMsgLower.includes('password_length')
-        ) {
-          errorMessage = 'Senha deve ter no mínimo 8 caracteres.';
-        }
-        else if (
-          errorMsgLower.includes('weak password') ||
-          errorMsgLower.includes('password is too weak')
-        ) {
-          errorMessage = 'Senha muito fraca. Use uma senha mais forte com letras, números e caracteres especiais.';
+        // Erro 422 pode ter várias causas - ser mais específico
+        else if (errorCode === 422) {
+          // Verificar se é problema de constraint de email ou telefone
+          if (errorMsgLower.includes('email')) {
+            errorMessage = 'Este email já está em uso. Use outro email ou faça login.';
+          } else if (errorMsgLower.includes('phone')) {
+            errorMessage = 'Este telefone já está cadastrado. Use outro telefone ou faça login.';
+          } else if (errorMsgLower.includes('database') || errorMsgLower.includes('constraint')) {
+            errorMessage = 'Erro ao processar cadastro. Este email ou telefone pode já estar em uso.';
+          } else {
+            errorMessage = 'Não foi possível criar a conta. Verifique se os dados estão corretos e tente novamente.';
+          }
         }
         // Erros relacionados a email inválido
         else if (

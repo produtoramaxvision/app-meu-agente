@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Phone, User, Mail, Lock } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { HelpAndSupport } from '@/components/HelpAndSupport';
+import { PasswordStrengthMeter } from '@/components/ui/password-strength-meter';
 
 export default function Signup() {
   const { cliente, signup } = useAuth();
@@ -24,6 +25,33 @@ export default function Signup() {
   if (cliente) {
     return <Navigate to="/dashboard" replace />;
   }
+
+  // Função para validar força da senha
+  const validatePasswordStrength = (password: string): { valid: boolean; message: string } => {
+    if (password.length < 8) {
+      return { valid: false, message: 'Senha deve ter no mínimo 8 caracteres' };
+    }
+    
+    const hasLowercase = /[a-z]/.test(password);
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+    
+    const missing = [];
+    if (!hasLowercase) missing.push('letra minúscula');
+    if (!hasUppercase) missing.push('letra maiúscula');
+    if (!hasNumber) missing.push('número');
+    if (!hasSymbol) missing.push('símbolo (!@#$%...)');
+    
+    if (missing.length > 0) {
+      return { 
+        valid: false, 
+        message: `Senha deve conter: ${missing.join(', ')}` 
+      };
+    }
+    
+    return { valid: true, message: '' };
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,8 +81,10 @@ export default function Signup() {
       return;
     }
 
-    if (formData.password.length < 8) {
-      toast.error('Senha deve ter no mínimo 8 caracteres');
+    // Validação de força da senha
+    const passwordValidation = validatePasswordStrength(formData.password);
+    if (!passwordValidation.valid) {
+      toast.error(passwordValidation.message);
       return;
     }
 
@@ -186,7 +216,7 @@ export default function Signup() {
               </div>
             </div>
 
-            <div>
+            <div className="md:col-span-2">
               <Label htmlFor="password">Senha *</Label>
               <div className="relative mt-1">
                 <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" />
@@ -200,7 +230,10 @@ export default function Signup() {
                   required
                 />
               </div>
-              <p className="mt-1 text-xs text-text-muted">Mínimo 8 caracteres</p>
+              {/* Componente visual de força da senha */}
+              <div className="mt-3">
+                <PasswordStrengthMeter password={formData.password} />
+              </div>
             </div>
 
             <div>
