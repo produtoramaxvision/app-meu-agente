@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useSearch } from '@/contexts/SearchContext';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { NotificationBell } from '../NotificationBell';
 import {
@@ -156,6 +156,9 @@ export function AppHeader({ onMenuClick, isMenuOpen = false }: AppHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Check if we're on the Chat page - use minimal header style
+  const isChatPage = useMemo(() => location.pathname === '/chat', [location.pathname]);
+
   useEffect(() => {
     // Sincroniza o input local com o estado global se ele mudar em outro lugar
     if (searchQuery !== localSearch) {
@@ -278,7 +281,13 @@ export function AppHeader({ onMenuClick, isMenuOpen = false }: AppHeaderProps) {
 
   return (
     <>
-      <header className="flex h-16 items-center justify-between border-b border-border bg-bg px-4 sm:px-6 lg:px-8 gap-4">
+      <header className={cn(
+        "flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8 gap-4 relative z-50",
+        // Chat page: transparent background on desktop, normal on mobile
+        isChatPage 
+          ? "md:bg-transparent md:border-0 border-b border-border bg-bg" 
+          : "border-b border-border bg-bg"
+      )}>
         
         {/* Mobile Menu Button */}
         <button
@@ -289,21 +298,24 @@ export function AppHeader({ onMenuClick, isMenuOpen = false }: AppHeaderProps) {
           <div className="relative w-5 h-5">
             <Menu 
               className={cn(
-                "h-5 w-5 absolute inset-0 transition-all duration-300",
+                "h-5 w-5 absolute inset-0 transition-all duration-300 text-text",
                 isMenuOpen && "opacity-0 rotate-90 scale-0"
               )} 
             />
             <X 
               className={cn(
-                "h-5 w-5 absolute inset-0 transition-all duration-300",
+                "h-5 w-5 absolute inset-0 transition-all duration-300 text-text",
                 !isMenuOpen && "opacity-0 rotate-90 scale-0"
               )} 
             />
           </div>
         </button>
         
-        {/* Search */}
-        <div className="flex-1 mr-2 sm:mr-6">
+        {/* Search - Hidden on desktop for Chat page */}
+        <div className={cn(
+          "flex-1 mr-2 sm:mr-6",
+          isChatPage && "md:hidden"
+        )}>
           <form onSubmit={handleSearchSubmit}>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
@@ -365,20 +377,23 @@ export function AppHeader({ onMenuClick, isMenuOpen = false }: AppHeaderProps) {
           </form>
         </div>
 
-        {/* Right Side */}
-        <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+        {/* Spacer to push icons to the right on Chat page */}
+        {isChatPage && <div className="hidden md:flex flex-1" />}
+
+        {/* Right Side - Icons and Avatar */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
           {/* Botão para abrir a Command Palette (além do atalho Ctrl/Cmd+K) */}
           <Button
             onClick={() => setIsCommandPaletteOpen(true)}
             variant="ghost"
             size="icon"
             aria-label="Abrir paleta de comandos (Ctrl+K)"
-            className="hidden sm:inline-flex h-9 w-9 group relative overflow-hidden rounded-lg p-2 transition-all duration-200 hover:scale-105"
+            className="hidden sm:inline-flex h-9 w-9 group relative overflow-hidden rounded-lg p-2 transition-all duration-200 hover:scale-105 hover:bg-surface/50"
           >
             <span className="relative z-10">
-              <CommandIcon className="h-4 w-4 text-text-muted" />
+              <CommandIcon className="h-5 w-5 text-text" />
             </span>
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
           </Button>
 
           <ThemeSwitch />
@@ -386,12 +401,12 @@ export function AppHeader({ onMenuClick, isMenuOpen = false }: AppHeaderProps) {
           
           {cliente && (
             <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:block">
+              <div className={cn("text-right hidden sm:block", isChatPage && "md:hidden")}>
                 <p className="text-sm font-medium">{cliente.name}</p>
                 <p className="text-xs text-text-muted">{cliente.phone}</p>
               </div>
               <Link to="/perfil" className="transition-transform duration-300 ease-in-out hover:scale-110 block">
-                <Avatar>
+                <Avatar className="ring-2 ring-border/30 hover:ring-border/60 transition-all">
                   {cliente.avatar_url && (
                     <AvatarImage 
                       src={cliente.avatar_url}
@@ -399,7 +414,7 @@ export function AppHeader({ onMenuClick, isMenuOpen = false }: AppHeaderProps) {
                       className="object-cover"
                     />
                   )}
-                  <AvatarFallback className="bg-gradient-to-br from-brand-900 to-brand-700 text-white">
+                  <AvatarFallback className="bg-gradient-to-br from-surface-hover to-surface text-text font-semibold">
                     {getInitials(cliente.name)}
                   </AvatarFallback>
                 </Avatar>

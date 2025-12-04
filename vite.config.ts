@@ -10,24 +10,35 @@ export default defineConfig(({ mode }) => {
   const isProduction = mode === "production";
   
   // Configuração dinâmica baseada no ambiente
+  // Headers base para CORS (sempre aplicados)
+  const baseHeaders = {
+    'Cross-Origin-Embedder-Policy': 'unsafe-none',
+    'Cross-Origin-Opener-Policy': 'unsafe-none',
+    'Cross-Origin-Resource-Policy': 'cross-origin',
+  };
+
+  // Headers de segurança adicionais apenas para produção
+  // NOTA: X-Frame-Options: DENY bloqueia iframes, incluindo o Simple Browser do VS Code
+  const securityHeaders = isProduction ? {
+    'X-Frame-Options': 'DENY',
+    'X-Content-Type-Options': 'nosniff',
+    'X-XSS-Protection': '0',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload'
+  } : {
+    // Em desenvolvimento, permitir iframe (necessário para VS Code Simple Browser)
+    'X-Content-Type-Options': 'nosniff',
+  };
+
   const serverConfig = {
     host: "0.0.0.0",
     port: 8080,
     strictPort: true,
     cors: true,
     headers: {
-      // Headers CORS existentes (mantidos)
-      'Cross-Origin-Embedder-Policy': 'unsafe-none',
-      'Cross-Origin-Opener-Policy': 'unsafe-none',
-      'Cross-Origin-Resource-Policy': 'cross-origin',
-      
-      // Headers de Segurança HTTP (adicionados)
-      'X-Frame-Options': 'DENY',
-      'X-Content-Type-Options': 'nosniff',
-      'X-XSS-Protection': '0',
-      'Referrer-Policy': 'strict-origin-when-cross-origin',
-      'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
-      'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload'
+      ...baseHeaders,
+      ...securityHeaders,
     }
   };
 
