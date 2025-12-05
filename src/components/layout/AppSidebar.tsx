@@ -213,20 +213,21 @@ export function AppSidebar({ collapsed, onToggle, showCloseButton = false }: App
             }}
             disabled={isLoggingOut}
             className={cn(
-              "group relative overflow-hidden flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-              'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:scale-105 hover:shadow-lg',
-              'disabled:opacity-50 disabled:pointer-events-none disabled:hover:scale-100',
+              "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+              'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
+              'disabled:opacity-50 disabled:pointer-events-none',
               collapsed && 'justify-center'
             )}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
-            {isLoggingOut ? (
-              <Loader2 className="h-5 w-5 flex-shrink-0 relative z-10 animate-spin" />
-            ) : (
-              <LogOut className="h-5 w-5 flex-shrink-0 relative z-10 transition-transform group-hover:scale-110" />
-            )}
+            <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
+              {isLoggingOut ? (
+                <Loader2 className="h-5 w-5 flex-shrink-0 animate-spin" />
+              ) : (
+                <LogOut className="h-5 w-5 flex-shrink-0" />
+              )}
+            </div>
             {!collapsed && (
-              <span className="relative z-10">
+              <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">
                 {isLoggingOut ? 'Saindo...' : 'Sair'}
               </span>
             )}

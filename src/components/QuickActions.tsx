@@ -122,18 +122,17 @@ export function QuickActions({ collapsed = false }: QuickActionsProps) {
               mainAction.onClick();
             }}
             className={cn(
-              'group relative overflow-hidden flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
-              'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:scale-105 hover:shadow-lg',
+              'group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+              'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
               collapsed && 'justify-center'
             )}
             title={collapsed ? mainAction.label : undefined}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-            <mainAction.icon className={cn(
-              "h-5 w-5 flex-shrink-0 relative z-10 transition-transform group-hover:scale-110"
-            )} />
+            <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
+              <mainAction.icon className="h-5 w-5 flex-shrink-0" />
+            </div>
             {!collapsed && (
-              <span className="relative z-10">
+              <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">
                 {mainAction.label}
               </span>
             )}
@@ -153,11 +152,12 @@ export function QuickActions({ collapsed = false }: QuickActionsProps) {
               <button
                 key={action.label}
                 onClick={action.onClick}
-                className="group relative overflow-hidden flex w-full items-center justify-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:scale-105 hover:shadow-lg"
+                className="group relative flex w-full items-center justify-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
-                <action.icon className="h-5 w-5 flex-shrink-0 relative z-10 transition-transform group-hover:scale-110" />
-                <span className="relative z-10">{action.label}</span>
+                <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
+                  <action.icon className="h-5 w-5 flex-shrink-0" />
+                </div>
+                <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">{action.label}</span>
               </button>
             ))}
           </div>
