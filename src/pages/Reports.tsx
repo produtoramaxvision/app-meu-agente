@@ -660,7 +660,7 @@ export default function Reports() {
           </div>
           
           {/* Botão de exportação unificado */}
-          <div className="animate-fade-in flex justify-center md:justify-end md:pr-6 lg:pr-10 xl:pr-12" style={{ animationDelay: '100ms' }}>
+          <div className="animate-fade-in flex justify-center md:justify-end md:pr-8 lg:pr-14 xl:pr-16" style={{ animationDelay: '100ms' }}>
             <div className="relative w-full sm:w-auto">
               <ProtectedExportButton
                 onExportPDF={handleExportPDF}
