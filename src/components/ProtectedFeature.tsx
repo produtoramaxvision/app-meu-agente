@@ -54,7 +54,7 @@ export function ProtectedFeature({
           </div>
           <CardTitle className="text-lg flex items-center justify-center gap-2">
             <Crown className="h-5 w-5 text-amber-500" />
-            Recurso Premium
+            Recurso Business/Premium
           </CardTitle>
           <CardDescription className="text-sm">
             {getUpgradeMessage(featureName)}
@@ -152,14 +152,14 @@ export function ProtectedExportButton({
     );
   }
 
-  // Botão bloqueado para usuários sem assinatura ativa
+  // Botão bloqueado para usuários sem plano Business ou Premium
   return (
     <div className="relative group inline-block w-full sm:w-auto">
       <Button 
         onClick={() => {
-          // Mostrar toast elaborado de upgrade
-          toast.error("🔒 Recurso Premium Bloqueado", {
-            description: "Esta funcionalidade está disponível apenas para usuários com assinatura ativa. Faça upgrade para desbloquear todos os recursos premium!",
+          // Mostrar toast elaborado de upgrade - CORRIGIDO para mencionar apenas Business/Premium
+          toast.error("🔒 Recurso Business/Premium", {
+            description: "Esta funcionalidade está disponível apenas nos planos Business e Premium. Faça upgrade para desbloquear este recurso!",
             duration: 5000,
             action: {
               label: "Ver Planos",
@@ -189,10 +189,10 @@ export function ProtectedExportButton({
         <div className="absolute inset-0 bg-gradient-to-br from-amber-200/20 via-transparent to-orange-200/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-lg" />
       </Button>
 
-      {/* Badge de Premium sobreposto ao botão (centralizado horizontalmente) */}
-      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white text-[11px] px-3 py-1.5 rounded-full font-bold animate-premium-pulse z-20 transform-gpu shadow-lg hover:shadow-xl transition-all duration-500 border border-amber-400/30 flex items-center justify-center min-w-[4.5rem] h-6 overflow-hidden">
+      {/* Badge de Business/Premium sobreposto ao botão (centralizado horizontalmente) */}
+      <div className="absolute -top-3 inset-x-0 mx-auto w-max bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white text-[11px] px-3 py-1.5 rounded-full font-bold animate-premium-pulse z-20 transform-gpu shadow-lg hover:shadow-xl transition-all duration-500 border border-amber-400/30 flex items-center justify-center min-w-[4.5rem] h-6 overflow-hidden pointer-events-none">
         <span className="relative z-10 text-center leading-none text-xs font-bold tracking-wide">
-          PREMIUM
+          BUSINESS+
         </span>
         {/* Efeito de brilho no badge */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full opacity-0 group-hover:opacity-100 transition-all duration-1500 rounded-full" />
@@ -204,7 +204,7 @@ export function ProtectedExportButton({
           <div className="flex items-center gap-2 text-center">
             <Crown className="h-4 w-4 text-amber-400 animate-pulse" />
             <span className="font-medium leading-snug">
-              Faça upgrade para desbloquear este recurso premium.
+              Disponível nos planos Business e Premium.
             </span>
           </div>
           <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-900" />

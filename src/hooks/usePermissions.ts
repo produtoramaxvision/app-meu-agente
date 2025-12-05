@@ -8,38 +8,71 @@ export interface Permission {
   canAccessAIFeatures: boolean; // Search, Think, Canvas, History - Business/Premium only
 }
 
+/**
+ * Hook de permissões corrigido e consistente com os planos do PlansSection.tsx
+ * 
+ * REGRAS DE ACESSO POR PLANO:
+ * ===========================
+ * 
+ * FREE:
+ *   - Acesso básico ao app
+ *   - NÃO tem: Exportação, Suporte, WhatsApp, IA Avançada, Recursos Avançados
+ * 
+ * BASIC:
+ *   - Acesso ao app + recursos básicos
+ *   - NÃO tem: Exportação, Suporte, WhatsApp, IA Avançada (hasSupport: false, hasWhatsApp: false)
+ * 
+ * BUSINESS e PREMIUM:
+ *   - TODOS os recursos: Exportação, Suporte, WhatsApp, IA Avançada, Recursos Avançados
+ *   - (hasSupport: true, hasWhatsApp: true, hasAdvancedFeatures: true)
+ * 
+ * IMPORTANTE: Exportação, Suporte e Recursos Avançados estão disponíveis APENAS
+ * nos planos BUSINESS e PREMIUM, NÃO no plano BASIC!
+ */
 export function usePermissions() {
   const { cliente } = useAuth();
 
-  // CORREÇÃO CRÍTICA: Validação baseada nas políticas RLS do Supabase
-  // Usar a mesma lógica das funções SQL para consistência
-  
   // Verificar se o usuário tem assinatura ativa
   const hasActiveSubscription = cliente?.subscription_active === true;
   
   // Verificar se é um plano pago (basic, business, premium)
   const isPaidPlan = hasActiveSubscription && cliente?.plan_id && ['basic', 'business', 'premium'].includes(cliente.plan_id);
   
-  // Verificar se é plano business ou premium
+  // Verificar se é plano business ou premium - ESTES SÃO OS ÚNICOS COM ACESSO COMPLETO
   const isBusinessOrPremium = hasActiveSubscription && cliente?.plan_id && ['business', 'premium'].includes(cliente.plan_id);
   
   // Verificar se usuário está ativo
   const isUserActive = cliente?.is_active === true;
 
   const permissions: Permission = {
-    // CORREÇÃO: Exportação apenas para usuários com planos PAGOS e ativos
-    canExport: isUserActive && (isPaidPlan || hasActiveSubscription),
+    /**
+     * CORREÇÃO: Exportação APENAS para Business e Premium
+     * O plano Basic NÃO tem acesso à exportação (conforme PlansSection.tsx)
+     */
+    canExport: isUserActive && isBusinessOrPremium,
     
-    // WhatsApp apenas para business e premium (com subscription ativa e usuário ativo)
-    canAccessWhatsApp: isUserActive && hasActiveSubscription && (cliente?.plan_id === 'business' || cliente?.plan_id === 'premium'),
+    /**
+     * WhatsApp APENAS para Business e Premium
+     * Conforme PlansSection.tsx: Basic hasWhatsApp: false
+     */
+    canAccessWhatsApp: isUserActive && isBusinessOrPremium,
     
-    // Suporte para usuários com subscription ativa e usuário ativo
-    canAccessSupport: isUserActive && hasActiveSubscription,
+    /**
+     * CORREÇÃO: Suporte APENAS para Business e Premium
+     * Conforme PlansSection.tsx: Basic hasSupport: false
+     */
+    canAccessSupport: isUserActive && isBusinessOrPremium,
     
-    // Recursos avançados para usuários com subscription ativa e usuário ativo
-    canAccessAdvancedFeatures: isUserActive && hasActiveSubscription,
+    /**
+     * CORREÇÃO: Recursos avançados APENAS para Business e Premium
+     * Isso inclui: Relatórios avançados, Integrações Google, etc.
+     */
+    canAccessAdvancedFeatures: isUserActive && isBusinessOrPremium,
     
-    // Funcionalidades de IA avançadas (Search, Think, Canvas, History) - apenas Business/Premium
+    /**
+     * Funcionalidades de IA avançadas (Search, Think, Canvas, History)
+     * APENAS Business e Premium
+     */
     canAccessAIFeatures: isUserActive && isBusinessOrPremium,
   };
 
@@ -60,20 +93,15 @@ export function usePermissions() {
       return `Sua conta está inativa. Entre em contato com o suporte para reativar.`;
     }
     
-    if (!hasActiveSubscription) {
-      return `Esta funcionalidade (${feature}) está disponível apenas para usuários com planos pagos (Basic, Business ou Premium). Faça upgrade para acessar este recurso.`;
+    // TODAS as funcionalidades bloqueadas requerem Business ou Premium
+    // Não há mais menção ao plano Basic pois ele não dá acesso a essas features
+    if (!isBusinessOrPremium) {
+      return `Esta funcionalidade (${feature}) está disponível apenas nos planos Business e Premium. Faça upgrade para desbloquear este recurso.`;
     }
     
-    if (feature === 'WhatsApp' && !['business', 'premium'].includes(cliente?.plan_id || '')) {
-      return `A integração WhatsApp está disponível apenas nos planos Business e Premium. Faça upgrade para acessar este recurso.`;
-    }
-    
-    // Mensagem para funcionalidades de IA avançadas
-    if (['Search', 'Think', 'Canvas', 'History', 'AI Features'].includes(feature) && !isBusinessOrPremium) {
-      return `As funcionalidades avançadas de IA (${feature}) estão disponíveis apenas nos planos Business e Premium. Faça upgrade para acessar este recurso.`;
-    }
-    
-    return `Esta funcionalidade (${feature}) está disponível apenas para usuários com planos pagos (Basic, Business ou Premium). Faça upgrade para acessar este recurso.`;
+    // Se chegou aqui, o usuário tem Business ou Premium mas ainda assim não pode acessar
+    // (situação rara, mas pode acontecer por conta inativa)
+    return `Esta funcionalidade (${feature}) está disponível apenas nos planos Business e Premium. Faça upgrade para desbloquear este recurso.`;
   };
 
   const getPlanInfo = () => {

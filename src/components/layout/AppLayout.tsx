@@ -50,7 +50,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <NotificationProvider>
-      <div className="flex h-screen w-full bg-bg overflow-hidden">
+      <div className="flex h-screen w-full bg-bg overflow-x-visible">
         {/* Desktop Sidebar - Height to stop exactly at footer line */}
         <div className="hidden md:block h-[calc(100vh-2.6rem)]">
           <AppSidebar 
@@ -88,9 +88,12 @@ export function AppLayout({ children }: AppLayoutProps) {
             onMenuClick={handleSidebarToggle} 
             isMenuOpen={sidebarOpen}
           />
-          <main className="flex-1 overflow-y-auto">
-            <div className="px-4 sm:px-6 lg:px-8 max-w-[1920px] mx-auto h-full flex flex-col">
-              {children}
+          {/* Scrollbar grudada na borda da viewport; padding fica dentro do conteúdo */}
+          <main className="flex-1 overflow-y-auto overflow-x-hidden">
+            <div className="w-full">
+              <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col min-w-0">
+                {children}
+              </div>
             </div>
           </main>
           <AppFooter />

@@ -115,7 +115,16 @@ export function PlanInfoCard() {
           <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
             <p className="text-sm text-orange-800">
               <strong>Plano Gratuito:</strong> Você tem acesso completo ao app com todos os recursos básicos. 
-              Para recursos avançados como WhatsApp e suporte prioritário, considere fazer upgrade para um plano pago.
+              Para recursos avançados como WhatsApp, suporte prioritário e exportação de dados, faça upgrade para o plano Business ou Premium.
+            </p>
+          </div>
+        )}
+
+        {planInfo.name === 'basic' && (
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>Plano Básico:</strong> Você tem acesso aos agentes básicos e relatórios. 
+              Para recursos avançados como WhatsApp, suporte prioritário, exportação de dados e IA avançada, faça upgrade para o plano Business ou Premium.
             </p>
           </div>
         )}

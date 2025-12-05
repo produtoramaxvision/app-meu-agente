@@ -85,7 +85,7 @@ export const DespesasPorCategoriaChart = memo(function DespesasPorCategoriaChart
   }
 
   return (
-    <Card className="flex flex-col h-full group relative overflow-hidden">
+    <Card className="flex flex-col h-full group relative overflow-hidden min-w-0">
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none z-10" />
       
       {/* Header */}

@@ -405,6 +405,11 @@
     background: hsl(var(--color-brand-400));
   }
 
+  /* Scrollbar gutter stability - prevents layout shift */
+  .scrollbar-gutter-stable {
+    scrollbar-gutter: stable;
+  }
+
   /* Smooth scrollbar animations */
   .smooth-scrollbar {
     scroll-behavior: smooth;

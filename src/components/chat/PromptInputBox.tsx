@@ -554,7 +554,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
           <Crown className="h-4 w-4 text-amber-500" />
         </div>
         <div className="flex-1">
-          <p className="font-medium text-sm">Recurso Premium</p>
+          <p className="font-medium text-sm">Recurso Business/Premium</p>
           <p className="text-xs text-muted-foreground mt-1">
             {getUpgradeMessage(featureName)}
           </p>
@@ -851,7 +851,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
               <PromptInputAction
                 tooltip={
                   !canAccessAIFeatures
-                    ? "Recurso Premium - Pensamento Profundo"
+                    ? "Recurso Plano Business/Premium"
                     : "Pensamento profundo"
                 }
               >
@@ -914,7 +914,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
               <PromptInputAction
                 tooltip={
                   !canAccessAIFeatures
-                    ? "Recurso Premium - Canvas"
+                    ? "Recurso Plano Business/Premium"
                     : "Canvas"
                 }
               >
@@ -1046,7 +1046,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                 </TooltipTrigger>
                 <TooltipContent side="top">
                   {!canAccessAIFeatures
-                    ? "Recurso Premium - Histórico"
+                    ? "Recurso Plano Business/Premium"
                     : "Histórico de conversas"}
                 </TooltipContent>
               </Tooltip>
@@ -1062,7 +1062,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                 : hasContent
                 ? "Enviar mensagem"
                 : !canAccessAIFeatures
-                ? "Recurso Premium - Mensagem de Voz"
+                ? "Recurso Plano Business/Premium"
                 : "Mensagem de voz"
             }
           >

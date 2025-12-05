@@ -113,7 +113,7 @@ export default function Relatorios() {
   };
 
   return (
-    <div className="py-4 sm:py-6 lg:py-8 space-y-8">
+    <div className="py-4 sm:py-6 lg:py-8 space-y-8 min-w-0 overflow-hidden">
       <div className="animate-fade-in">
         <h1 className="text-4xl font-extrabold bg-gradient-to-br from-text via-brand-700 to-brand-500 bg-clip-text text-transparent drop-shadow-sm">
           Relatórios
@@ -237,26 +237,26 @@ export default function Relatorios() {
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="animate-fade-in" style={{ animationDelay: '500ms' }}>
+      <div className="grid gap-6 lg:grid-cols-2 min-w-0">
+        <Card className="animate-fade-in min-w-0 overflow-hidden" style={{ animationDelay: '500ms' }}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <PieChart className="h-5 w-5" />
               Distribuição por Categoria
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-w-0 overflow-hidden">
             {renderChart(categoryData, 'pie')}
           </CardContent>
         </Card>
-        <Card className="animate-fade-in" style={{ animationDelay: '600ms' }}>
+        <Card className="animate-fade-in min-w-0 overflow-hidden" style={{ animationDelay: '600ms' }}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart className="h-5 w-5" />
               Entradas vs. Saídas por Dia
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-w-0 overflow-hidden">
             {renderChart(dailyData, 'bar')}
           </CardContent>
         </Card>

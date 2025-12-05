@@ -651,8 +651,8 @@ export default function Reports() {
   }
 
   return (
-    <div className="py-4 sm:py-6 lg:py-8 space-y-8 overflow-x-hidden">
-      <div className="flex flex-col gap-4 px-2 md:px-0">
+    <div className="py-4 sm:py-6 lg:py-8 space-y-8 min-w-0 w-full">
+      <div className="flex flex-col gap-4 px-2 md:px-0 min-w-0">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="animate-fade-in">
             <h1 className="text-3xl sm:text-4xl font-extrabold bg-gradient-to-br from-text via-brand-700 to-brand-500 bg-clip-text text-transparent drop-shadow-sm">Relatórios</h1>
@@ -660,7 +660,7 @@ export default function Reports() {
           </div>
           
           {/* Botão de exportação unificado */}
-          <div className="animate-fade-in flex justify-center md:justify-end md:pr-4 lg:pr-6" style={{ animationDelay: '100ms' }}>
+          <div className="animate-fade-in flex justify-center md:justify-end md:pr-6 lg:pr-10 xl:pr-12" style={{ animationDelay: '100ms' }}>
             <div className="relative w-full sm:w-auto">
               <ProtectedExportButton
                 onExportPDF={handleExportPDF}
@@ -835,7 +835,7 @@ export default function Reports() {
       </Card>
 
       {/* Insights Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 min-w-0">
         <Card className="group relative overflow-hidden border-0 bg-gradient-to-br from-surface via-surface/95 to-background shadow-xl" style={{ animationDelay: '0ms' }}>
           <div className="pointer-events-none absolute inset-px rounded-[1rem] bg-gradient-to-br from-emerald-500/15 via-transparent to-emerald-500/5 opacity-90" />
           <CardHeader className="relative z-10 flex flex-row items-center justify-between pb-2">
@@ -937,20 +937,20 @@ export default function Reports() {
       </div>
 
       {/* Charts Grid - 3 columns com altura consistente */}
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 min-w-0">
         {/* Gastos por Categoria */}
-        <div className="h-[450px] sm:h-[500px] md:col-span-2 lg:col-span-1">
+        <div className="h-[450px] sm:h-[500px] md:col-span-2 lg:col-span-1 min-w-0 overflow-hidden">
           <DespesasPorCategoriaChart />
         </div>
 
         {/* Evolução de Transações */}
-        <div className="h-[450px] sm:h-[500px] md:col-span-2 lg:col-span-1">
+        <div className="h-[450px] sm:h-[500px] md:col-span-2 lg:col-span-1 min-w-0 overflow-hidden">
           <StatusTimelineChart />
         </div>
 
         {/* Monthly Bar Chart */}
-        <div className="h-[450px] sm:h-[500px] md:col-span-2 lg:col-span-1">
-          <Card className="group relative overflow-hidden h-full flex flex-col">
+        <div className="h-[450px] sm:h-[500px] md:col-span-2 lg:col-span-1 min-w-0 overflow-hidden">
+          <Card className="group relative overflow-hidden h-full flex flex-col min-w-0">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none z-10" />
             <CardHeader className="pb-3">
               <CardTitle className="text-base sm:text-lg">Comparação Mensal</CardTitle>
