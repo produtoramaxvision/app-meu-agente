@@ -313,30 +313,6 @@ export function AppSidebar({ collapsed, onToggle, showCloseButton = false }: App
           </div>
         </Collapsible>
         
-        {/* Segundo item: Agenda */}
-        {navigation.slice(1, 2).map((item) => {
-          const isActive = location.pathname === item.href;
-          return (
-          <NavLink
-            key={item.name}
-            to={item.href}
-            onClick={(e) => e.stopPropagation()}
-            className={cn(
-              'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
-              isActive
-                ? 'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
-                : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
-              collapsed && 'justify-center'
-            )}
-          >
-            <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
-              <item.icon className={cn('h-5 w-5 flex-shrink-0', isActive && 'text-white')} />
-            </div>
-            {!collapsed && <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">{item.name}</span>}
-          </NavLink>
-          );
-        })}
-        
         {/* Menu Contas com submenu Metas */}
         <Collapsible 
           open={contasOpen} 
@@ -424,6 +400,30 @@ export function AppSidebar({ collapsed, onToggle, showCloseButton = false }: App
             )}
           </div>
         </Collapsible>
+
+        {/* Item: Agenda (mover para baixo de Contas) */}
+        {navigation.slice(1, 2).map((item) => {
+          const isActive = location.pathname === item.href;
+          return (
+          <NavLink
+            key={item.name}
+            to={item.href}
+            onClick={(e) => e.stopPropagation()}
+            className={cn(
+              'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+              isActive
+                ? 'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
+                : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
+              collapsed && 'justify-center'
+            )}
+          >
+            <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
+              <item.icon className={cn('h-5 w-5 flex-shrink-0', isActive && 'text-white')} />
+            </div>
+            {!collapsed && <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">{item.name}</span>}
+          </NavLink>
+          );
+        })}
         
         {/* Renderizar itens de navegação depois de Contas (Tarefas, Notificações, Perfil) */}
         {navigation.slice(2).map((item) => {
