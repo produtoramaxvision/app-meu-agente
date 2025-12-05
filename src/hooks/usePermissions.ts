@@ -5,6 +5,7 @@ export interface Permission {
   canAccessWhatsApp: boolean;
   canAccessSupport: boolean;
   canAccessAdvancedFeatures: boolean;
+  canAccessAIFeatures: boolean; // Search, Think, Canvas, History - Business/Premium only
 }
 
 export function usePermissions() {
@@ -18,6 +19,9 @@ export function usePermissions() {
   
   // Verificar se é um plano pago (basic, business, premium)
   const isPaidPlan = hasActiveSubscription && cliente?.plan_id && ['basic', 'business', 'premium'].includes(cliente.plan_id);
+  
+  // Verificar se é plano business ou premium
+  const isBusinessOrPremium = hasActiveSubscription && cliente?.plan_id && ['business', 'premium'].includes(cliente.plan_id);
   
   // Verificar se usuário está ativo
   const isUserActive = cliente?.is_active === true;
@@ -34,6 +38,9 @@ export function usePermissions() {
     
     // Recursos avançados para usuários com subscription ativa e usuário ativo
     canAccessAdvancedFeatures: isUserActive && hasActiveSubscription,
+    
+    // Funcionalidades de IA avançadas (Search, Think, Canvas, History) - apenas Business/Premium
+    canAccessAIFeatures: isUserActive && isBusinessOrPremium,
   };
 
   const hasPermission = (permission: keyof Permission): boolean => {
@@ -61,6 +68,11 @@ export function usePermissions() {
       return `A integração WhatsApp está disponível apenas nos planos Business e Premium. Faça upgrade para acessar este recurso.`;
     }
     
+    // Mensagem para funcionalidades de IA avançadas
+    if (['Search', 'Think', 'Canvas', 'History', 'AI Features'].includes(feature) && !isBusinessOrPremium) {
+      return `As funcionalidades avançadas de IA (${feature}) estão disponíveis apenas nos planos Business e Premium. Faça upgrade para acessar este recurso.`;
+    }
+    
     return `Esta funcionalidade (${feature}) está disponível apenas para usuários com planos pagos (Basic, Business ou Premium). Faça upgrade para acessar este recurso.`;
   };
 
@@ -70,6 +82,7 @@ export function usePermissions() {
       subscriptionActive: hasActiveSubscription,
       isActive: isUserActive,
       isPaidPlan,
+      isBusinessOrPremium,
     };
   };
 
@@ -80,6 +93,7 @@ export function usePermissions() {
     getUpgradeMessage,
     hasActiveSubscription,
     isPaidPlan,
+    isBusinessOrPremium,
     isUserActive,
     getPlanInfo,
   };

@@ -2,9 +2,11 @@ import React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
-import { ArrowUp, Paperclip, Square, X, StopCircle, Mic, Globe, BrainCog, FolderCode, History, MessageSquare, Clock } from "lucide-react";
+import { ArrowUp, Paperclip, Square, X, StopCircle, Mic, Globe, BrainCog, FolderCode, History, MessageSquare, Clock, Lock, Crown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/hooks/usePermissions";
+import { toast } from "sonner";
 
 // Textarea Component
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -535,17 +537,81 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
   const uploadInputRef = React.useRef<HTMLInputElement>(null);
   const promptBoxRef = React.useRef<HTMLDivElement>(null);
 
+  // Verificação de permissão para funcionalidades avançadas de IA (Think, Canvas, Mic e History)
+  const { hasPermission, getUpgradeMessage } = usePermissions();
+  const canAccessAIFeatures = hasPermission('canAccessAIFeatures');
+  
+  // Estados para controlar hover nos botões bloqueados
+  const [isThinkHovered, setIsThinkHovered] = React.useState(false);
+  const [isCanvasHovered, setIsCanvasHovered] = React.useState(false);
+  const [isMicHovered, setIsMicHovered] = React.useState(false);
+  const [isHistoryHovered, setIsHistoryHovered] = React.useState(false);
+
+  const showUpgradeToast = (featureName: string) => {
+    toast.error(
+      <div className="flex items-start gap-3">
+        <div className="flex-shrink-0 p-1.5 rounded-full bg-amber-500/20">
+          <Crown className="h-4 w-4 text-amber-500" />
+        </div>
+        <div className="flex-1">
+          <p className="font-medium text-sm">Recurso Premium</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {getUpgradeMessage(featureName)}
+          </p>
+        </div>
+      </div>,
+      {
+        duration: 4000,
+        action: {
+          label: "Upgrade",
+          onClick: () => window.location.href = '/perfil?tab=planos',
+        },
+      }
+    );
+  };
+
   const handleToggleChange = (value: string) => {
     if (value === "search") {
+      // Search é livre para todos os usuários
       setShowSearch((prev) => !prev);
       setShowThink(false);
     } else if (value === "think") {
+      // Verificar permissão antes de ativar Think
+      if (!canAccessAIFeatures) {
+        showUpgradeToast("Think");
+        return;
+      }
       setShowThink((prev) => !prev);
       setShowSearch(false);
     }
   };
 
-  const handleCanvasToggle = () => setShowCanvas((prev) => !prev);
+  const handleCanvasToggle = () => {
+    // Verificar permissão antes de ativar Canvas
+    if (!canAccessAIFeatures) {
+      showUpgradeToast("Canvas");
+      return;
+    }
+    setShowCanvas((prev) => !prev);
+  };
+
+  const handleMicToggle = () => {
+    // Verificar permissão antes de usar Mic
+    if (!canAccessAIFeatures) {
+      showUpgradeToast("Mensagem de Voz");
+      return;
+    }
+    setIsRecording(true);
+  };
+
+  const handleHistoryToggle = (open: boolean) => {
+    // Verificar permissão antes de abrir History
+    if (open && !canAccessAIFeatures) {
+      showUpgradeToast("Histórico");
+      return;
+    }
+    setShowHistory(open);
+  };
 
   const isImageFile = (file: File) => file.type.startsWith("image/");
 
@@ -782,24 +848,50 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
 
               <CustomDivider />
 
-              <button
-                type="button"
-                onClick={() => handleToggleChange("think")}
-                disabled={disabled}
-                className={cn(
-                  "rounded-full transition-all flex items-center gap-1 px-2 py-1 border h-8",
-                  showThink
-                    ? "bg-[#8B5CF6]/15 border-[#8B5CF6] text-[#8B5CF6]"
-                    : "bg-transparent border-transparent text-[#9CA3AF] hover:text-[#D1D5DB]"
-                )}
+              <PromptInputAction
+                tooltip={
+                  !canAccessAIFeatures
+                    ? "Recurso Premium - Pensamento Profundo"
+                    : "Pensamento profundo"
+                }
               >
+                <button
+                  type="button"
+                  onClick={() => handleToggleChange("think")}
+                  onMouseEnter={() => setIsThinkHovered(true)}
+                  onMouseLeave={() => setIsThinkHovered(false)}
+                  disabled={disabled}
+                  className={cn(
+                    "rounded-full transition-all flex items-center gap-1 px-2 py-1 border h-8",
+                    showThink
+                      ? "bg-[#8B5CF6]/15 border-[#8B5CF6] text-[#8B5CF6]"
+                      : "bg-transparent border-transparent text-[#9CA3AF] hover:text-[#D1D5DB]"
+                  )}
+                >
                 <div className="w-5 h-5 flex items-center justify-center flex-shrink-0 pointer-events-none">
-                  <motion.div
-                    animate={{ rotate: showThink ? 360 : 0, scale: showThink ? 1.1 : 1 }}
-                    transition={{ type: "spring", stiffness: 260, damping: 25 }}
-                  >
-                    <BrainCog className={cn("w-4 h-4", showThink ? "text-[#8B5CF6]" : "text-inherit")} />
-                  </motion.div>
+                  <AnimatePresence mode="wait">
+                    {!canAccessAIFeatures && isThinkHovered ? (
+                      <motion.div
+                        key="lock"
+                        initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
+                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                        exit={{ opacity: 0, scale: 0.5, rotate: 90 }}
+                        transition={{ type: "spring", stiffness: 1500, damping: 100 }}
+                      >
+                        <Lock className="w-4 h-4 text-amber-500" />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="icon"
+                        initial={{ opacity: 0, scale: 0.5, rotate: 90 }}
+                        animate={{ opacity: 1, scale: showThink ? 1.1 : 1, rotate: showThink ? 360 : 0 }}
+                        exit={{ opacity: 0, scale: 0.5, rotate: -90 }}
+                        transition={{ type: "spring", stiffness: 1300, damping: 125 }}
+                      >
+                        <BrainCog className={cn("w-4 h-4", showThink ? "text-[#8B5CF6]" : "text-inherit")} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
                 <AnimatePresence>
                   {showThink && (
@@ -815,27 +907,54 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                   )}
                 </AnimatePresence>
               </button>
+              </PromptInputAction>
 
               <CustomDivider />
 
-              <button
-                type="button"
-                onClick={handleCanvasToggle}
+              <PromptInputAction
+                tooltip={
+                  !canAccessAIFeatures
+                    ? "Recurso Premium - Canvas"
+                    : "Canvas"
+                }
+              >
+                <button
+                  type="button"
+                  onClick={handleCanvasToggle}
+                  onMouseEnter={() => setIsCanvasHovered(true)}
+                  onMouseLeave={() => setIsCanvasHovered(false)}
                 disabled={disabled}
-                className={cn(
-                  "rounded-full transition-all flex items-center gap-1 px-2 py-1 border h-8",
-                  showCanvas
-                    ? "bg-[#F97316]/15 border-[#F97316] text-[#F97316]"
-                    : "bg-transparent border-transparent text-[#9CA3AF] hover:text-[#D1D5DB]"
-                )}
+                  className={cn(
+                    "rounded-full transition-all flex items-center gap-1 px-2 py-1 border h-8",
+                    showCanvas
+                      ? "bg-[#F97316]/15 border-[#F97316] text-[#F97316]"
+                      : "bg-transparent border-transparent text-[#9CA3AF] hover:text-[#D1D5DB]"
+                  )}
               >
                 <div className="w-5 h-5 flex items-center justify-center flex-shrink-0 pointer-events-none">
-                  <motion.div
-                    animate={{ rotate: showCanvas ? 360 : 0, scale: showCanvas ? 1.1 : 1 }}
-                    transition={{ type: "spring", stiffness: 260, damping: 25 }}
-                  >
-                    <FolderCode className={cn("w-4 h-4", showCanvas ? "text-[#F97316]" : "text-inherit")} />
-                  </motion.div>
+                  <AnimatePresence mode="wait">
+                    {!canAccessAIFeatures && isCanvasHovered ? (
+                      <motion.div
+                        key="lock"
+                        initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
+                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                        exit={{ opacity: 0, scale: 0.5, rotate: 90 }}
+                        transition={{ type: "spring", stiffness: 1500, damping: 100 }}
+                      >
+                        <Lock className="w-4 h-4 text-amber-500" />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="icon"
+                        initial={{ opacity: 0, scale: 0.5, rotate: 90 }}
+                        animate={{ opacity: 1, scale: showCanvas ? 1.1 : 1, rotate: showCanvas ? 360 : 0 }}
+                        exit={{ opacity: 0, scale: 0.5, rotate: -90 }}
+                        transition={{ type: "spring", stiffness: 1300, damping: 125 }}
+                      >
+                        <FolderCode className={cn("w-4 h-4", showCanvas ? "text-[#F97316]" : "text-inherit")} />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
                 <AnimatePresence>
                   {showCanvas && (
@@ -851,28 +970,51 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                   )}
                 </AnimatePresence>
               </button>
+              </PromptInputAction>
 
               <CustomDivider />
 
-              <Popover open={showHistory} onOpenChange={setShowHistory}>
-                <PopoverTrigger asChild>
-                  <button
-                    type="button"
-                    disabled={disabled}
-                    className={cn(
-                      "rounded-full transition-all flex items-center gap-1 px-2 py-1 border h-8",
-                      showHistory
-                        ? "bg-[#22D3EE]/15 border-[#22D3EE] text-[#22D3EE]"
-                        : "bg-transparent border-transparent text-[#9CA3AF] hover:text-[#D1D5DB]"
-                    )}
-                  >
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <Popover open={showHistory} onOpenChange={handleHistoryToggle}>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          disabled={disabled}
+                          onMouseEnter={() => setIsHistoryHovered(true)}
+                          onMouseLeave={() => setIsHistoryHovered(false)}
+                          className={cn(
+                            "rounded-full transition-all flex items-center gap-1 px-2 py-1 border h-8",
+                            showHistory
+                              ? "bg-[#22D3EE]/15 border-[#22D3EE] text-[#22D3EE]"
+                              : "bg-transparent border-transparent text-[#9CA3AF] hover:text-[#D1D5DB]"
+                          )}
+                        >
                     <div className="w-5 h-5 flex items-center justify-center flex-shrink-0 pointer-events-none">
-                      <motion.div
-                        animate={{ rotate: showHistory ? 360 : 0, scale: showHistory ? 1.1 : 1 }}
-                        transition={{ type: "spring", stiffness: 260, damping: 25 }}
-                      >
-                        <History className={cn("w-4 h-4", showHistory ? "text-[#22D3EE]" : "text-inherit")} />
-                      </motion.div>
+                      <AnimatePresence mode="wait">
+                        {!canAccessAIFeatures && isHistoryHovered ? (
+                          <motion.div
+                            key="lock"
+                            initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
+                            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                            exit={{ opacity: 0, scale: 0.5, rotate: 90 }}
+                            transition={{ type: "spring", stiffness: 1500, damping: 100 }}
+                          >
+                            <Lock className="w-4 h-4 text-amber-500" />
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="icon"
+                            initial={{ opacity: 0, scale: 0.5, rotate: 90 }}
+                            animate={{ opacity: 1, scale: showHistory ? 1.1 : 1, rotate: showHistory ? 360 : 0 }}
+                            exit={{ opacity: 0, scale: 0.5, rotate: -90 }}
+                            transition={{ type: "spring", stiffness: 1300, damping: 125 }}
+                          >
+                            <History className={cn("w-4 h-4", showHistory ? "text-[#22D3EE]" : "text-inherit")} />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                     <AnimatePresence>
                       {showHistory && (
@@ -899,7 +1041,15 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                     disabled={disabled}
                   />
                 </PopoverContent>
-              </Popover>
+                    </Popover>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  {!canAccessAIFeatures
+                    ? "Recurso Premium - Histórico"
+                    : "Histórico de conversas"}
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
 
@@ -911,6 +1061,8 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                 ? "Parar gravação"
                 : hasContent
                 ? "Enviar mensagem"
+                : !canAccessAIFeatures
+                ? "Recurso Premium - Mensagem de Voz"
                 : "Mensagem de voz"
             }
           >
@@ -925,10 +1077,12 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                   ? "bg-white hover:bg-white/80 text-[#1F2023]"
                   : "bg-transparent hover:bg-gray-600/30 text-[#9CA3AF] hover:text-[#D1D5DB]"
               )}
+              onMouseEnter={() => setIsMicHovered(true)}
+              onMouseLeave={() => setIsMicHovered(false)}
               onClick={() => {
                 if (isRecording) setIsRecording(false);
                 else if (hasContent) handleSubmit();
-                else setIsRecording(true);
+                else handleMicToggle();
               }}
               disabled={(isLoading && !hasContent) || disabled}
             >
@@ -939,7 +1093,29 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
               ) : hasContent ? (
                 <ArrowUp className="h-4 w-4" />
               ) : (
-                <Mic className="h-5 w-5 transition-colors" />
+                <AnimatePresence mode="wait">
+                  {!canAccessAIFeatures && isMicHovered ? (
+                    <motion.div
+                      key="lock"
+                      initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
+                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                      exit={{ opacity: 0, scale: 0.5, rotate: 90 }}
+                      transition={{ type: "spring", stiffness: 1500, damping: 100 }}
+                    >
+                      <Lock className="h-5 w-5 text-amber-500" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="mic"
+                      initial={{ opacity: 0, scale: 0.5, rotate: 90 }}
+                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                      exit={{ opacity: 0, scale: 0.5, rotate: -90 }}
+                      transition={{ type: "spring", stiffness: 1500, damping: 100 }}
+                    >
+                      <Mic className="h-5 w-5 transition-colors" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               )}
             </Button>
           </PromptInputAction>
