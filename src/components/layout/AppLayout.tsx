@@ -39,6 +39,15 @@ export function AppLayout({ children }: AppLayoutProps) {
     setIsClosing(false);
   };
 
+  // Handle sidebar toggle (for mobile menu button)
+  const handleSidebarToggle = () => {
+    if (sidebarOpen) {
+      handleSidebarClose();
+    } else {
+      handleSidebarOpen();
+    }
+  };
+
   return (
     <NotificationProvider>
       <div className="flex h-screen w-full bg-bg overflow-hidden">
@@ -76,7 +85,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         {/* Main content area */}
         <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
           <AppHeader 
-            onMenuClick={handleSidebarOpen} 
+            onMenuClick={handleSidebarToggle} 
             isMenuOpen={sidebarOpen}
           />
           <main className="flex-1 overflow-y-auto">
