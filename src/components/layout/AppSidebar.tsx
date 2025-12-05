@@ -1,23 +1,46 @@
+import { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, User, LogOut, Wallet, Target, Bell, CheckSquare, CalendarDays, X, Loader2, MessageCircle } from 'lucide-react';
+import { LayoutDashboard, FileText, User, LogOut, Wallet, Target, Bell, CheckSquare, CalendarDays, X, Loader2, MessageCircle, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotificationsData } from '@/hooks/useNotificationsData';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/Logo';
 import { QuickActions } from '@/components/QuickActions';
 import { HelpAndSupport } from '@/components/HelpAndSupport';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 
+// Navegação principal (sem Metas e Relatórios, que agora são submenus)
 const navigation = [
   { name: 'Chat IA', href: '/chat', icon: MessageCircle },
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Agenda', href: '/agenda', icon: CalendarDays },
-  { name: 'Contas', href: '/contas', icon: Wallet },
-  { name: 'Metas', href: '/metas', icon: Target },
   { name: 'Tarefas', href: '/tarefas', icon: CheckSquare },
-  { name: 'Relatórios', href: '/relatorios', icon: FileText },
   { name: 'Notificações', href: '/notificacoes', icon: Bell },
   { name: 'Perfil', href: '/perfil', icon: User },
 ];
+
+// Item de menu "Dashboard" com submenu "Relatórios"
+const dashboardMenuItem = {
+  name: 'Dashboard',
+  href: '/dashboard',
+  icon: LayoutDashboard,
+  submenu: [
+    { name: 'Relatórios', href: '/relatorios', icon: FileText },
+  ],
+};
+
+// Item de menu "Contas" com submenu "Metas"
+const contasMenuItem = {
+  name: 'Contas',
+  href: '/contas',
+  icon: Wallet,
+  submenu: [
+    { name: 'Metas', href: '/metas', icon: Target },
+  ],
+};
 
 interface AppSidebarProps {
   collapsed: boolean;
@@ -30,6 +53,30 @@ export function AppSidebar({ collapsed, onToggle, showCloseButton = false }: App
   const location = useLocation();
   const navigate = useNavigate();
   const { unreadCount } = useNotificationsData();
+  
+  // Estado para controlar os submenus
+  const [dashboardOpen, setDashboardOpen] = useState(false);
+  const [contasOpen, setContasOpen] = useState(false);
+  
+  // Verificar se estamos em uma página de Dashboard ou Relatórios para abrir automaticamente
+  const isInDashboardSection = location.pathname === '/dashboard' || location.pathname === '/relatorios';
+  
+  // Verificar se estamos em uma página de Contas ou Metas para abrir automaticamente
+  const isInContasSection = location.pathname === '/contas' || location.pathname === '/metas';
+  
+  // Abrir automaticamente o submenu quando estiver na seção de Dashboard/Relatórios
+  useEffect(() => {
+    if (isInDashboardSection) {
+      setDashboardOpen(true);
+    }
+  }, [isInDashboardSection]);
+  
+  // Abrir automaticamente o submenu quando estiver na seção de Contas/Metas
+  useEffect(() => {
+    if (isInContasSection) {
+      setContasOpen(true);
+    }
+  }, [isInContasSection]);
 
   const handleLogout = async () => {
     /**
@@ -154,7 +201,232 @@ export function AppSidebar({ collapsed, onToggle, showCloseButton = false }: App
 
       {/* Navigation */}
       <nav className={cn("flex-1 space-y-1 transition-all relative", collapsed ? 'p-2' : 'p-4')}>
-        {navigation.map((item) => {
+        {/* Primeiro item: Chat IA */}
+        {navigation.slice(0, 1).map((item) => {
+          const isActive = location.pathname === item.href;
+          return (
+          <NavLink
+            key={item.name}
+            to={item.href}
+            onClick={(e) => e.stopPropagation()}
+            className={cn(
+              'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+              isActive
+                ? 'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
+                : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
+              collapsed && 'justify-center'
+            )}
+          >
+            <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
+              <item.icon className={cn('h-5 w-5 flex-shrink-0', isActive && 'text-white')} />
+            </div>
+            {!collapsed && <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">{item.name}</span>}
+          </NavLink>
+          );
+        })}
+        
+        {/* Menu Dashboard com submenu Relatórios */}
+        <Collapsible 
+          open={dashboardOpen} 
+          onOpenChange={setDashboardOpen}
+          className="w-full"
+        >
+          <div className="flex flex-col">
+            {/* Container para Dashboard - clicável para ir à página */}
+            <div className="flex items-center">
+              <NavLink
+                to={dashboardMenuItem.href}
+                onClick={(e) => e.stopPropagation()}
+                className={cn(
+                  'group relative flex flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                  location.pathname === dashboardMenuItem.href
+                    ? 'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
+                    : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
+                  collapsed && 'justify-center'
+                )}
+              >
+                <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
+                  <dashboardMenuItem.icon className={cn('h-5 w-5 flex-shrink-0', location.pathname === dashboardMenuItem.href && 'text-white')} />
+                </div>
+                {!collapsed && (
+                  <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">
+                    {dashboardMenuItem.name}
+                  </span>
+                )}
+              </NavLink>
+              
+              {/* Botão de toggle do submenu Dashboard - visível apenas quando não colapsado */}
+              {!collapsed && (
+                <CollapsibleTrigger 
+                  asChild
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    className={cn(
+                      'p-1.5 rounded-md transition-all duration-200 mr-1',
+                      'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))]',
+                      dashboardOpen && 'bg-[hsl(var(--sidebar-hover))]'
+                    )}
+                    aria-label={dashboardOpen ? 'Fechar submenu' : 'Abrir submenu'}
+                  >
+                    <ChevronDown 
+                      className={cn(
+                        'h-4 w-4 transition-transform duration-200',
+                        dashboardOpen && 'rotate-180'
+                      )} 
+                    />
+                  </button>
+                </CollapsibleTrigger>
+              )}
+            </div>
+            
+            {/* Submenu de Relatórios - oculto quando sidebar está colapsado */}
+            {!collapsed && (
+              <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+                <div className="ml-4 pl-3 border-l-2 border-[hsl(var(--sidebar-border))] mt-1 space-y-1">
+                  {dashboardMenuItem.submenu.map((subItem) => {
+                    const isSubActive = location.pathname === subItem.href;
+                    return (
+                      <NavLink
+                        key={subItem.name}
+                        to={subItem.href}
+                        onClick={(e) => e.stopPropagation()}
+                        className={cn(
+                          'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+                          isSubActive
+                            ? 'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
+                            : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md'
+                        )}
+                      >
+                        <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
+                          <subItem.icon className={cn('h-4 w-4 flex-shrink-0', isSubActive && 'text-white')} />
+                        </div>
+                        <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">
+                          {subItem.name}
+                        </span>
+                      </NavLink>
+                    );
+                  })}
+                </div>
+              </CollapsibleContent>
+            )}
+          </div>
+        </Collapsible>
+        
+        {/* Segundo item: Agenda */}
+        {navigation.slice(1, 2).map((item) => {
+          const isActive = location.pathname === item.href;
+          return (
+          <NavLink
+            key={item.name}
+            to={item.href}
+            onClick={(e) => e.stopPropagation()}
+            className={cn(
+              'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+              isActive
+                ? 'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
+                : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
+              collapsed && 'justify-center'
+            )}
+          >
+            <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
+              <item.icon className={cn('h-5 w-5 flex-shrink-0', isActive && 'text-white')} />
+            </div>
+            {!collapsed && <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">{item.name}</span>}
+          </NavLink>
+          );
+        })}
+        
+        {/* Menu Contas com submenu Metas */}
+        <Collapsible 
+          open={contasOpen} 
+          onOpenChange={setContasOpen}
+          className="w-full"
+        >
+          <div className="flex flex-col">
+            {/* Container para Contas - clicável para ir à página */}
+            <div className="flex items-center">
+              <NavLink
+                to={contasMenuItem.href}
+                onClick={(e) => e.stopPropagation()}
+                className={cn(
+                  'group relative flex flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                  location.pathname === contasMenuItem.href
+                    ? 'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
+                    : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
+                  collapsed && 'justify-center'
+                )}
+              >
+                <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
+                  <contasMenuItem.icon className={cn('h-5 w-5 flex-shrink-0', location.pathname === contasMenuItem.href && 'text-white')} />
+                </div>
+                {!collapsed && (
+                  <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">
+                    {contasMenuItem.name}
+                  </span>
+                )}
+              </NavLink>
+              
+              {/* Botão de toggle do submenu - visível apenas quando não colapsado */}
+              {!collapsed && (
+                <CollapsibleTrigger 
+                  asChild
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    className={cn(
+                      'p-1.5 rounded-md transition-all duration-200 mr-1',
+                      'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))]',
+                      contasOpen && 'bg-[hsl(var(--sidebar-hover))]'
+                    )}
+                    aria-label={contasOpen ? 'Fechar submenu' : 'Abrir submenu'}
+                  >
+                    <ChevronDown 
+                      className={cn(
+                        'h-4 w-4 transition-transform duration-200',
+                        contasOpen && 'rotate-180'
+                      )} 
+                    />
+                  </button>
+                </CollapsibleTrigger>
+              )}
+            </div>
+            
+            {/* Submenu de Metas - oculto quando sidebar está colapsado */}
+            {!collapsed && (
+              <CollapsibleContent className="overflow-hidden data-[state=open]:animate-collapsible-down data-[state=closed]:animate-collapsible-up">
+                <div className="ml-4 pl-3 border-l-2 border-[hsl(var(--sidebar-border))] mt-1 space-y-1">
+                  {contasMenuItem.submenu.map((subItem) => {
+                    const isSubActive = location.pathname === subItem.href;
+                    return (
+                      <NavLink
+                        key={subItem.name}
+                        to={subItem.href}
+                        onClick={(e) => e.stopPropagation()}
+                        className={cn(
+                          'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+                          isSubActive
+                            ? 'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
+                            : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md'
+                        )}
+                      >
+                        <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
+                          <subItem.icon className={cn('h-4 w-4 flex-shrink-0', isSubActive && 'text-white')} />
+                        </div>
+                        <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">
+                          {subItem.name}
+                        </span>
+                      </NavLink>
+                    );
+                  })}
+                </div>
+              </CollapsibleContent>
+            )}
+          </div>
+        </Collapsible>
+        
+        {/* Renderizar itens de navegação depois de Contas (Tarefas, Notificações, Perfil) */}
+        {navigation.slice(2).map((item) => {
           const isActive = location.pathname === item.href;
           const isNotifications = item.name === 'Notificações';
           return (
