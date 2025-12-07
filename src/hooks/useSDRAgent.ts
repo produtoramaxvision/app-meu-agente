@@ -22,6 +22,8 @@ export function useSDRAgent() {
   const phone = cliente?.phone || '';
   
   const [pollingEnabled, setPollingEnabled] = useState(false);
+  // Evita loop de auto-refresh quando instância está desconectada
+  const [autoRefreshedInstanceId, setAutoRefreshedInstanceId] = useState<string | null>(null);
 
   // =====================================================
   // Query: Buscar instância Evolution
@@ -143,6 +145,10 @@ export function useSDRAgent() {
         return;
       }
 
+      // Atualizar cache imediato com a instância retornada (inclui QR / pairing)
+      if (data.instance) {
+        queryClient.setQueryData(['evolution-instance', phone], data.instance);
+      }
       queryClient.invalidateQueries({ queryKey: ['evolution-instance', phone] });
       
       // Parar polling se conectado
@@ -289,6 +295,10 @@ export function useSDRAgent() {
     },
   });
 
+  // Derivados para uso em efeitos abaixo
+  const hasInstanceValue = !!instance;
+  const isConnectedValue = instance?.connection_status === 'connected';
+
   // =====================================================
   // Realtime: Escutar atualizações da instância
   // =====================================================
@@ -331,8 +341,27 @@ export function useSDRAgent() {
       setPollingEnabled(true);
     } else if (instance?.connection_status === 'connected') {
       setPollingEnabled(false);
+      // Libera futura auto-verificação caso desconecte novamente
+      setAutoRefreshedInstanceId(null);
     }
   }, [instance?.connection_status]);
+
+  // =====================================================
+  // Efeito: Ao montar/atualizar, se houver instância e não estiver conectada,
+  // dispara uma verificação imediata para sincronizar o status com a Evolution API.
+  // Evita rodar em paralelo se a mutation já estiver em progresso.
+  // =====================================================
+  useEffect(() => {
+    if (!phone || !hasInstanceValue) return;
+    if (isConnectedValue) return;
+    if (refreshConnectionMutation.isPending) return;
+
+    // Evita loop: só auto-dispara uma vez por instância enquanto desconectada
+    if (autoRefreshedInstanceId === instance?.id) return;
+
+    setAutoRefreshedInstanceId(instance?.id || null);
+    refreshConnectionMutation.mutate();
+  }, [phone, hasInstanceValue, isConnectedValue, refreshConnectionMutation.isPending, autoRefreshedInstanceId, instance?.id]);
 
   // =====================================================
   // Helpers

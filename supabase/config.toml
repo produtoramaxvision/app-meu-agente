@@ -1,1 +1,6 @@
 project_id = "teexqwlnfdlcruqbmwuz"
+
+# Desabilita verificação de JWT para o webhook da Evolution API, pois os webhooks
+# são enviados sem token pelo provedor externo.
+[functions.evolution-webhook]
+verify_jwt = false
