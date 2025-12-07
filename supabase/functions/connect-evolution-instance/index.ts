@@ -12,11 +12,12 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 }
 
+// Evolution API v2.3.7 retorna resposta no nível raiz (não aninhada)
 interface ConnectResponse {
-  pairingCode: string;
-  code: string;
-  base64?: string;
-  count: number;
+  pairingCode?: string;  // Código de pareamento de 8 dígitos (ex: "WZYEH1YY")
+  code?: string;         // Código longo para geração do QR Code
+  base64?: string;       // QR Code em formato base64 (imagem)
+  count?: number;        // Contador de tentativas
 }
 
 interface ConnectionStateResponse {
@@ -105,6 +106,35 @@ serve(async (req: Request) => {
 
     let connectionState = 'disconnected'
     
+    // Se a instância foi deletada externamente (404), limpar registro local
+    if (stateResponse.status === 404) {
+      console.log('Instance not found in Evolution API (404), cleaning local record...')
+      
+      // Deletar registro do banco local
+      await supabase
+        .from('evolution_instances')
+        .delete()
+        .eq('id', instance.id)
+      
+      // Também deletar configuração SDR associada
+      await supabase
+        .from('sdr_agent_config')
+        .delete()
+        .eq('instance_id', instance.id)
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Instance was deleted externally',
+          needsCreate: true,
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 404 
+        }
+      )
+    }
+    
     if (stateResponse.ok) {
       const stateData: ConnectionStateResponse = await stateResponse.json()
       
@@ -137,12 +167,41 @@ serve(async (req: Request) => {
         }
       )
 
+      // Se o connect também retornar 404, a instância foi deletada
+      if (connectResponse.status === 404) {
+        console.log('Connect endpoint returned 404, cleaning local record...')
+        
+        await supabase
+          .from('evolution_instances')
+          .delete()
+          .eq('id', instance.id)
+        
+        await supabase
+          .from('sdr_agent_config')
+          .delete()
+          .eq('instance_id', instance.id)
+
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Instance not found in Evolution API',
+            needsCreate: true,
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 404 
+          }
+        )
+      }
+
       if (connectResponse.ok) {
         const connectData: ConnectResponse = await connectResponse.json()
         
-        // Log detalhado para debug
-        console.log('Evolution API connect response:', JSON.stringify({
+        // Log detalhado para debug (Evolution API v2.3.7)
+        console.log('Evolution API connect response (raw):', JSON.stringify(connectData, null, 2))
+        console.log('Evolution API connect response (parsed):', JSON.stringify({
           hasPairingCode: !!connectData.pairingCode,
+          pairingCodeValue: connectData.pairingCode || 'NULL',
           pairingCodeLength: connectData.pairingCode?.length || 0,
           hasCode: !!connectData.code,
           codeLength: connectData.code?.length || 0,
@@ -151,8 +210,11 @@ serve(async (req: Request) => {
           count: connectData.count,
         }))
         
+        // Evolution API v2.3.7 retorna no nível raiz
         qrCode = connectData.base64 || null
         pairingCode = connectData.pairingCode || null
+        
+        console.log('Valores extraídos - QR Code:', qrCode ? 'PRESENTE' : 'NULL', '| Pairing Code:', pairingCode || 'NULL')
 
         // Atualizar no banco
         await supabase

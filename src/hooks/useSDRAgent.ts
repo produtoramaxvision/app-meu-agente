@@ -49,7 +49,8 @@ export function useSDRAgent() {
       return data as unknown as EvolutionInstance | null;
     },
     enabled: !!phone,
-    staleTime: 1000 * 30, // 30 segundos
+    staleTime: 1000 * 5, // 5 segundos (reduzido de 30s para manter dados mais atualizados)
+    refetchOnWindowFocus: true, // Refetch ao focar na janela
     refetchInterval: pollingEnabled ? 5000 : false, // Poll a cada 5s quando habilitado
   });
 
@@ -124,7 +125,8 @@ export function useSDRAgent() {
 
       if (!data.success) {
         if (data.needsCreate) {
-          throw new Error('NO_INSTANCE');
+          // Retornar objeto especial para indicar que precisa criar
+          return { needsCreate: true };
         }
         throw new Error(data.error || 'Failed to refresh connection');
       }
@@ -132,6 +134,15 @@ export function useSDRAgent() {
       return data;
     },
     onSuccess: (data) => {
+      // Se precisa criar nova instância, criar automaticamente
+      if (data.needsCreate) {
+        console.log('Instance needs to be created, auto-creating...');
+        queryClient.invalidateQueries({ queryKey: ['evolution-instance', phone] });
+        // Criar nova instância automaticamente
+        createInstanceMutation.mutate(undefined);
+        return;
+      }
+
       queryClient.invalidateQueries({ queryKey: ['evolution-instance', phone] });
       
       // Parar polling se conectado
@@ -142,7 +153,10 @@ export function useSDRAgent() {
     },
     onError: (error: Error) => {
       if (error.message === 'NO_INSTANCE') {
-        // Não mostrar erro, apenas indicar que precisa criar
+        // Criar instância automaticamente quando não existe
+        console.log('No instance found, auto-creating...');
+        queryClient.invalidateQueries({ queryKey: ['evolution-instance', phone] });
+        createInstanceMutation.mutate(undefined);
         return;
       }
       toast.error(`Erro ao verificar conexão: ${error.message}`);

@@ -90,18 +90,48 @@ serve(async (req: Request) => {
       .single()
 
     if (existingInstance) {
-      // Retornar instância existente
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: 'Instance already exists',
-          instance: existingInstance,
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 
+      // Verificar se a instância ainda existe na Evolution API
+      console.log('Found existing instance in DB, checking if it exists in Evolution API...')
+      
+      const stateResponse = await fetch(
+        `${evolutionApiUrl}/instance/connectionState/${existingInstance.instance_name}`,
+        {
+          method: 'GET',
+          headers: {
+            'apikey': evolutionApiKey,
+          },
         }
       )
+
+      if (stateResponse.status === 404) {
+        // Instância foi deletada externamente, limpar registro local
+        console.log('Instance not found in Evolution API (404), cleaning local record and creating new one...')
+        
+        await supabase
+          .from('evolution_instances')
+          .delete()
+          .eq('id', existingInstance.id)
+        
+        await supabase
+          .from('sdr_agent_config')
+          .delete()
+          .eq('instance_id', existingInstance.id)
+        
+        // Continuar para criar uma nova instância (não retornar aqui)
+      } else {
+        // Instância ainda existe, retornar a existente
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: 'Instance already exists',
+            instance: existingInstance,
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200 
+          }
+        )
+      }
     }
 
     // Parse do body
@@ -125,17 +155,6 @@ serve(async (req: Request) => {
         // Configuração específica para habilitar pairing code
         number: cliente.phone.replace(/\D/g, ''),
         mobile: true,
-        webhook: {
-          url: webhookUrl,
-          webhook_by_events: false,
-          webhook_base64: true,
-          events: [
-            'QRCODE_UPDATED',
-            'CONNECTION_UPDATE',
-            'MESSAGES_UPSERT',
-            'MESSAGES_UPDATE',
-          ],
-        },
       }),
     })
 
@@ -147,8 +166,41 @@ serve(async (req: Request) => {
 
     const evolutionData: EvolutionCreateResponse = await evolutionResponse.json()
 
+    // Configurar webhook explicitamente após criação da instância
+    console.log('Configuring webhook for instance:', instanceName)
+    const webhookSetResponse = await fetch(`${evolutionApiUrl}/webhook/set/${instanceName}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': evolutionApiKey,
+      },
+      body: JSON.stringify({
+        enabled: true,
+        url: webhookUrl,
+        webhookByEvents: false,
+        webhookBase64: true,
+        events: [
+          'QRCODE_UPDATED',
+          'CONNECTION_UPDATE',
+          'MESSAGES_UPSERT',
+          'MESSAGES_UPDATE',
+          'MESSAGES_DELETE',
+          'SEND_MESSAGE',
+        ],
+      }),
+    })
+
+    if (!webhookSetResponse.ok) {
+      console.warn('Failed to set webhook, but continuing:', await webhookSetResponse.text())
+    } else {
+      console.log('Webhook configured successfully')
+    }
+
+    // Log completo da resposta para debug (Evolution API v2.3.7)
+    console.log('Evolution API create response (raw):', JSON.stringify(evolutionData, null, 2))
+    
     // Log detalhado para debug
-    console.log('Evolution API create response:', JSON.stringify({
+    console.log('Evolution API create response (parsed):', JSON.stringify({
       instanceName: evolutionData.instance?.instanceName,
       status: evolutionData.instance?.status,
       hasQrcode: !!evolutionData.qrcode,
@@ -159,6 +211,8 @@ serve(async (req: Request) => {
       hasBase64: !!evolutionData.qrcode?.base64,
       base64Length: evolutionData.qrcode?.base64?.length || 0,
     }))
+    
+    console.log('Valores extraídos - QR Code:', evolutionData.qrcode?.base64 ? 'PRESENTE' : 'NULL', '| Pairing Code:', evolutionData.qrcode?.pairingCode || 'NULL')
 
     // Salvar no banco de dados
     const { data: newInstance, error: insertError } = await supabase

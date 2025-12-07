@@ -107,13 +107,13 @@ export function SDRConnectionCard() {
           {!hasInstance ? (
             <Button
               onClick={() => createInstance()}
-              disabled={isCreating}
+              disabled={isCreating || isRefreshing}
               className="w-full sm:w-auto"
             >
               {isCreating ? (
                 <>
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Criando...
+                  Criando conexão...
                 </>
               ) : (
                 <>
@@ -126,12 +126,17 @@ export function SDRConnectionCard() {
             <Button
               variant="outline"
               onClick={refreshConnection}
-              disabled={isRefreshing}
+              disabled={isRefreshing || isCreating}
             >
               {isRefreshing ? (
                 <>
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                   Verificando...
+                </>
+              ) : isCreating ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Reconectando...
                 </>
               ) : (
                 <>
@@ -141,9 +146,18 @@ export function SDRConnectionCard() {
               )}
             </Button>
           ) : (
-            <Button variant="outline" onClick={refreshConnection}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Verificar Status
+            <Button variant="outline" onClick={refreshConnection} disabled={isRefreshing}>
+              {isRefreshing ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Verificando...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Verificar Status
+                </>
+              )}
             </Button>
           )}
         </div>
