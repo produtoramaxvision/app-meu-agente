@@ -144,6 +144,19 @@ serve(async (req: Request) => {
 
     const evolutionData: EvolutionCreateResponse = await evolutionResponse.json()
 
+    // Log detalhado para debug
+    console.log('Evolution API create response:', JSON.stringify({
+      instanceName: evolutionData.instance?.instanceName,
+      status: evolutionData.instance?.status,
+      hasQrcode: !!evolutionData.qrcode,
+      hasPairingCode: !!evolutionData.qrcode?.pairingCode,
+      pairingCodeValue: evolutionData.qrcode?.pairingCode || 'NULL',
+      hasCode: !!evolutionData.qrcode?.code,
+      codeLength: evolutionData.qrcode?.code?.length || 0,
+      hasBase64: !!evolutionData.qrcode?.base64,
+      base64Length: evolutionData.qrcode?.base64?.length || 0,
+    }))
+
     // Salvar no banco de dados
     const { data: newInstance, error: insertError } = await supabase
       .from('evolution_instances')

@@ -139,6 +139,18 @@ serve(async (req: Request) => {
 
       if (connectResponse.ok) {
         const connectData: ConnectResponse = await connectResponse.json()
+        
+        // Log detalhado para debug
+        console.log('Evolution API connect response:', JSON.stringify({
+          hasPairingCode: !!connectData.pairingCode,
+          pairingCodeLength: connectData.pairingCode?.length || 0,
+          hasCode: !!connectData.code,
+          codeLength: connectData.code?.length || 0,
+          hasBase64: !!connectData.base64,
+          base64Length: connectData.base64?.length || 0,
+          count: connectData.count,
+        }))
+        
         qrCode = connectData.base64 || null
         pairingCode = connectData.pairingCode || null
 

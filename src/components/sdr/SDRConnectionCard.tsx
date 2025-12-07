@@ -98,6 +98,7 @@ export function SDRConnectionCard() {
             pairingCode={pairingCode}
             isLoading={isRefreshing}
             onRefresh={refreshConnection}
+            onRequestPairingCode={refreshConnection}
           />
         )}
 
