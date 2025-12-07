@@ -122,6 +122,9 @@ serve(async (req: Request) => {
         instanceName: instanceName,
         qrcode: true,
         integration: 'WHATSAPP-BAILEYS',
+        // Configuração específica para habilitar pairing code
+        number: cliente.phone.replace(/\D/g, ''),
+        mobile: true,
         webhook: {
           url: webhookUrl,
           webhook_by_events: false,
@@ -210,10 +213,11 @@ serve(async (req: Request) => {
 
   } catch (error) {
     console.error('Error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error'
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'Internal server error',
+        error: errorMessage,
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -90,18 +90,28 @@ serve(async (req: Request) => {
     // Processar baseado no tipo de evento
     switch (payload.event) {
       case 'QRCODE_UPDATED': {
-        // Atualizar QR Code no banco
+        const updateData: any = {
+          last_qr_update: new Date().toISOString(),
+          connection_status: 'connecting',
+        }
+        
+        // Atualizar QR Code se presente
+        if (payload.data.qrcode?.base64) {
+          updateData.qr_code = payload.data.qrcode.base64
+        }
+        
+        // Atualizar Pairing Code se presente
+        if (payload.data.qrcode?.pairingCode) {
+          updateData.pairing_code = payload.data.qrcode.pairingCode
+          console.log('Pairing code received:', payload.data.qrcode.pairingCode)
+        }
+        
         await supabase
           .from('evolution_instances')
-          .update({
-            qr_code: payload.data.qrcode?.base64 || null,
-            pairing_code: payload.data.qrcode?.pairingCode || null,
-            last_qr_update: new Date().toISOString(),
-            connection_status: 'connecting',
-          })
+          .update(updateData)
           .eq('id', instance.id)
         
-        console.log('QR Code updated for instance:', payload.instance)
+        console.log('QR Code/Pairing updated for instance:', payload.instance, 'Has pairing:', !!payload.data.qrcode?.pairingCode)
         break
       }
 
