@@ -33,6 +33,7 @@ const Notifications = lazy(() => import("./pages/Notifications"));
 const Tasks = lazy(() => import("./pages/Tasks"));
 const Agenda = lazy(() => import("./pages/Agenda"));
 const Chat = lazy(() => import("./pages/Chat"));
+const AgenteSDR = lazy(() => import("./pages/AgenteSDR"));
 
 // Inicializar monitoramento de performance
 initPerformanceMonitoring();
@@ -127,6 +128,14 @@ const App = () => (
                     element={
                       <ProtectedRoute>
                         <AppLayout><Chat /></AppLayout>
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/agente-sdr"
+                    element={
+                      <ProtectedRoute>
+                        <AppLayout><AgenteSDR /></AppLayout>
                       </ProtectedRoute>
                     }
                   />

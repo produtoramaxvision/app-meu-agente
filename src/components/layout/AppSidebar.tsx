@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, User, LogOut, Wallet, Target, Bell, CheckSquare, CalendarDays, X, Loader2, MessageCircle, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, FileText, User, LogOut, Wallet, Target, Bell, CheckSquare, CalendarDays, X, Loader2, MessageCircle, ChevronDown, Bot } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotificationsData } from '@/hooks/useNotificationsData';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,7 @@ import {
 // Navegação principal (sem Metas e Relatórios, que agora são submenus)
 const navigation = [
   { name: 'Chat IA', href: '/chat', icon: MessageCircle },
+  { name: 'Agente SDR', href: '/agente-sdr', icon: Bot },
   { name: 'Agenda', href: '/agenda', icon: CalendarDays },
   { name: 'Tarefas', href: '/tarefas', icon: CheckSquare },
   { name: 'Notificações', href: '/notificacoes', icon: Bell },

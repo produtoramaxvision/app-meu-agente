@@ -6,6 +6,7 @@ export interface Permission {
   canAccessSupport: boolean;
   canAccessAdvancedFeatures: boolean;
   canAccessAIFeatures: boolean; // Search, Think, Canvas, History - Business/Premium only
+  canAccessSDRAgent: boolean; // Agente SDR com WhatsApp - Business/Premium only
 }
 
 /**
@@ -74,6 +75,12 @@ export function usePermissions() {
      * APENAS Business e Premium
      */
     canAccessAIFeatures: isUserActive && isBusinessOrPremium,
+    
+    /**
+     * Agente SDR com integração WhatsApp via Evolution API
+     * APENAS Business e Premium
+     */
+    canAccessSDRAgent: isUserActive && isBusinessOrPremium,
   };
 
   const hasPermission = (permission: keyof Permission): boolean => {
