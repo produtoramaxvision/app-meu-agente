@@ -1,43 +1,67 @@
 # 👤 GUIA COMPLETO DO USUÁRIO
-## Meu Agente Financeiro - Manual de Uso Detalhado
+## Meu Agente - Manual de Uso Detalhado do App
 
 ---
 
 ## 📋 **ÍNDICE**
 
 1. [Introdução](#introdução)
-2. [Primeiros Passos](#primeiros-passos)
-3. [Dashboard](#dashboard)
-4. [Gestão de Contas](#gestão-de-contas)
-5. [Metas Financeiras](#metas-financeiras)
-6. [Agenda e Eventos](#agenda-e-eventos)
-7. [Tarefas](#tarefas)
-8. [Relatórios](#relatórios)
-9. [Notificações](#notificações)
-10. [Sistema de Suporte](#sistema-de-suporte)
-11. [Configurações](#configurações)
-12. [Dicas e Truques](#dicas-e-truques)
-13. [Solução de Problemas](#solução-de-problemas)
+2. [O App Meu Agente](#o-app-meu-agente)
+3. [Primeiros Passos](#primeiros-passos)
+4. [Dashboard](#dashboard)
+5. [Chat com IA](#chat-com-ia)
+6. [Gestão de Contas](#gestão-de-contas)
+7. [Metas Financeiras](#metas-financeiras)
+8. [Agenda e Eventos](#agenda-e-eventos)
+9. [Tarefas](#tarefas)
+10. [Agente SDR](#agente-sdr)
+11. [Relatórios](#relatórios)
+12. [Notificações](#notificações)
+13. [Sistema de Suporte](#sistema-de-suporte)
+14. [Configurações](#configurações)
+15. [Dicas e Truques](#dicas-e-truques)
+16. [Solução de Problemas](#solução-de-problemas)
 
 ---
 
 ## 🎯 **INTRODUÇÃO**
 
-### **Bem-vindo ao Meu Agente Financeiro!**
+### **Bem-vindo ao Meu Agente!**
 
-O Meu Agente Financeiro é uma ferramenta completa para gestão financeira pessoal que te ajuda a:
-- ✅ Controlar receitas e despesas
-- ✅ Acompanhar metas financeiras
-- ✅ Organizar tarefas e eventos
-- ✅ Gerar relatórios detalhados
-- ✅ Receber notificações importantes
+O Meu Agente é uma aplicação completa que combina **gestão financeira pessoal** com **agentes de IA conversacionais**. O app oferece uma experiência visual única com animações imersivas, chat com IA integrado e ferramentas poderosas para organizar sua vida financeira.
 
-### **Características Principais**
-- 🎨 **Interface Moderna**: Design limpo e intuitivo
-- 📱 **Responsivo**: Funciona em desktop, tablet e mobile
-- 🔒 **Seguro**: Seus dados são protegidos com criptografia
-- ⚡ **Rápido**: Carregamento otimizado para melhor experiência
-- 🎯 **Inteligente**: Validações automáticas e sugestões
+### **O que diferencia o Meu Agente?**
+
+| Característica | Descrição |
+|----------------|-----------|
+| 🤖 **Chat com IA** | Converse com agentes de IA diretamente no app (todos os planos!) |
+| 🌌 **Experiência Imersiva** | Animações espaciais 3D na tela de chat |
+| 📊 **Dashboard Completo** | Métricas, gráficos e visão geral em tempo real |
+| 📅 **Agenda Avançada** | 6 visualizações com drag-and-drop |
+| 🎯 **Agente SDR** | Qualificação automática de leads via WhatsApp |
+| ⚡ **Tempo Real** | Atualizações instantâneas via WebSocket |
+| 📱 **PWA** | Funciona como app nativo no celular |
+
+---
+
+## 📱 **O APP MEU AGENTE**
+
+### **Uma Experiência Visual Única**
+
+O App Meu Agente foi projetado para ser não apenas funcional, mas **agradável de usar**. Com animações fluidas, design premium e interações intuitivas.
+
+### **Principais Telas**
+
+| Tela | Função | Acesso |
+|------|--------|--------|
+| 🏠 **Dashboard** | Visão geral financeira | Rota principal |
+| 💬 **Chat** | Conversa com IA | Menu lateral |
+| 💳 **Contas** | Gestão de transações | Menu lateral |
+| 🎯 **Metas** | Objetivos financeiros | Menu lateral |
+| 📅 **Agenda** | Eventos e compromissos | Menu lateral |
+| ✅ **Tarefas** | Lista de tarefas | Menu lateral |
+| 🤖 **Agente SDR** | Qualificação de leads | Menu lateral (Business+) |
+| 👤 **Perfil** | Dados e assinatura | Menu lateral |
 
 ---
 
@@ -45,105 +69,157 @@ O Meu Agente Financeiro é uma ferramenta completa para gestão financeira pesso
 
 ### **1. Criando sua Conta**
 
-1. **Acesse o sistema**
-   - Vá para a página de login
-   - Clique em "Criar conta"
-
-2. **Preencha seus dados**
+1. **Acesse o app** em [app.meuagente.api.br](https://app.meuagente.api.br)
+2. **Clique em "Criar conta"**
+3. **Preencha seus dados:**
    - Nome completo
    - Telefone (formato: 5511999999999)
    - Senha segura (mínimo 8 caracteres)
-   - Confirme a senha
+4. **Confirme seu telefone** via código SMS
+5. **Pronto!** Você já pode usar o app
 
-3. **Confirme seu telefone**
-   - Digite o código enviado por SMS
-   - Clique em "Confirmar"
+### **2. Primeiro Acesso**
 
-### **2. Primeiro Login**
+Ao fazer login, você será redirecionado para o **Chat com IA**. Esta é a tela inicial onde você pode:
+- Conversar com o agente de IA
+- Ver o histórico de conversas anteriores
+- Apreciar a animação espacial de boas-vindas
 
-1. **Entre com suas credenciais**
-   - Telefone: 5511999999999
-   - Senha: sua senha
+### **3. Navegando pelo App**
 
-2. **Explore o Dashboard**
-   - Familiarize-se com a interface
-   - Veja os cards de resumo
-   - Observe os gráficos
+O menu lateral oferece acesso rápido a todas as funcionalidades:
 
-### **3. Configuração Inicial**
-
-1. **Defina suas categorias preferidas**
-   - Vá em Configurações
-   - Personalize as categorias de gastos
-   - Adicione categorias específicas
-
-2. **Configure suas metas**
-   - Acesse a seção Metas
-   - Crie sua primeira meta financeira
-   - Defina valores e prazos
+```
+┌────────────────────────┐
+│  🏠 Dashboard          │
+│  💬 Chat               │ ← Tela inicial
+│  💳 Contas             │
+│  🎯 Metas              │
+│  📅 Agenda             │
+│  ✅ Tarefas            │
+│  🤖 Agente SDR         │ ← Business/Premium
+│  📊 Relatórios         │
+│  🔔 Notificações       │
+│  👤 Perfil             │
+└────────────────────────┘
+```
 
 ---
 
 ## 📊 **DASHBOARD**
 
 ### **Visão Geral**
-O Dashboard é sua central de controle, mostrando todas as informações importantes em um só lugar.
+O Dashboard é sua central de controle financeiro, mostrando todas as informações importantes em cards visuais.
 
-### **Cards Principais**
+### **Cards de Métricas**
 
-#### **💰 Total Receitas**
-- Mostra o total de receitas do período
-- Atualização em tempo real
-- Clique para ver detalhes
+```
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│ 💰 RECEITAS  │ │ 💸 DESPESAS  │ │ 📈 SALDO     │ │ 📋 TRANSAÇÕES│
+│  R$ 12.500   │ │  R$ 8.200    │ │  R$ 4.300    │ │     47       │
+│  ↑ +15%      │ │  ↓ -8%       │ │  ↑ +23%      │ │              │
+└──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
+```
 
-#### **💸 Total Despesas**
-- Exibe o total de despesas do período
-- Comparação com períodos anteriores
-- Clique para ver detalhes
+Cada card possui:
+- **Gradiente de cor** semântico (verde = positivo, vermelho = negativo)
+- **Ícone animado** no canto
+- **Valor formatado** em reais
+- **Descrição** explicativa
 
-#### **📈 Saldo**
-- Saldo atual (Receitas - Despesas)
-- Indicador visual (verde/vermelho)
-- Tendência de crescimento
+### **Gráficos Interativos**
 
-#### **📋 Transações**
-- Número total de transações
-- Últimas transações registradas
-- Status de pagamento
+#### **📈 Evolução Diária**
+- Gráfico de área com gradiente
+- Mostra receitas e despesas ao longo do tempo
+- Hover para ver valores específicos
+- Período configurável (7, 30, 90, 365 dias)
 
-### **Gráficos e Visualizações**
+#### **🥧 Distribuição por Categoria**
+- Gráfico de pizza interativo
+- Clique para expandir fatia
+- Mostra valor e percentual
+- Alterne entre receitas e despesas
 
-#### **📊 Evolução Diária**
-- Gráfico de linha mostrando evolução
-- Período dos últimos 30 dias
-- Comparação entre receitas e despesas
+### **Cards Adicionais**
 
-#### **🎯 Metas em Andamento**
-- Progresso das metas ativas
-- Percentual de conclusão
-- Tempo restante
+| Card | Descrição |
+|------|-----------|
+| 🎯 **Meta Principal** | Barra de progresso da meta ativa |
+| 📅 **Contas Próximas** | Lista de vencimentos iminentes |
+| ✅ **Tarefas** | Tarefas pendentes do dia |
 
-#### **⚠️ Contas a Vencer**
-- Próximas contas a vencer
-- Valores e datas
-- Alertas de urgência
+---
 
-#### **📊 Distribuição de Despesas**
-- Gráfico de pizza por categoria
-- Percentuais de gastos
-- Comparação entre períodos
+## 💬 **CHAT COM IA**
 
-### **Ações Rápidas**
+### **O que é?**
+O Chat com IA é um **agente conversacional integrado** disponível para **TODOS os planos** (incluindo Free). Você pode conversar em linguagem natural com a IA para pesquisar, analisar e obter sugestões.
 
-#### **➕ Nova Transação**
-- Botão para adicionar receita/despesa
-- Acesso rápido ao formulário
-- Preenchimento inteligente
+### **Animação de Boas-Vindas**
 
-#### **🔍 Busca**
-- Campo de busca global
-- Busca em tarefas e transações
-- Filtros avançados
+Ao abrir o chat, você é recebido por uma **experiência visual imersiva**:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│    ✦        ★           ✨                    ★            │
+│         ✨                     ✦                           │
+│                                                             │
+│                   🤖                                        │
+│              [Robô 3D]                                      │
+│                                                             │
+│    ★                  ✨              ✦         ★         │
+│                                                             │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │ 💬 Como posso ajudar você hoje?              [➤]   │   │
+│   └─────────────────────────────────────────────────────┘   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Elementos da animação:**
+- 🌌 **60+ estrelas** animadas ascendendo
+- 💫 **Nebulosas** pulsantes com brilho
+- 🤖 **Robô 3D** interativo (Spline)
+- ✨ **Partículas** em movimento parallax
+
+### **Como Usar**
+
+1. **Digite sua mensagem** no campo de input
+2. **Pressione Enter** ou clique no botão de enviar
+3. **Aguarde a resposta** da IA (aparece em streaming)
+4. **Continue a conversa** naturalmente
+
+### **Exemplos de Uso**
+
+#### **🔍 Pesquisas**
+```
+Você: "Pesquise tendências de marketing digital para 2025"
+```
+
+#### **📊 Análises**
+```
+Você: "Analise meus gastos do mês e sugira onde economizar"
+```
+
+#### **💡 Sugestões**
+```
+Você: "Me dê 5 ideias de conteúdo para Instagram de clínica"
+```
+
+#### **📝 Resumos**
+```
+Você: "Resuma as principais notícias de tecnologia da semana"
+```
+
+### **Histórico de Conversas**
+
+O chat salva todas as suas conversas:
+- 📚 Lista de sessões anteriores
+- 🔄 Troca rápida entre sessões
+- 📅 Data e hora de cada conversa
+- 🗑️ Opção de limpar histórico
 
 ---
 
@@ -307,7 +383,57 @@ O Dashboard é sua central de controle, mostrando todas as informações importa
 
 ## 📅 **AGENDA E EVENTOS**
 
-### **Visualizações Disponíveis**
+### **Uma Agenda Completa**
+
+A Agenda do Meu Agente oferece **6 visualizações diferentes** para você organizar seus compromissos da forma que preferir:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  [Dia] [Semana] [Mês] [Timeline] [Lista] [Ano/Heatmap]         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   ┌───────────────────────────────────────────────────────┐     │
+│   │  Janeiro 2025                         < Hoje >        │     │
+│   ├───────┬───────┬───────┬───────┬───────┬───────┬───────┤     │
+│   │  Dom  │  Seg  │  Ter  │  Qua  │  Qui  │  Sex  │  Sáb  │     │
+│   ├───────┼───────┼───────┼───────┼───────┼───────┼───────┤     │
+│   │       │   1   │   2   │   3   │   4   │   5   │   6   │     │
+│   │       │       │  🔵   │       │  🟢   │       │       │     │
+│   └───────┴───────┴───────┴───────┴───────┴───────┴───────┘     │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### **6 Visualizações Disponíveis**
+
+| Visualização | Ícone | Função |
+|--------------|-------|--------|
+| **Dia** | 📅 | Eventos hora a hora do dia selecionado |
+| **Semana** | 📊 | Grid de 7 dias com todos os eventos |
+| **Mês** | 🗓️ | Calendário mensal tradicional |
+| **Timeline** | ⏱️ | Linha do tempo cronológica |
+| **Lista** | 📋 | Lista simplificada de eventos |
+| **Heatmap Ano** | 🔥 | Mapa de calor anual (estilo GitHub) |
+
+### **Funcionalidades Avançadas**
+
+#### **🖱️ Drag-and-Drop**
+- Arraste eventos para reorganizar
+- Mova entre dias facilmente
+- Altere horários arrastando
+
+#### **⚡ Criação Rápida**
+- Clique em qualquer espaço vazio
+- Popover de criação rápida aparece
+- Preencha título e horário
+- Evento criado instantaneamente
+
+#### **🎨 Cores por Tipo**
+- 🔵 **Azul**: Reunião
+- 🟢 **Verde**: Pessoal
+- 🟣 **Roxo**: Lembrete
+- 🟡 **Amarelo**: Alerta
+- 🔴 **Vermelho**: Urgente
 
 #### **📅 Visualização Diária**
 - Eventos organizados por hora
@@ -480,6 +606,122 @@ O Dashboard é sua central de controle, mostrando todas as informações importa
 - **Percentual de conclusão**
 - **Tarefas vencidas**
 - **Progresso visual**
+
+---
+
+## 🤖 **AGENTE SDR**
+
+### **O que é o Agente SDR?**
+
+O **Agente SDR** (Sales Development Representative) é um agente de IA especializado em **qualificar leads automaticamente via WhatsApp**. Disponível para planos **Business** e **Premium**.
+
+### **Como Funciona?**
+
+```
+┌───────────────────────────────────────────────────────────────────┐
+│                                                                   │
+│    📱 Lead envia        🤖 Agente           📊 Lead              │
+│    mensagem via   ───>  qualifica     ───>  classificado         │
+│    WhatsApp             automaticamente     como quente/frio     │
+│                                                                   │
+└───────────────────────────────────────────────────────────────────┘
+```
+
+### **Conectando ao WhatsApp**
+
+#### **1. Acesse a página do Agente SDR**
+- Menu lateral > "Agente SDR"
+- Você verá o card de conexão
+
+#### **2. Escaneie o QR Code**
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│   📱 CONEXÃO WHATSAPP                                       │
+│                                                             │
+│   ┌───────────────────┐                                     │
+│   │  ▄▄▄▄▄▄▄  ▄▄▄▄   │   Status: 🔴 Desconectado           │
+│   │  █     █  █  ▄▄▄ │                                     │
+│   │  █ ▀▀▀ █  █▄▄▄▄▄ │   1. Abra o WhatsApp                │
+│   │  █ ▀▀▀ █  █     █│   2. Vá em "Aparelhos conectados"   │
+│   │  █     █  ▀▀▀▀▀▀ │   3. Escaneie o QR Code             │
+│   └───────────────────┘                                     │
+│                                                             │
+│   [🔄 Gerar novo QR Code]                                   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### **3. Aguarde a conexão**
+- Status muda para 🟢 **Conectado**
+- Nome e número aparecem na tela
+
+### **Configurando o Agente**
+
+#### **📝 Informações do Negócio**
+Forneça contexto sobre seu negócio para o agente responder melhor:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│   📋 CONFIGURAÇÃO DO AGENTE                                 │
+│                                                             │
+│   Nome do Negócio:                                          │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │ Minha Empresa LTDA                                  │   │
+│   └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│   Contexto/Prompt:                                          │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │ Você é um assistente de vendas especializado em...  │   │
+│   │ Nossos produtos são...                              │   │
+│   │ Os preços variam de R$X a R$Y...                    │   │
+│   └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│   [💾 Salvar Configuração]                                  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### **Playground de Testes**
+
+Antes de ativar em produção, teste seu agente no **Playground**:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│   🎮 PLAYGROUND                                             │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   Usuário: Olá, quanto custa o serviço?                     │
+│                                                             │
+│   Agente: Olá! 👋 Fico feliz com seu interesse!            │
+│           Nossos planos começam em R$99/mês...              │
+│                                                             │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │ Digite uma mensagem de teste...              [➤]   │   │
+│   └─────────────────────────────────────────────────────┘   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### **Métricas e Estatísticas**
+
+Acompanhe o desempenho do seu agente:
+
+| Métrica | Descrição |
+|---------|-----------|
+| 💬 **Conversas** | Total de conversas iniciadas |
+| 🔥 **Leads Quentes** | Leads qualificados como interessados |
+| ❄️ **Leads Frios** | Leads que não demonstraram interesse |
+| ⏱️ **Tempo Médio** | Tempo médio de resposta |
+| 📈 **Taxa de Conversão** | % de leads que avançaram |
+
+### **Requisitos**
+
+- ✅ Plano **Business** ou **Premium** ativo
+- ✅ Número de WhatsApp válido
+- ✅ WhatsApp Business (recomendado)
+- ✅ Conexão estável de internet
 
 ---
 

@@ -174,7 +174,7 @@ BEGIN
     
     RETURN v_result;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 COMMENT ON FUNCTION public.update_sdr_config_section IS 'Atualiza uma seção específica do config_json do agente SDR';
 
@@ -199,7 +199,7 @@ BEGIN
     
     RETURN COALESCE(v_config, '{}'::jsonb);
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 COMMENT ON FUNCTION public.get_sdr_config_for_n8n IS 'Retorna a configuração completa do agente SDR formatada para o N8N';
 
@@ -234,7 +234,7 @@ BEGIN
     -- Atualiza a configuração
     RETURN public.update_sdr_config_section(p_phone, 'ia_config', v_ia_config);
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
 COMMENT ON FUNCTION public.update_sdr_ia_config IS 'Atualiza as configurações de IA (temperature, top_p, etc.) do agente SDR';
 

@@ -1,5 +1,5 @@
 # 🔌 DOCUMENTAÇÃO DE API E INTEGRAÇÕES
-## Meu Agente Financeiro - APIs, Webhooks e Integrações
+## Meu Agente - APIs, Webhooks e Integrações
 
 ---
 
@@ -8,10 +8,12 @@
 1. [Visão Geral das APIs](#visão-geral-das-apis)
 2. [Autenticação e Segurança](#autenticação-e-segurança)
 3. [API do Supabase](#api-do-supabase)
-4. [Edge Functions (Stripe)](#edge-functions-stripe)
-5. [Webhooks](#webhooks)
-6. [Integrações Externas](#integrações-externas)
-7. [SDKs e Bibliotecas](#sdks-e-bibliotecas)
+4. [Chat com IA (n8n Webhook)](#chat-com-ia-n8n-webhook)
+5. [Agente SDR (Evolution API)](#agente-sdr-evolution-api)
+6. [Edge Functions (Stripe)](#edge-functions-stripe)
+7. [Webhooks](#webhooks)
+8. [Integrações Externas](#integrações-externas)
+9. [SDKs e Bibliotecas](#sdks-e-bibliotecas)
 
 ---
 
@@ -19,8 +21,10 @@
 
 ### **Arquitetura de APIs**
 
-O Meu Agente Financeiro utiliza uma arquitetura híbrida combinando:
+O Meu Agente utiliza uma arquitetura híbrida combinando:
 - **Supabase APIs**: Backend-as-a-Service para operações CRUD (PostgREST).
+- **n8n Webhooks**: Orquestração de agentes de IA para chat conversacional.
+- **Evolution API**: Conexão WhatsApp para Agente SDR.
 - **Edge Functions (Deno)**: Lógica de negócio complexa, especialmente para integração com Stripe.
 - **Webhooks**: Sincronização assíncrona com gateways de pagamento.
 - **Realtime**: Sincronização de estado do cliente via WebSockets.
@@ -31,6 +35,175 @@ O Meu Agente Financeiro utiliza uma arquitetura híbrida combinando:
 
 ### **Sistema de Autenticação**
 Utiliza Supabase Auth com JWT. O token é passado no header `Authorization: Bearer <token>` para todas as requisições, inclusive Edge Functions.
+
+---
+
+## 💬 **CHAT COM IA (n8n WEBHOOK)**
+
+### **Visão Geral**
+O Chat com IA é integrado via webhook n8n, permitindo que usuários de **TODOS os planos** (incluindo Free) conversem com agentes de IA.
+
+### **Configuração**
+```env
+# Variável de ambiente
+VITE_N8N_WEBHOOK_URL=https://seu-n8n.com/webhook/chat-ia
+```
+
+### **Endpoint**
+
+#### **POST /webhook/chat-ia**
+Envia uma mensagem para o agente de IA e recebe a resposta.
+
+- **URL**: `VITE_N8N_WEBHOOK_URL`
+- **Método**: `POST`
+- **Headers**:
+  ```json
+  { "Content-Type": "application/json" }
+  ```
+- **Body**:
+  ```json
+  {
+    "sessionId": "uuid-da-sessao",
+    "message": "Pesquise sobre marketing digital",
+    "userId": "uuid-do-usuario",
+    "timestamp": "2025-01-15T10:30:00Z"
+  }
+  ```
+- **Resposta**:
+  ```json
+  {
+    "response": "Aqui está um resumo sobre marketing digital...",
+    "sources": ["url1", "url2"],
+    "metadata": {
+      "model": "gpt-4",
+      "tokens_used": 150
+    }
+  }
+  ```
+
+### **Fluxo no n8n**
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Webhook   │────>│   Parse     │────>│   OpenAI    │────>│   Return    │
+│   Trigger   │     │   Request   │     │   Chat      │     │   Response  │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+```
+
+### **Armazenamento de Sessões**
+
+As sessões são armazenadas no Supabase para histórico:
+
+```typescript
+// src/hooks/useChatAgent.ts
+const createSession = async () => {
+  const { data, error } = await supabase
+    .from('chat_ia_sessions')
+    .insert({ cliente_id: user.id, title: 'Nova conversa' })
+    .select()
+    .single()
+  return data
+}
+```
+
+---
+
+## 🤖 **AGENTE SDR (EVOLUTION API)**
+
+### **Visão Geral**
+O Agente SDR usa a Evolution API para conectar ao WhatsApp e qualificar leads automaticamente. Disponível para planos **Business** e **Premium**.
+
+### **Configuração**
+```env
+# Variáveis de ambiente
+VITE_EVOLUTION_API_URL=https://api.evolution-api.com
+VITE_EVOLUTION_API_KEY=sua-api-key
+```
+
+### **Endpoints da Evolution API**
+
+#### **1. POST /instance/create**
+Cria uma nova instância do WhatsApp.
+
+- **Headers**:
+  ```json
+  { "apikey": "sua-api-key" }
+  ```
+- **Body**:
+  ```json
+  {
+    "instanceName": "sdr-cliente-123",
+    "qrcode": true
+  }
+  ```
+- **Resposta**:
+  ```json
+  {
+    "instance": {
+      "instanceName": "sdr-cliente-123",
+      "status": "created"
+    },
+    "qrcode": {
+      "base64": "data:image/png;base64,..."
+    }
+  }
+  ```
+
+#### **2. GET /instance/connectionState/{instanceName}**
+Verifica o status de conexão da instância.
+
+- **Resposta**:
+  ```json
+  {
+    "state": "open" | "close" | "connecting"
+  }
+  ```
+
+#### **3. POST /message/sendText/{instanceName}**
+Envia uma mensagem de texto.
+
+- **Body**:
+  ```json
+  {
+    "number": "5511999999999",
+    "text": "Olá! Como posso ajudar?"
+  }
+  ```
+
+### **Webhook de Mensagens Recebidas**
+
+O Evolution API pode enviar mensagens recebidas para um webhook:
+
+```json
+// POST /n8n/webhook/sdr-messages
+{
+  "event": "messages.upsert",
+  "instance": "sdr-cliente-123",
+  "data": {
+    "key": {
+      "remoteJid": "5511999999999@s.whatsapp.net",
+      "fromMe": false
+    },
+    "message": {
+      "conversation": "Olá, gostaria de saber mais sobre o produto"
+    }
+  }
+}
+```
+
+### **Fluxo de Qualificação**
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│ Lead envia msg  │────>│ Evolution recebe│────>│ n8n processa    │
+│ no WhatsApp     │     │ e encaminha     │     │ com contexto    │
+└─────────────────┘     └─────────────────┘     └────────┬────────┘
+                                                         │
+┌─────────────────┐     ┌─────────────────┐     ┌────────▼────────┐
+│ Lead recebe     │<────│ Evolution envia │<────│ LLM gera        │
+│ resposta        │     │ resposta        │     │ resposta        │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+```
 
 ---
 
@@ -106,9 +279,34 @@ A integridade dos dados de assinatura é garantida pela combinação do Webhook 
 - **API Version**: 2024-06-20
 - **Modo**: Subscription
 - **Produtos**:
-  - Basic
-  - Business
-  - Premium
+  - Basic (R$19,90/mês)
+  - Business (R$49,90/mês)
+  - Premium (R$99,90/mês)
+
+### **n8n (Automação)**
+- **Tipo**: Self-hosted ou Cloud
+- **Uso**: Orquestração de agentes de IA
+- **Webhooks**:
+  - Chat IA (`/webhook/chat-ia`)
+  - SDR Messages (`/webhook/sdr-messages`)
+
+### **Evolution API (WhatsApp)**
+- **Tipo**: Self-hosted ou Cloud
+- **Uso**: Conexão WhatsApp para Agente SDR
+- **Funcionalidades**:
+  - QR Code para conexão
+  - Envio/recebimento de mensagens
+  - Status de conexão
+
+### **OpenAI / LLMs**
+- **Uso**: Processamento de linguagem natural
+- **Modelos**: GPT-4, GPT-3.5-turbo
+- **Via**: n8n (não direto do frontend)
+
+### **Spline (3D)**
+- **Tipo**: CDN
+- **Uso**: Animação 3D do robô no Chat
+- **Componente**: `@splinetool/react-spline`
 
 ---
 
@@ -120,8 +318,39 @@ A integridade dos dados de assinatura é garantida pela combinação do Webhook 
 
 ### **Frontend**
 - `@supabase/supabase-js` (Cliente Auth e Realtime)
+- `@splinetool/react-spline` (Animações 3D)
+- `framer-motion` (Animações)
+- `recharts` (Gráficos)
+- `react-query` (@tanstack/react-query)
+- `zod` (Validações)
+- `date-fns` (Datas)
+
+### **Integrações**
+- `n8n` (Webhooks para IA)
+- `evolution-api` (WhatsApp)
 
 ---
 
-**Documentação de API atualizada em**: 24/11/2025  
-**Versão**: 1.1.0
+## 🔒 **VARIÁVEIS DE AMBIENTE**
+
+```env
+# Supabase
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_ANON_KEY=sua-chave-anon
+
+# n8n (Chat IA)
+VITE_N8N_WEBHOOK_URL=https://seu-n8n.com/webhook/chat-ia
+
+# Evolution API (SDR)
+VITE_EVOLUTION_API_URL=https://api.evolution-api.com
+VITE_EVOLUTION_API_KEY=sua-api-key
+
+# Stripe (Backend only)
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+---
+
+**Documentação de API atualizada em**: Janeiro 2025  
+**Versão**: 2.0.0

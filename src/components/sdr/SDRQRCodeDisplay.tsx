@@ -87,11 +87,11 @@ export function SDRQRCodeDisplay({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="qrcode" className="space-y-4">
-            <div className="flex justify-center">
+          <TabsContent value="qrcode" className="space-y-4 flex flex-col items-center">
+            <div className="flex justify-center w-full">
               <div
                 className={cn(
-                  'p-4 bg-white rounded-lg shadow-inner',
+                  'p-4 bg-white rounded-lg shadow-inner min-h-[260px] min-w-[260px] flex items-center justify-center',
                   isLoading && 'opacity-50'
                 )}
               >
@@ -129,11 +129,11 @@ export function SDRQRCodeDisplay({
             </p>
           </TabsContent>
 
-          <TabsContent value="pairing" className="space-y-4">
-            <div className="flex flex-col items-center gap-4">
+          <TabsContent value="pairing" className="space-y-4 flex flex-col items-center">
+            <div className="flex flex-col items-center gap-4 w-full">
               {pairingCode ? (
                 <>
-                  <div className="text-4xl font-mono font-bold tracking-[0.5em] text-center bg-muted px-6 py-4 rounded-lg">
+                  <div className="text-4xl font-mono font-bold tracking-[0.5em] text-center bg-muted px-6 py-4 rounded-lg min-h-[88px] flex items-center justify-center">
                     {pairingCode}
                   </div>
 
@@ -157,25 +157,12 @@ export function SDRQRCodeDisplay({
                   </Button>
                 </>
               ) : (
-                <>
-                  <div className="text-center py-4">
-                    <Smartphone className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
-                    <p className="text-muted-foreground mb-4">
-                      O código de pareamento não está disponível no momento.
-                    </p>
-                    {onRequestPairingCode && (
-                      <Button
-                        variant="outline"
-                        onClick={onRequestPairingCode}
-                        disabled={isLoading}
-                        className="gap-2"
-                      >
-                        <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
-                        {isLoading ? 'Solicitando...' : 'Solicitar Código'}
-                      </Button>
-                    )}
-                  </div>
-                </>
+                <div className="flex flex-col items-center justify-center w-[260px] min-h-[260px] rounded-lg bg-muted/40 border border-dashed border-muted-foreground/30 text-center p-6">
+                  <Smartphone className="h-12 w-12 text-muted-foreground/50 mb-3" />
+                  <p className="text-muted-foreground">
+                    O código de pareamento não está disponível no momento.
+                  </p>
+                </div>
               )}
             </div>
 
@@ -197,7 +184,7 @@ export function SDRQRCodeDisplay({
               className="gap-2"
             >
               <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
-              {isLoading ? 'Atualizando...' : 'Atualizar QR Code'}
+              {isLoading ? 'Atualizando...' : 'Atualizar Código'}
             </Button>
           </div>
         )}

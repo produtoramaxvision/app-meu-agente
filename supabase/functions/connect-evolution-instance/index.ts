@@ -152,7 +152,8 @@ serve(async (req: Request) => {
       }
     }
 
-    // Se não está conectado, buscar novo QR Code
+    // Se não está conectado, buscar novo QR Code / Pairing Code
+    // Mantemos os valores atuais como fallback e só sobrescrevemos quando a API devolver algo
     let qrCode = instance.qr_code
     let pairingCode = instance.pairing_code
 
@@ -210,9 +211,18 @@ serve(async (req: Request) => {
           count: connectData.count,
         }))
         
-        // Evolution API v2.3.7 retorna no nível raiz
-        qrCode = connectData.base64 || null
-        pairingCode = connectData.pairingCode || null
+        // Evolution API v2.3.7 retorna no nível raiz. Alguns provedores devolvem apenas "code"
+        // (string que pode ser usada para gerar o QR) em vez de "base64".
+        // Só sobrescrevemos se houver valor novo para não perder o pairing/QR que já temos no banco.
+        const newQrCode = connectData.base64 || connectData.code || null
+        if (newQrCode) {
+          qrCode = newQrCode
+        }
+
+        const newPairingCode = connectData.pairingCode?.trim() || null
+        if (newPairingCode) {
+          pairingCode = newPairingCode
+        }
         
         console.log('Valores extraídos - QR Code:', qrCode ? 'PRESENTE' : 'NULL', '| Pairing Code:', pairingCode || 'NULL')
 
@@ -223,7 +233,9 @@ serve(async (req: Request) => {
             qr_code: qrCode,
             pairing_code: pairingCode,
             last_qr_update: new Date().toISOString(),
-            connection_status: connectionState,
+            // Se recebemos códigos, consideramos estado "connecting" para forçar o front a exibir
+            // os valores mais recentes até confirmar conexão.
+            connection_status: connectionState === 'connected' ? 'connected' : 'connecting',
           })
           .eq('id', instance.id)
       }
@@ -238,6 +250,10 @@ serve(async (req: Request) => {
           pairing_code: null,
         })
         .eq('id', instance.id)
+      
+      // Limpar valores quando conectado
+      qrCode = null
+      pairingCode = null
     }
 
     return new Response(
@@ -248,10 +264,10 @@ serve(async (req: Request) => {
           instance_name: instance.instance_name,
           connection_status: connectionState,
           whatsapp_number: instance.whatsapp_number,
-          qr_code: connectionState !== 'connected' ? qrCode : null,
-          pairing_code: connectionState !== 'connected' ? pairingCode : null,
-          last_qr_update: instance.last_qr_update,
-          connected_at: instance.connected_at,
+          qr_code: qrCode, // Usar valores atualizados
+          pairing_code: pairingCode, // Usar valores atualizados
+          last_qr_update: connectionState !== 'connected' ? new Date().toISOString() : instance.last_qr_update,
+          connected_at: connectionState === 'connected' ? (instance.connected_at || new Date().toISOString()) : instance.connected_at,
         },
       }),
       { 

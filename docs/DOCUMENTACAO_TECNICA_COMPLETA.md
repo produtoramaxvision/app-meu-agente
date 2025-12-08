@@ -1,5 +1,5 @@
 # 📚 DOCUMENTAÇÃO TÉCNICA COMPLETA
-## Meu Agente Financeiro - Sistema de Gestão Financeira Pessoal
+## Meu Agente - Sistema de Gestão Financeira e Agentes de IA
 
 ---
 
@@ -8,35 +8,38 @@
 1. [Visão Geral do Sistema](#visão-geral-do-sistema)
 2. [Arquitetura e Tecnologias](#arquitetura-e-tecnologias)
 3. [Estrutura do Projeto](#estrutura-do-projeto)
-4. [Configuração e Instalação](#configuração-e-instalação)
-5. [Funcionalidades Implementadas](#funcionalidades-implementadas)
-6. [Gestão de Assinaturas e Planos](#gestão-de-assinaturas-e-planos)
-7. [Validações e Segurança](#validações-e-segurança)
-8. [Integração com Supabase](#integração-com-supabase)
-9. [Componentes e Hooks](#componentes-e-hooks)
-10. [Testes e Validação](#testes-e-validação)
-11. [Deploy e Produção](#deploy-e-produção)
+4. [Funcionalidades do App](#funcionalidades-do-app)
+5. [Chat com IA Integrado](#chat-com-ia-integrado)
+6. [Agente SDR](#agente-sdr)
+7. [Animações e UI/UX](#animações-e-uiux)
+8. [Gestão de Assinaturas e Planos](#gestão-de-assinaturas-e-planos)
+9. [Validações e Segurança](#validações-e-segurança)
+10. [Integração com Supabase](#integração-com-supabase)
+11. [Componentes e Hooks](#componentes-e-hooks)
+12. [Deploy e Produção](#deploy-e-produção)
 
 ---
 
 ## 🎯 **VISÃO GERAL DO SISTEMA**
 
 ### **Descrição**
-O Meu Agente Financeiro é uma aplicação web completa para gestão financeira pessoal, desenvolvida com React, TypeScript e Supabase. O sistema oferece funcionalidades avançadas para controle de receitas, despesas, metas, tarefas e agenda, além de planos de assinatura integrados via Stripe.
+O Meu Agente é uma aplicação web completa que combina **gestão financeira pessoal** com **agentes de IA conversacionais**. O sistema oferece uma experiência visual imersiva com animações 3D, chat com IA integrado para todos os planos, e integração com WhatsApp para planos pagos.
 
 ### **Características Principais**
-- ✅ **Interface Moderna**: Design responsivo com ShadcnUI v4
-- ✅ **Validação Robusta**: Sistema de validação com Zod
-- ✅ **Segurança Avançada**: RLS (Row Level Security) no Supabase
-- ✅ **Performance Otimizada**: Hooks customizados e lazy loading
-- ✅ **Funcionalidades Completas**: Dashboard, relatórios, exportação, drag-and-drop
-- ✅ **Assinaturas**: Integração completa com Stripe (Checkout, Portal, Webhooks)
+- ✅ **Interface Premium**: Design com glassmorphism, gradientes e animações Framer Motion
+- ✅ **Chat com IA**: Agente conversacional integrado (disponível até no plano Free)
+- ✅ **Animações 3D**: Cena espacial interativa com Spline na tela de chat
+- ✅ **Agente SDR**: Qualificação de leads via WhatsApp (Business/Premium)
+- ✅ **Dashboard Financeiro**: Gráficos interativos e métricas em tempo real
+- ✅ **Agenda Avançada**: 6 visualizações com drag-and-drop
+- ✅ **PWA Ready**: Funciona como app nativo no celular
+- ✅ **Realtime**: Atualizações instantâneas via WebSocket
+- ✅ **Assinaturas Stripe**: Checkout, Portal e Webhooks
 
 ### **Status Atual**
-- **Versão**: 1.1.0
+- **Versão**: 2.0.0
 - **Status**: ✅ **PRODUÇÃO READY**
-- **Validação**: ✅ **100% das funcionalidades testadas e funcionando**
-- **Última Atualização**: 24/11/2025
+- **Última Atualização**: Dezembro/2025
 
 ---
 
@@ -77,13 +80,17 @@ O Meu Agente Financeiro é uma aplicação web completa para gestão financeira 
     ┌─────────┐            ┌─────────────┐        ┌──────────────┐
     │ ShadcnUI│            │ Edge Funcs  │◄──────►│   Stripe     │
     │ Tailwind│            │ (Webhooks)  │        │  (Payment)   │
-    │ Zod     │            └─────────────┘        └──────────────┘
-    └─────────┘                  ▲
-                                 │
-                           ┌─────────────┐
-                           │  Realtime   │
-                           │ Subscription│
-                           └─────────────┘
+    │ Framer  │            └─────────────┘        └──────────────┘
+    │ Motion  │                  ▲
+    │ Spline  │                  │
+    └─────────┘            ┌─────────────┐
+         │                 │  Realtime   │
+         ▼                 │ Subscription│
+    ┌─────────┐            └─────────────┘
+    │ n8n     │                  ▲
+    │ Webhook │◄─────────────────┘
+    │(Chat IA)│
+    └─────────┘
 ```
 
 ---
@@ -91,100 +98,355 @@ O Meu Agente Financeiro é uma aplicação web completa para gestão financeira 
 ## 📁 **ESTRUTURA DO PROJETO**
 
 ```
-meu-agente-fin/
+meu-agente/
 ├── src/
 │   ├── components/          # Componentes reutilizáveis
-│   │   ├── ui/             # Componentes base (ShadcnUI)
-│   │   ├── forms/          # Formulários específicos
-│   │   └── layout/         # Componentes de layout
+│   │   ├── ui/             # Componentes base (ShadcnUI v4)
+│   │   ├── chat/           # Componentes do Chat com IA
+│   │   │   ├── ChatIntroAnimation.tsx  # Animação espacial 3D
+│   │   │   ├── ChatMessage.tsx         # Mensagens do chat
+│   │   │   ├── PromptInputBox.tsx      # Input com histórico
+│   │   │   └── ...
+│   │   ├── sdr/            # Componentes do Agente SDR
+│   │   │   ├── SDRConnectionCard.tsx   # Conexão WhatsApp
+│   │   │   ├── SDRConfigForm.tsx       # Configurações
+│   │   │   ├── SDRPlayground.tsx       # Testes
+│   │   │   └── ...
+│   │   ├── layout/         # Componentes de layout
+│   │   └── ...
 │   ├── pages/              # Páginas da aplicação
-│   │   ├── auth/           # Autenticação
-│   │   ├── Dashboard.tsx   # Página principal
-│   │   ├── Profile.tsx     # Perfil e Assinatura
-│   │   └── ...             # Outras páginas
+│   │   ├── Dashboard.tsx   # Dashboard financeiro
+│   │   ├── Chat.tsx        # Chat com IA
+│   │   ├── AgenteSDR.tsx   # Agente SDR
+│   │   ├── Contas.tsx      # Gestão de contas
+│   │   ├── Goals.tsx       # Metas financeiras
+│   │   ├── Agenda.tsx      # Agenda e eventos
+│   │   ├── Tasks.tsx       # Tarefas
+│   │   ├── Profile.tsx     # Perfil e assinatura
+│   │   └── ...
 │   ├── hooks/              # Hooks customizados
-│   │   ├── usePlanInfo.ts  # Lógica de planos
+│   │   ├── useChatAgent.ts       # Lógica do chat com IA
+│   │   ├── useSDRAgent.ts        # Lógica do agente SDR
+│   │   ├── usePlanInfo.ts        # Informações de planos
+│   │   ├── useFinancialData.ts   # Dados financeiros
 │   │   └── ...
 │   ├── contexts/           # Contextos React
-│   │   ├── AuthContext.tsx # Autenticação e Realtime
+│   │   ├── AuthContext.tsx       # Autenticação + Realtime
+│   │   ├── SearchContext.tsx     # Busca global
+│   │   └── ThemeContext.tsx      # Tema claro/escuro
+│   ├── types/              # Tipos TypeScript
+│   │   ├── chat.ts         # Tipos do chat
 │   │   └── ...
 │   └── integrations/       # Integrações externas
 │       └── supabase/
 ├── supabase/               # Configuração Supabase
-│   ├── functions/          # Edge Functions (Stripe)
-│   ├── migrations/         # Migrações do banco
-│   └── config.toml         # Configuração
-├── tests/                  # Testes automatizados
-├── docs/                   # Documentação
+│   ├── functions/          # Edge Functions
+│   │   ├── create-checkout-session/
+│   │   ├── create-portal-session/
+│   │   └── stripe-webhook/
+│   └── migrations/         # Migrações do banco
+├── docs/                   # Documentação técnica
+├── docs-site/              # Documentação do site
 └── public/                 # Arquivos estáticos
 ```
 
 ---
 
-## ⚙️ **CONFIGURAÇÃO E INSTALAÇÃO**
+## 🚀 **FUNCIONALIDADES DO APP**
 
-### **Pré-requisitos**
-- Node.js 18.0+
-- npm ou yarn
-- Conta Supabase
-- Conta Stripe (para pagamentos)
-- Git
+### **1. Dashboard Financeiro**
+- ✅ Cards de métricas com gradientes animados
+- ✅ Gráfico de evolução diária (área)
+- ✅ Gráfico de distribuição por categoria (pizza interativa)
+- ✅ Card de meta principal com progresso
+- ✅ Lista de contas próximas
+- ✅ Tarefas pendentes
+- ✅ Filtro por período (7, 30, 90, 365 dias)
 
-### **Instalação Local**
+### **2. Gestão de Contas**
+- ✅ Abas: A Pagar, A Receber, Pagas, Recebidas
+- ✅ Cards de resumo com totais
+- ✅ Lista de transações com animações stagger
+- ✅ Filtros por categoria e período
+- ✅ Ações: Editar, Duplicar, Excluir
 
-1. **Clone o repositório**
-```bash
-git clone <repository-url>
-cd meu-agente-fin
+### **3. Metas Financeiras**
+- ✅ Criar metas com valor e prazo
+- ✅ Barra de progresso animada
+- ✅ Tipos: Economia, Compra, Viagem, Educação
+- ✅ Ações: Editar, Concluir, Excluir
+
+### **4. Agenda e Eventos**
+- ✅ 6 visualizações: Dia, Semana, Mês, Lista, Timeline, Ano
+- ✅ Drag-and-drop para eventos
+- ✅ Criação rápida via popover
+- ✅ Filtros: Calendário, Categoria, Prioridade, Status
+- ✅ Integração Google Calendar (planos pagos)
+
+### **5. Tarefas**
+- ✅ Estatísticas: Total, Pendentes, Concluídas, Atrasadas
+- ✅ Filtros por status e busca
+- ✅ Prioridades com cores
+- ✅ Ações: Concluir, Editar, Duplicar, Excluir
+
+### **6. Notificações**
+- ✅ Bell dropdown com contador
+- ✅ Tipos: Financeiras, Agenda, Metas, Sistema
+- ✅ Marcar como lidas
+- ✅ Link para página completa
+
+### **7. Perfil e Assinaturas**
+- ✅ Upload de avatar com crop
+- ✅ Edição de dados pessoais
+- ✅ Visualização do plano atual
+- ✅ Cards de upgrade
+- ✅ Redirecionamento para Stripe
+
+---
+
+## 🤖 **CHAT COM IA INTEGRADO**
+
+### **Visão Geral**
+O Chat com IA é um agente conversacional integrado diretamente no app, disponível para **todos os planos** (incluindo Free). Ele se conecta a um webhook n8n para processamento inteligente.
+
+### **Arquitetura do Chat**
+
+```
+┌─────────────────┐        ┌─────────────────┐        ┌─────────────────┐
+│   Usuário       │        │   App (React)   │        │   n8n Webhook   │
+│                 │───────►│                 │───────►│                 │
+│   Envia msg     │        │   useChatAgent  │        │   Processa IA   │
+└─────────────────┘        └─────────────────┘        └─────────────────┘
+                                    │                          │
+                                    ▼                          ▼
+                           ┌─────────────────┐        ┌─────────────────┐
+                           │   Supabase      │        │   Resposta IA   │
+                           │   (Histórico)   │◄───────│                 │
+                           └─────────────────┘        └─────────────────┘
 ```
 
-2. **Instale as dependências**
-```bash
-npm install
+### **Hook useChatAgent**
+
+```typescript
+// Funcionalidades principais
+export function useChatAgent() {
+  // Estados
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [optimisticMessages, setOptimisticMessages] = useState<ChatMessage[]>([]);
+  
+  // Queries
+  const { data: allSessions } = useQuery({...}); // Todas as sessões
+  const { data: session } = useQuery({...});     // Sessão ativa
+  const { data: messages } = useQuery({...});    // Mensagens da sessão
+  
+  // Mutations
+  const sendMessage = useMutation({...});        // Enviar mensagem
+  const createSession = useMutation({...});      // Criar sessão
+  
+  // Funções expostas
+  return {
+    messages,
+    allSessions,
+    sendMessage,
+    retryMessage,
+    clearMessages,
+    selectSession,
+    isLoading,
+    messagesEndRef,
+    isWebhookConfigured,
+  };
+}
 ```
 
-3. **Configure as variáveis de ambiente**
-```bash
-cp .env.example .env.local
+### **Animação Espacial (ChatIntroAnimation)**
+
+O componente cria uma experiência visual imersiva:
+
+```typescript
+// Elementos da animação
+const starPositions = useMemo(() => generateStarPositions(60), []);
+
+// Estrutura
+<div className="absolute inset-0 bg-gradient-to-b from-black via-[#050508] to-[#0a0a0f]">
+  {/* Nebulosas pulsantes */}
+  <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.08, 0.12, 0.08] }} />
+  
+  {/* Campo de estrelas */}
+  {starPositions.map(star => (
+    <motion.div animate={{ opacity: [0, star.opacity, 0], y: [0, -150, -300] }} />
+  ))}
+  
+  {/* Robô 3D (Spline) */}
+  <SplineScene scene="https://prod.spline.design/..." />
+  
+  {/* Input flutuante */}
+  <PromptInputBox />
+</div>
 ```
 
-4. **Configure o Supabase e Stripe**
-- Configure as chaves do Stripe no Supabase Secrets.
-- Execute as migrações locais.
+### **Tabelas do Banco**
 
-5. **Execute as migrações**
-```bash
-supabase db push
-```
+```sql
+-- Sessões de chat
+CREATE TABLE chat_ia_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  phone TEXT NOT NULL REFERENCES clientes(phone),
+  title TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 
-6. **Inicie o servidor de desenvolvimento**
-```bash
-npm run dev
+-- Mensagens
+CREATE TABLE chat_ia_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id UUID NOT NULL REFERENCES chat_ia_sessions(id),
+  role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+  content TEXT NOT NULL,
+  metadata JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 ```
 
 ---
 
-## 🚀 **FUNCIONALIDADES IMPLEMENTADAS**
+## 🎯 **AGENTE SDR**
 
-### **1. Sistema de Autenticação**
-- ✅ Login com telefone e senha
-- ✅ Registro de novos usuários
-- ✅ Sessão persistente e segura
-- ✅ Sincronização Realtime de dados do usuário
+### **Visão Geral**
+O Agente SDR (Sales Development Representative) é um assistente de vendas com IA que qualifica leads automaticamente via WhatsApp. Disponível apenas nos planos **Business** e **Premium**.
 
-### **2. Dashboard Financeiro**
-- ✅ Visão geral das finanças
-- ✅ Gráficos de evolução e resumo
+### **Arquitetura**
 
-### **3. Gestão de Contas**
-- ✅ Cadastro de receitas e despesas
-- ✅ Categorização e validação
+```
+┌─────────────────┐        ┌─────────────────┐        ┌─────────────────┐
+│   WhatsApp      │        │   Evolution API │        │   n8n           │
+│   (Mensagens)   │◄──────►│   (Conexão)     │◄──────►│   (Automação)   │
+└─────────────────┘        └─────────────────┘        └─────────────────┘
+                                    │                          │
+                                    ▼                          ▼
+                           ┌─────────────────┐        ┌─────────────────┐
+                           │   Supabase      │        │   IA (GPT/etc)  │
+                           │   (Config/Logs) │        │   Processamento │
+                           └─────────────────┘        └─────────────────┘
+```
 
-### **4. Assinaturas e Planos (Stripe)**
-- ✅ Planos: Free, Basic, Business, Premium
-- ✅ Upgrade/Downgrade via Stripe Checkout e Portal
-- ✅ Webhooks para sincronização automática
-- ✅ Tratamento de cancelamentos e renovações
+### **Hook useSDRAgent**
+
+```typescript
+export function useSDRAgent() {
+  return {
+    instance,           // Dados da instância WhatsApp
+    config,             // Configurações do agente
+    isAgentActive,      // Status de ativação
+    isConnected,        // Status da conexão WhatsApp
+    isLoadingInstance,
+    isLoadingConfig,
+    toggleActive,       // Ativar/pausar agente
+    isSaving,
+  };
+}
+```
+
+### **Componentes SDR**
+
+| Componente | Função |
+|------------|--------|
+| `SDRConnectionCard` | Exibe QR Code e status da conexão |
+| `SDRConfigForm` | Formulário de configuração |
+| `SDRPlayground` | Área de testes do agente |
+| `SDRStatusBadge` | Badge de status (conectado/desconectado) |
+| `SDRQRCodeDisplay` | Exibição do QR Code |
+
+### **Fluxo de Qualificação**
+
+```
+1. Lead envia mensagem
+       ↓
+2. Recepção humanizada
+       ↓
+3. Coleta: nome, empresa, interesse, urgência, orçamento
+       ↓
+4. Qualificação: fit (alto/médio/baixo)
+       ↓
+5. Oferta: reunião ou orçamento
+       ↓
+6. Agendamento automático (Google Calendar)
+       ↓
+7. Confirmação (WhatsApp + e-mail)
+```
+
+---
+
+## ✨ **ANIMAÇÕES E UI/UX**
+
+### **Tecnologias de Animação**
+
+| Tecnologia | Uso |
+|------------|-----|
+| **Framer Motion** | Animações de componentes React |
+| **Spline** | Cenas 3D interativas |
+| **Tailwind** | Transições CSS |
+| **Recharts** | Gráficos animados |
+
+### **Padrões de Animação**
+
+#### **Fade In**
+```typescript
+<motion.div
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ duration: 0.3 }}
+/>
+```
+
+#### **Slide Up**
+```typescript
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+/>
+```
+
+#### **Stagger Children**
+```typescript
+{items.map((item, index) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ delay: index * 0.1 }}
+  />
+))}
+```
+
+#### **Hover Scale**
+```typescript
+<motion.button
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+/>
+```
+
+### **Design System**
+
+#### **Glassmorphism**
+```css
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+```
+
+#### **Gradientes**
+```css
+.gradient-card {
+  background: linear-gradient(
+    to bottom right,
+    var(--surface),
+    var(--surface-95),
+    var(--background)
+  );
+}
+```
 
 ---
 

@@ -1,17 +1,63 @@
-# 📚 DOCUMENTAÇÃO COMPLETA DO SISTEMA
-## Meu Agente Financeiro - Gestão Financeira Pessoal
+# 🤖 MEU AGENTE
+## Gestão Financeira Pessoal + Agentes de IA Conversacionais
 
 ---
 
 ## 🎯 **VISÃO GERAL**
 
-O **Meu Agente Financeiro** é uma aplicação web completa para gestão financeira pessoal, desenvolvida com tecnologias modernas e arquitetura escalável. O sistema oferece funcionalidades avançadas para controle de receitas, despesas, metas, tarefas e agenda.
+O **Meu Agente** é uma aplicação web completa que combina **gestão financeira pessoal** com **agentes de IA conversacionais**. O sistema oferece uma experiência visual premium com animações imersivas, chat com IA integrado e ferramentas poderosas para organizar sua vida financeira.
+
+### **🌟 Diferenciais**
+
+| Característica | Descrição |
+|----------------|-----------|
+| 🤖 **Chat com IA** | Converse com agentes de IA diretamente no app (todos os planos!) |
+| 🌌 **Experiência Imersiva** | Animações espaciais 3D na tela de chat |
+| 📊 **Dashboard Completo** | Métricas, gráficos e visão geral em tempo real |
+| 📅 **Agenda Avançada** | 6 visualizações com drag-and-drop |
+| 🎯 **Agente SDR** | Qualificação automática de leads via WhatsApp |
+| ⚡ **Tempo Real** | Atualizações instantâneas via WebSocket |
+| 📱 **PWA** | Funciona como app nativo no celular |
 
 ### **Status do Projeto**
-- ✅ **Versão**: 1.0.0
+- ✅ **Versão**: 2.0.0
 - ✅ **Status**: PRODUÇÃO READY
 - ✅ **Validação**: 100% das funcionalidades testadas e funcionando
-- ✅ **Última Atualização**: 16/01/2025
+- ✅ **Última Atualização**: Janeiro 2025
+
+---
+
+## 🚀 **PRINCIPAIS FUNCIONALIDADES**
+
+### **💬 Chat com IA (Todos os Planos)**
+- Converse com agentes de IA em linguagem natural
+- Animação de boas-vindas com robô 3D interativo
+- Histórico de sessões salvo
+- Pesquisas, análises e sugestões inteligentes
+
+### **📊 Dashboard Financeiro**
+- Cards de métricas com gradientes animados
+- Gráficos de área e pizza interativos
+- Evolução diária e distribuição por categoria
+- Metas e contas a vencer
+
+### **🤖 Agente SDR (Business/Premium)**
+- Qualificação automática de leads via WhatsApp
+- Conexão via QR Code (Evolution API)
+- Playground para testes
+- Métricas de conversão
+
+### **📅 Agenda com 6 Visualizações**
+- Dia, Semana, Mês, Timeline, Lista, Heatmap Anual
+- Drag-and-drop de eventos
+- Criação rápida com popover
+- Cores por tipo de evento
+
+### **🎯 Metas Financeiras**
+- Progresso visual com barra animada
+- Ícones customizáveis
+- Categorias (Economia, Compra, Viagem, Educação)
+- Alertas de prazo
 
 ---
 
@@ -23,28 +69,27 @@ O **Meu Agente Financeiro** é uma aplicação web completa para gestão finance
   - Arquitetura e tecnologias
   - Estrutura do projeto
   - Configuração e instalação
-  - Funcionalidades implementadas
-  - Validações e segurança
-  - Integração com Supabase
-  - Componentes e hooks
-  - Testes e validação
-  - Deploy e produção
+  - Sistema de Chat com IA
+  - Sistema de Agente SDR
+  - Integrações (n8n, Evolution, Stripe)
+
+### **📱 Funcionalidades do App**
+- **[📱 Funcionalidades Completas do App](docs-site/APP_FUNCIONALIDADES_COMPLETAS.md)**
+  - Interface visual e animações
+  - Chat com IA e experiência imersiva
+  - Dashboard financeiro
+  - Agente SDR
+  - Agenda e tarefas
 
 ### **👤 Guia do Usuário**
 - **[👤 Guia Completo do Usuário](docs/GUIA_USUARIO_COMPLETO.md)**
   - Introdução ao sistema
   - Primeiros passos
   - Dashboard
+  - Chat com IA
   - Gestão de contas
-  - Metas financeiras
+  - Agente SDR
   - Agenda e eventos
-  - Tarefas
-  - Relatórios
-  - Notificações
-  - Sistema de suporte
-  - Configurações
-  - Dicas e truques
-  - Solução de problemas
 
 ### **🔧 Documentação de Manutenção**
 - **[🔧 Documentação de Manutenção](docs/DOCUMENTACAO_MANUTENCAO.md)**
@@ -62,26 +107,20 @@ O **Meu Agente Financeiro** é uma aplicação web completa para gestão finance
 ### **🔌 Documentação de API**
 - **[🔌 Documentação de API e Integrações](docs/DOCUMENTACAO_API_INTEGRACOES.md)**
   - Visão geral das APIs
+  - Chat com IA (n8n Webhook)
+  - Agente SDR (Evolution API)
+  - Edge Functions (Stripe)
   - Autenticação e segurança
-  - API do Supabase
-  - Endpoints customizados
-  - Webhooks
-  - Integrações externas
-  - SDKs e bibliotecas
-  - Rate limiting
-  - Códigos de erro
-  - Exemplos de uso
 
 ### **🏗️ Documentação de Arquitetura**
 - **[🏗️ Documentação de Arquitetura](docs/DOCUMENTACAO_ARQUITETURA.md)**
   - Visão geral da arquitetura
-  - Arquitetura de alto nível
+  - Arquitetura do Chat com IA
+  - Arquitetura do Agente SDR
   - Arquitetura frontend
   - Arquitetura backend
-  - Arquitetura de dados
   - Padrões de design
   - Fluxos de dados
-  - Decisões arquiteturais
   - Escalabilidade
   - Segurança
 
@@ -91,7 +130,7 @@ O **Meu Agente Financeiro** é uma aplicação web completa para gestão finance
 
 ### **Variáveis de Ambiente (.env)**
 
-O projeto utiliza variáveis de ambiente para configurar a conexão com o Supabase. Um arquivo `.env.example` está disponível como template.
+O projeto utiliza variáveis de ambiente para configurar a conexão com o Supabase e integrações. Um arquivo `.env.example` está disponível como template.
 
 **Passos para configuração:**
 
@@ -100,20 +139,28 @@ O projeto utiliza variáveis de ambiente para configurar a conexão com o Supaba
    cp .env.example .env
    ```
 
-2. **Obtenha suas credenciais do Supabase:**
+2. **Configure as variáveis de ambiente:**
+   ```env
+   # Supabase (Obrigatório)
+   VITE_SUPABASE_PROJECT_ID="seu-project-id"
+   VITE_SUPABASE_URL="https://seu-project-id.supabase.co"
+   VITE_SUPABASE_ANON_KEY="sua-anon-key"
+
+   # n8n - Chat com IA (Obrigatório para chat funcionar)
+   VITE_N8N_WEBHOOK_URL="https://seu-n8n.com/webhook/chat-ia"
+
+   # Evolution API - Agente SDR (Opcional)
+   VITE_EVOLUTION_API_URL="https://api.evolution-api.com"
+   VITE_EVOLUTION_API_KEY="sua-api-key"
+   ```
+
+3. **Obtenha suas credenciais do Supabase:**
    - Acesse seu projeto no [Supabase Dashboard](https://app.supabase.com)
    - Vá em **Settings > API**
    - Copie as seguintes informações:
      - **Project URL** → `VITE_SUPABASE_URL`
      - **Project ID** → `VITE_SUPABASE_PROJECT_ID`
      - **anon/public key** → `VITE_SUPABASE_ANON_KEY`
-
-3. **Edite o arquivo `.env`:**
-   ```env
-   VITE_SUPABASE_PROJECT_ID="seu-project-id"
-   VITE_SUPABASE_URL="https://seu-project-id.supabase.co"
-   VITE_SUPABASE_ANON_KEY="sua-anon-key"
-   ```
 
 **⚠️ IMPORTANTE:**
 - ❌ **NUNCA** faça commit do arquivo `.env` (ele já está no `.gitignore`)
@@ -132,10 +179,7 @@ O projeto utiliza variáveis de ambiente para configurar a conexão com o Supaba
    # Copie o arquivo .env.example para .env
    cp .env.example .env
    
-   # Edite o arquivo .env com suas credenciais do Supabase
-   # VITE_SUPABASE_PROJECT_ID=seu-project-id
-   # VITE_SUPABASE_URL=https://seu-project-id.supabase.co
-   # VITE_SUPABASE_ANON_KEY=sua-anon-key
+   # Edite o arquivo .env com suas credenciais
    ```
 3. **Execute as migrações** do banco de dados
 4. **Inicie o servidor** de desenvolvimento:
@@ -146,10 +190,10 @@ O projeto utiliza variáveis de ambiente para configurar a conexão com o Supaba
 
 ### **Para Usuários**
 1. **Leia o [Guia do Usuário](docs/GUIA_USUARIO_COMPLETO.md)**
-2. **Crie sua conta** no sistema
-3. **Configure suas preferências** iniciais
-4. **Explore as funcionalidades** disponíveis
-5. **Consulte as dicas** para maximizar o uso
+2. **Acesse o app** em https://app.meuagente.api.br
+3. **Crie sua conta** com telefone + SMS
+4. **Explore o Chat com IA** (disponível em todos os planos!)
+5. **Configure suas preferências** no perfil
 
 ### **Para Administradores**
 1. **Leia a [Documentação de Manutenção](docs/DOCUMENTACAO_MANUTENCAO.md)**

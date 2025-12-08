@@ -1,17 +1,94 @@
 // =============================================================================
-// Edge Function: evolution-webhook
+// Edge Function: evolution-webhook v7.1 (Optimized + Documents)
 // Recebe webhooks da Evolution API (QR Code, Connection, Messages)
 // IMPORTANTE: Esta função deve ser exposta com --no-verify-jwt
+// 
+// v7.1 Otimizações:
+// - Filtra mensagens do próprio agente (fromMe: true)
+// - Suporta: textos, áudios, imagens e DOCUMENTOS
+// - Envia payload otimizado ao N8N (apenas campos essenciais)
+// - Validação robusta com Zod
 // =============================================================================
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-csrf-token',
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 }
+
+// =============================================================================
+// Schemas de Validação Zod
+// =============================================================================
+
+const MessageKeySchema = z.object({
+  remoteJid: z.string(),
+  fromMe: z.boolean(),
+  id: z.string(),
+})
+
+const TextMessageSchema = z.object({
+  conversation: z.string().optional(),
+  extendedTextMessage: z.object({
+    text: z.string(),
+  }).optional(),
+})
+
+const AudioMessageSchema = z.object({
+  audioMessage: z.object({
+    url: z.string().optional(),
+    mimetype: z.string().optional(),
+    fileSha256: z.string().optional(),
+    fileLength: z.number().optional(),
+    seconds: z.number().optional(),
+    ptt: z.boolean().optional(), // push-to-talk (audio de voz)
+    mediaKey: z.string().optional(),
+  }),
+})
+
+const ImageMessageSchema = z.object({
+  imageMessage: z.object({
+    url: z.string().optional(),
+    mimetype: z.string().optional(),
+    caption: z.string().optional(),
+    fileSha256: z.string().optional(),
+    fileLength: z.number().optional(),
+    height: z.number().optional(),
+    width: z.number().optional(),
+    jpegThumbnail: z.string().optional(),
+  }),
+})
+
+const DocumentMessageSchema = z.object({
+  documentMessage: z.object({
+    url: z.string().optional(),
+    mimetype: z.string().optional(),
+    title: z.string().optional(),
+    fileSha256: z.string().optional(),
+    fileLength: z.number().optional(),
+    pageCount: z.number().optional(),
+    fileName: z.string().optional(),
+    caption: z.string().optional(),
+  }),
+})
+
+const WebhookPayloadSchema = z.object({
+  event: z.enum(['QRCODE_UPDATED', 'CONNECTION_UPDATE', 'MESSAGES_UPSERT', 'MESSAGES_UPDATE']),
+  instance: z.string(),
+  data: z.any(),
+  destination: z.string().optional(),
+  date_time: z.string().optional(),
+  sender: z.string().optional(),
+  server_url: z.string().optional(),
+  apikey: z.string().optional(),
+})
+
+// =============================================================================
+// Types
+// =============================================================================
 
 type WebhookEvent = 
   | 'QRCODE_UPDATED'
@@ -38,12 +115,7 @@ interface WebhookPayload {
       fromMe: boolean;
       id: string;
     };
-    message?: {
-      conversation?: string;
-      extendedTextMessage?: {
-        text: string;
-      };
-    };
+    message?: any; // Aceita qualquer estrutura de mensagem
     pushName?: string;
   };
   destination: string;
@@ -51,6 +123,92 @@ interface WebhookPayload {
   sender: string;
   server_url: string;
   apikey: string;
+}
+
+type MessageType = 'text' | 'audio' | 'image' | 'document' | 'unsupported'
+
+interface ExtractedMessage {
+  type: MessageType;
+  content: string | null;
+  audio?: any;
+  image?: any;
+  document?: any;
+}
+
+// =============================================================================
+// Helper Functions
+// =============================================================================
+
+/**
+ * Detecta o tipo de mensagem e extrai o conteúdo relevante
+ */
+function extractMessageContent(message: any): ExtractedMessage {
+  if (!message) {
+    return { type: 'unsupported', content: null }
+  }
+
+  // Texto simples
+  if (message.conversation) {
+    return {
+      type: 'text',
+      content: message.conversation,
+    }
+  }
+
+  // Texto estendido
+  if (message.extendedTextMessage?.text) {
+    return {
+      type: 'text',
+      content: message.extendedTextMessage.text,
+    }
+  }
+
+  // Áudio
+  if (message.audioMessage) {
+    return {
+      type: 'audio',
+      content: null,
+      audio: {
+        url: message.audioMessage.url,
+        mimetype: message.audioMessage.mimetype,
+        seconds: message.audioMessage.seconds,
+        ptt: message.audioMessage.ptt, // true = nota de voz
+      },
+    }
+  }
+
+  // Imagem
+  if (message.imageMessage) {
+    return {
+      type: 'image',
+      content: message.imageMessage.caption || null,
+      image: {
+        url: message.imageMessage.url,
+        mimetype: message.imageMessage.mimetype,
+        width: message.imageMessage.width,
+        height: message.imageMessage.height,
+        thumbnail: message.imageMessage.jpegThumbnail,
+      },
+    }
+  }
+
+  // Documento (PDF, DOCX, etc.)
+  if (message.documentMessage) {
+    return {
+      type: 'document',
+      content: message.documentMessage.caption || message.documentMessage.fileName || null,
+      document: {
+        url: message.documentMessage.url,
+        mimetype: message.documentMessage.mimetype,
+        fileName: message.documentMessage.fileName || message.documentMessage.title,
+        pageCount: message.documentMessage.pageCount,
+        fileLength: message.documentMessage.fileLength,
+      },
+    }
+  }
+
+  // Tipo não suportado (vídeo, sticker, location, etc.)
+  return { type: 'unsupported', content: null }
 }
 
 serve(async (req: Request) => {
@@ -143,24 +301,50 @@ serve(async (req: Request) => {
       }
 
       case 'MESSAGES_UPSERT': {
-        // Ignorar mensagens enviadas pelo próprio bot
-        if (payload.data.key?.fromMe) {
-          console.log('Ignoring outgoing message')
-          break
+        // =============================================================================
+        // FILTRO 1: Rejeitar mensagens do próprio agente (fromMe: true)
+        // =============================================================================
+        if (payload.data.key?.fromMe === true) {
+          console.log('Message from agent itself - filtered out', {
+            instance: payload.instance,
+            message_id: payload.data.key?.id,
+          })
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              event: payload.event,
+              filtered: true,
+              reason: 'fromMe: true (agent own message)',
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+          )
         }
 
-        // Extrair texto da mensagem
-        const messageText = 
-          payload.data.message?.conversation || 
-          payload.data.message?.extendedTextMessage?.text || 
-          ''
-
-        if (!messageText) {
-          console.log('No text content in message, ignoring')
-          break
+        // =============================================================================
+        // FILTRO 2: Detectar e validar tipo de mensagem (texto, áudio, imagem)
+        // =============================================================================
+        const extractedMessage = extractMessageContent(payload.data.message)
+        
+        if (extractedMessage.type === 'unsupported') {
+          console.log('Unsupported message type - filtered out', {
+            instance: payload.instance,
+            message_id: payload.data.key?.id,
+            message_keys: Object.keys(payload.data.message || {}),
+          })
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              event: payload.event,
+              filtered: true,
+              reason: 'Unsupported message type (only text, audio, image, document allowed)',
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+          )
         }
 
-        // Buscar configuração do agente SDR
+        // =============================================================================
+        // FILTRO 3: Validar se agente SDR está ativo
+        // =============================================================================
         const { data: sdrConfig } = await supabase
           .from('sdr_agent_config')
           .select('config_json, is_active')
@@ -169,30 +353,71 @@ serve(async (req: Request) => {
 
         if (!sdrConfig?.is_active) {
           console.log('SDR agent is not active for this instance')
-          break
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              event: payload.event,
+              filtered: true,
+              reason: 'SDR agent not active',
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+          )
         }
 
-        // Se N8N webhook configurado, encaminhar mensagem
+        // =============================================================================
+        // ENVIAR PAYLOAD OTIMIZADO AO N8N
+        // =============================================================================
         if (n8nWebhookUrl) {
-          const n8nPayload = {
+          const senderNumber = payload.data.key?.remoteJid?.split('@')[0] || ''
+          const isGroup = payload.data.key?.remoteJid?.endsWith('@g.us') || false
+
+          // Payload otimizado: apenas campos essenciais
+          const optimizedPayload = {
+            // Identificação da instância
             instance_name: payload.instance,
             phone: instance.phone,
-            sender: payload.data.key?.remoteJid?.split('@')[0],
-            sender_name: payload.data.pushName,
-            message: messageText,
-            message_id: payload.data.key?.id,
-            timestamp: payload.date_time,
+            
+            // Metadados da mensagem
+            message_metadata: {
+              id: payload.data.key?.id,
+              timestamp: payload.date_time,
+              remote_jid: payload.data.key?.remoteJid,
+              from_me: false, // sempre false neste ponto (já filtrado)
+            },
+            
+            // Informações do remetente
+            sender: {
+              number: senderNumber,
+              name: payload.data.pushName || senderNumber,
+              is_group: isGroup,
+            },
+            
+            // Conteúdo da mensagem baseado no tipo
+            message: {
+              type: extractedMessage.type,
+              text: extractedMessage.content,
+              ...(extractedMessage.type === 'audio' && { audio: extractedMessage.audio }),
+              ...(extractedMessage.type === 'image' && { image: extractedMessage.image }),
+              ...(extractedMessage.type === 'document' && { document: extractedMessage.document }),
+            },
+            
+            // Configuração do agente SDR
             agent_config: sdrConfig.config_json,
           }
 
-          // Enviar para N8N de forma assíncrona (não esperar resposta)
+          // Enviar para N8N de forma assíncrona
           fetch(n8nWebhookUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(n8nPayload),
+            body: JSON.stringify(optimizedPayload),
           }).catch(err => console.error('Error sending to N8N:', err))
 
-          console.log('Message forwarded to N8N for processing')
+          console.log('✅ Message forwarded to N8N (optimized v7)', {
+            type: extractedMessage.type,
+            sender: senderNumber,
+            is_group: isGroup,
+            has_content: !!extractedMessage.content,
+          })
         }
         break
       }

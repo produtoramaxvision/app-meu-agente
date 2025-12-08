@@ -1,5 +1,5 @@
 # 🏗️ DOCUMENTAÇÃO DE ARQUITETURA
-## Meu Agente Financeiro - Arquitetura e Design do Sistema
+## Meu Agente - Arquitetura e Design do Sistema
 
 ---
 
@@ -7,14 +7,16 @@
 
 1. [Visão Geral da Arquitetura](#visão-geral-da-arquitetura)
 2. [Arquitetura de Alto Nível](#arquitetura-de-alto-nível)
-3. [Arquitetura Frontend](#arquitetura-frontend)
-4. [Arquitetura Backend](#arquitetura-backend)
-5. [Arquitetura de Dados](#arquitetura-de-dados)
-6. [Padrões de Design](#padrões-de-design)
-7. [Fluxos de Dados](#fluxos-de-dados)
-8. [Decisões Arquiteturais](#decisões-arquiteturais)
-9. [Escalabilidade](#escalabilidade)
-10. [Segurança](#segurança)
+3. [Arquitetura do Chat com IA](#arquitetura-do-chat-com-ia)
+4. [Arquitetura do Agente SDR](#arquitetura-do-agente-sdr)
+5. [Arquitetura Frontend](#arquitetura-frontend)
+6. [Arquitetura Backend](#arquitetura-backend)
+7. [Arquitetura de Dados](#arquitetura-de-dados)
+8. [Padrões de Design](#padrões-de-design)
+9. [Fluxos de Dados](#fluxos-de-dados)
+10. [Decisões Arquiteturais](#decisões-arquiteturais)
+11. [Escalabilidade](#escalabilidade)
+12. [Segurança](#segurança)
 
 ---
 
@@ -22,12 +24,18 @@
 
 ### **Filosofia Arquitetural**
 
-O Meu Agente Financeiro foi projetado seguindo os princípios de:
+O Meu Agente é um **sistema híbrido** que combina:
+- **Gestão Financeira Pessoal** - CRUD completo com visualizações avançadas
+- **Agentes de IA Conversacionais** - Chat integrado via webhooks n8n
+- **Automação de Vendas (SDR)** - Qualificação de leads via WhatsApp
+
+O sistema foi projetado seguindo os princípios de:
 - **Modularidade**: Componentes independentes e reutilizáveis
 - **Escalabilidade**: Preparado para crescimento horizontal
 - **Manutenibilidade**: Código limpo e bem estruturado
 - **Performance**: Otimizado para velocidade e eficiência
 - **Segurança**: Proteção de dados em todas as camadas
+- **Experiência Imersiva**: Animações e interações premium
 
 ### **Stack Tecnológico**
 
@@ -37,12 +45,21 @@ O Meu Agente Financeiro foi projetado seguindo os princípios de:
 - **Vite**: Build tool otimizado para desenvolvimento
 - **Tailwind CSS**: Framework CSS utilitário
 - **ShadcnUI v4**: Biblioteca de componentes
+- **Framer Motion**: Animações fluidas
+- **Spline**: Animações 3D interativas (robô do chat)
+- **Recharts**: Gráficos financeiros
 
 #### **Backend**
 - **Supabase**: Backend-as-a-Service completo
 - **PostgreSQL**: Banco de dados relacional
 - **Edge Functions**: Serverless functions em Deno
 - **Row Level Security**: Segurança a nível de linha
+- **Stripe**: Processamento de pagamentos
+
+#### **Integrações IA**
+- **n8n Webhooks**: Orquestração de agentes de IA
+- **Evolution API**: Conexão WhatsApp para SDR
+- **OpenAI/LLMs**: Processamento de linguagem natural
 
 #### **DevOps**
 - **Vercel**: Deploy e hosting
@@ -54,47 +71,57 @@ O Meu Agente Financeiro foi projetado seguindo os princípios de:
 
 ## 🏛️ **ARQUITETURA DE ALTO NÍVEL**
 
-### **Diagrama de Arquitetura**
+### **Diagrama de Arquitetura Completo**
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    CLIENTE (Browser)                        │
-├─────────────────────────────────────────────────────────────┤
-│  React App (Frontend)                                      │
-│  ├── Components (UI)                                       │
-│  ├── Hooks (Logic)                                         │
-│  ├── Contexts (State)                                      │
-│  └── Utils (Helpers)                                       │
-└─────────────────┬───────────────────────────────────────────┘
-                  │ HTTPS/REST API
-                  │ WebSocket (Real-time)
-┌─────────────────▼───────────────────────────────────────────┐
-│                 SUPABASE (Backend)                          │
-├─────────────────────────────────────────────────────────────┤
-│  ├── Auth Service (JWT)                                   │
-│  ├── REST API (CRUD)                                      │
-│  ├── Real-time (WebSocket)                                │
-│  ├── Edge Functions (Serverless)                          │
-│  └── Storage (Files)                                      │
-└─────────────────┬───────────────────────────────────────────┘
-                  │ SQL Queries
-┌─────────────────▼───────────────────────────────────────────┐
-│              POSTGRESQL (Database)                         │
-├─────────────────────────────────────────────────────────────┤
-│  ├── Tables (Data)                                        │
-│  ├── Views (Aggregations)                                 │
-│  ├── Functions (Business Logic)                           │
-│  ├── Triggers (Automation)                                 │
-│  └── RLS Policies (Security)                              │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         CLIENTE (Browser/PWA)                          │
+├─────────────────────────────────────────────────────────────────────────┤
+│  React App (Frontend)                                                  │
+│  ├── Pages (Dashboard, Chat, Contas, Goals, Agenda, SDR, etc.)        │
+│  ├── Components (UI + Animações Spline/Framer Motion)                 │
+│  ├── Hooks (useChatAgent, useSDRAgent, useFinancialData, etc.)        │
+│  ├── Contexts (Auth, Theme, Notifications)                            │
+│  └── Utils (Formatters, Validators, API Clients)                      │
+└───────────┬──────────────────────────────┬──────────────────┬──────────┘
+            │                              │                  │
+            │ HTTPS/REST                   │ Webhook          │ HTTPS
+            │ WebSocket                    │ Requests         │
+            ▼                              ▼                  ▼
+┌───────────────────────┐   ┌──────────────────────┐   ┌──────────────────┐
+│   SUPABASE (Backend)  │   │   n8n (Automação)    │   │  STRIPE (Pagtos) │
+├───────────────────────┤   ├──────────────────────┤   ├──────────────────┤
+│ ├── Auth Service      │   │ ├── Chat IA Webhook  │   │ ├── Checkout     │
+│ ├── REST API          │   │ ├── SDR AI Workflow  │   │ ├── Portal       │
+│ ├── Real-time         │   │ └── Lead Scoring     │   │ └── Webhooks     │
+│ ├── Edge Functions    │   └──────────────────────┘   └──────────────────┘
+│ └── Storage           │              │
+└───────────┬───────────┘              │
+            │                          │
+            │ SQL                      │ HTTP
+            ▼                          ▼
+┌───────────────────────┐   ┌──────────────────────┐
+│  POSTGRESQL (Database)│   │  EVOLUTION API       │
+├───────────────────────┤   ├──────────────────────┤
+│ ├── Tabelas           │   │ ├── WhatsApp Connect │
+│ ├── Views             │   │ ├── Messages         │
+│ ├── RLS Policies      │   │ └── QR Code          │
+│ └── Triggers          │   └──────────────────────┘
+└───────────────────────┘
 ```
 
 ### **Camadas do Sistema**
 
 #### **🎨 Camada de Apresentação (Frontend)**
 - **Responsabilidade**: Interface do usuário e interação
-- **Tecnologias**: React, TypeScript, Tailwind CSS
+- **Tecnologias**: React, TypeScript, Tailwind CSS, Framer Motion
 - **Padrões**: Component-based, Hook-based
+- **Animações**: Spline 3D, CSS Animations, Framer Motion
+
+#### **🤖 Camada de IA (Chat & SDR)**
+- **Responsabilidade**: Processamento de linguagem natural e automações
+- **Tecnologias**: n8n Webhooks, OpenAI, Evolution API
+- **Padrões**: Webhook-based, Event-driven
 
 #### **🔧 Camada de Aplicação (Business Logic)**
 - **Responsabilidade**: Lógica de negócio e regras
@@ -113,6 +140,233 @@ O Meu Agente Financeiro foi projetado seguindo os princípios de:
 
 ---
 
+## 💬 **ARQUITETURA DO CHAT COM IA**
+
+### **Visão Geral**
+
+O Chat com IA é um sistema conversacional integrado que permite aos usuários interagir com agentes de IA através de linguagem natural. O sistema é disponível para **TODOS os planos** (incluindo Free).
+
+### **Fluxo de Dados**
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│   1. USUÁRIO DIGITA                  2. HOOK PROCESSA                    │
+│   ┌─────────────────────┐            ┌─────────────────────┐             │
+│   │ "Pesquise sobre..." │ ──────────>│ useChatAgent()      │             │
+│   └─────────────────────┘            │ ├── Cria mensagem   │             │
+│                                      │ ├── Atualiza UI     │             │
+│                                      │ └── Envia webhook   │             │
+│                                      └──────────┬──────────┘             │
+│                                                 │                        │
+│   3. N8N PROCESSA                              │ POST                    │
+│   ┌─────────────────────┐                      │                        │
+│   │ Webhook n8n         │<─────────────────────┘                        │
+│   │ ├── Recebe query    │                                               │
+│   │ ├── Chama LLM       │                                               │
+│   │ └── Retorna resposta│                                               │
+│   └──────────┬──────────┘                                               │
+│              │                                                          │
+│   4. RESPOSTA STREAMING          5. UI ATUALIZA                         │
+│   ┌──────────▼──────────┐        ┌─────────────────────┐                │
+│   │ { response: "..." } │───────>│ Mensagem aparece    │                │
+│   └─────────────────────┘        │ com streaming       │                │
+│                                  └─────────────────────┘                │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+### **Componentes Principais**
+
+#### **1. useChatAgent Hook**
+```typescript
+// src/hooks/useChatAgent.ts
+export function useChatAgent() {
+  // Estado das sessões e mensagens
+  const [sessions, setSessions] = useState<ChatSession[]>([])
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Envia mensagem para o webhook n8n
+  const sendMessage = async (content: string) => {
+    const response = await fetch(VITE_N8N_WEBHOOK_URL, {
+      method: 'POST',
+      body: JSON.stringify({ 
+        sessionId, 
+        message: content,
+        userId: cliente.id 
+      })
+    })
+    // Processa resposta streaming
+  }
+
+  return { sessions, messages, sendMessage, isLoading }
+}
+```
+
+#### **2. ChatIntroAnimation Component**
+```typescript
+// src/components/chat/ChatIntroAnimation.tsx
+// Animação espacial imersiva com:
+// - 60+ estrelas animadas (CSS keyframes)
+// - Nebulosas pulsantes com blur
+// - Robô 3D interativo (Spline)
+// - Parallax effect no mouse
+```
+
+#### **3. Armazenamento de Sessões**
+```sql
+-- Tabela de sessões de chat
+CREATE TABLE chat_ia_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cliente_id UUID REFERENCES clientes(id),
+  title TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Tabela de mensagens
+CREATE TABLE chat_ia_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id UUID REFERENCES chat_ia_sessions(id),
+  role TEXT CHECK (role IN ('user', 'assistant')),
+  content TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### **Configuração de Ambiente**
+
+```env
+# .env
+VITE_N8N_WEBHOOK_URL=https://seu-n8n.com/webhook/chat-ia
+```
+
+---
+
+## 🤖 **ARQUITETURA DO AGENTE SDR**
+
+### **Visão Geral**
+
+O Agente SDR (Sales Development Representative) é um sistema de qualificação automática de leads via WhatsApp, disponível para planos **Business** e **Premium**.
+
+### **Arquitetura de Integração**
+
+```
+┌───────────────────────────────────────────────────────────────────────────┐
+│                                                                           │
+│   FRONTEND                     BACKEND                     WHATSAPP      │
+│   ┌─────────────┐              ┌─────────────┐             ┌───────────┐ │
+│   │ AgenteSDR   │              │ Supabase    │             │ Evolution │ │
+│   │ Page        │              │ Edge Func   │             │ API       │ │
+│   ├─────────────┤              ├─────────────┤             ├───────────┤ │
+│   │ Connection  │◄────REST────►│ sdr_agents  │◄────HTTP───►│ Instance  │ │
+│   │ Card (QR)   │              │ sdr_config  │             │ Management│ │
+│   ├─────────────┤              ├─────────────┤             ├───────────┤ │
+│   │ Config Form │              │ n8n Webhook │◄────────────│ Messages  │ │
+│   │             │              │ for SDR     │             │ Incoming  │ │
+│   ├─────────────┤              └─────────────┘             └───────────┘ │
+│   │ Playground  │                     │                                  │
+│   │ Testing     │                     ▼                                  │
+│   ├─────────────┤              ┌─────────────┐                           │
+│   │ Metrics     │              │ LLM Service │                           │
+│   │ Dashboard   │              │ (OpenAI)    │                           │
+│   └─────────────┘              └─────────────┘                           │
+│                                                                           │
+└───────────────────────────────────────────────────────────────────────────┘
+```
+
+### **Componentes Principais**
+
+#### **1. useSDRAgent Hook**
+```typescript
+// src/hooks/useSDRAgent.ts
+export function useSDRAgent() {
+  // Gerencia conexão WhatsApp
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected'>()
+  const [qrCode, setQrCode] = useState<string | null>(null)
+
+  // Gerencia configuração do agente
+  const [config, setConfig] = useState<SDRConfig>()
+
+  // Métricas
+  const [metrics, setMetrics] = useState<SDRMetrics>()
+
+  return { connectionStatus, qrCode, config, metrics, connect, disconnect, updateConfig }
+}
+```
+
+#### **2. SDRConnectionCard Component**
+- Exibe QR Code para conexão
+- Mostra status de conexão
+- Exibe informações do número conectado
+
+#### **3. SDRConfigForm Component**
+- Formulário para configurar o agente
+- Campo de nome do negócio
+- Textarea para prompt/contexto
+
+#### **4. SDRPlayground Component**
+- Interface de testes do agente
+- Simula conversas antes de produção
+- Mostra respostas do agente
+
+### **Fluxo de Qualificação**
+
+```
+1. Lead envia mensagem no WhatsApp
+         │
+         ▼
+2. Evolution API recebe e encaminha para n8n webhook
+         │
+         ▼
+3. n8n processa com contexto do agente (prompt configurado)
+         │
+         ▼
+4. LLM gera resposta personalizada
+         │
+         ▼
+5. Resposta é enviada ao lead via Evolution API
+         │
+         ▼
+6. Lead é classificado (quente/frio) baseado nas respostas
+         │
+         ▼
+7. Métricas são atualizadas no dashboard
+```
+
+### **Tabelas do Banco de Dados**
+
+```sql
+-- Configuração do agente SDR
+CREATE TABLE sdr_agents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  cliente_id UUID REFERENCES clientes(id),
+  instance_name TEXT,
+  instance_id TEXT,
+  webhook_url TEXT,
+  business_name TEXT,
+  prompt_context TEXT,
+  is_active BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Leads qualificados
+CREATE TABLE sdr_leads (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_id UUID REFERENCES sdr_agents(id),
+  phone TEXT,
+  name TEXT,
+  score INTEGER, -- 1-10 (quente/frio)
+  status TEXT, -- 'new', 'qualified', 'contacted', 'converted'
+  conversation_summary TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+---
+
 ## ⚛️ **ARQUITETURA FRONTEND**
 
 ### **Estrutura de Componentes**
@@ -125,6 +379,16 @@ src/
 │   │   ├── input.tsx
 │   │   ├── dialog.tsx
 │   │   └── ...
+│   ├── chat/                  # Componentes do Chat IA
+│   │   ├── ChatIntroAnimation.tsx
+│   │   ├── ChatMessage.tsx
+│   │   ├── PromptInputBox.tsx
+│   │   └── SessionList.tsx
+│   ├── sdr/                   # Componentes do Agente SDR
+│   │   ├── SDRConnectionCard.tsx
+│   │   ├── SDRConfigForm.tsx
+│   │   ├── SDRPlayground.tsx
+│   │   └── SDRMetrics.tsx
 │   ├── forms/                 # Formulários específicos
 │   │   ├── FinanceRecordForm.tsx
 │   │   ├── GoalForm.tsx
@@ -138,13 +402,19 @@ src/
 │       ├── PieChart.tsx
 │       └── ...
 ├── pages/                      # Páginas da aplicação
-│   ├── Dashboard.tsx
-│   ├── Contas.tsx
-│   ├── Agenda.tsx
+│   ├── Dashboard.tsx          # Dashboard financeiro
+│   ├── Chat.tsx               # Chat com IA
+│   ├── AgenteSDR.tsx          # Configuração SDR
+│   ├── Contas.tsx             # Gestão de transações
+│   ├── Goals.tsx              # Metas financeiras
+│   ├── Agenda.tsx             # Agenda de eventos
+│   ├── Tasks.tsx              # Lista de tarefas
 │   └── ...
 ├── hooks/                      # Hooks customizados
-│   ├── useFinancialData.ts
-│   ├── useDuplicateDetection.ts
+│   ├── useChatAgent.ts        # Hook do chat IA
+│   ├── useSDRAgent.ts         # Hook do agente SDR
+│   ├── useFinancialData.ts    # Hook dados financeiros
+│   ├── usePlanInfo.ts         # Hook informações do plano
 │   └── ...
 ├── contexts/                   # Contextos React
 │   ├── AuthContext.tsx
