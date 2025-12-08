@@ -44,7 +44,7 @@ export default function AgenteSDR() {
 
   return (
     <ProtectedFeature permission="canAccessSDRAgent" featureName="Agente SDR">
-      <div className="container mx-auto py-6 space-y-6">
+      <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6 mt-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">

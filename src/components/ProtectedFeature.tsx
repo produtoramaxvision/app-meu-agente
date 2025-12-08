@@ -44,8 +44,9 @@ export function ProtectedFeature({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}
+      className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 mt-6"
     >
-      <Card className="border-dashed border-2 border-muted-foreground/20 bg-muted/5">
+      <Card className="border-dashed border-2 border-muted-foreground/20 bg-muted/5 max-w-2xl mx-auto">
         <CardHeader className="text-center pb-4">
           <div className="flex justify-center mb-3">
             <div className="p-3 rounded-full bg-muted-foreground/10">

@@ -1,7 +1,7 @@
 import { UpcomingBill } from '@/hooks/useAlertsData';
 import { differenceInDays, format, isToday } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Calendar, Tag, Check, AlertCircle } from 'lucide-react';
@@ -14,7 +14,6 @@ interface UpcomingBillCardProps {
 
 export function UpcomingBillCard({ bill, onStatusChange }: UpcomingBillCardProps) {
   const [isPaying, setIsPaying] = useState(false);
-  const { toast } = useToast();
   const dueDate = new Date(bill.data_vencimento || new Date());
   const daysRemaining = differenceInDays(dueDate, new Date());
 

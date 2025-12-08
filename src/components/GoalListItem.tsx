@@ -23,7 +23,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
@@ -36,7 +36,6 @@ interface GoalListItemProps {
 export function GoalListItem({ goal, onDelete, onUpdate }: GoalListItemProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const { toast } = useToast();
   const progress = Math.min((goal.valor_atual / goal.valor_meta) * 100, 100);
   const restante = Math.max(goal.valor_meta - goal.valor_atual, 0);
 

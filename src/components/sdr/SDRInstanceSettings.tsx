@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 import { EvolutionSettings } from '@/types/sdr'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
 
 interface SDRInstanceSettingsProps {
@@ -109,7 +109,6 @@ export function SDRInstanceSettings({
   isConnected,
   className 
 }: SDRInstanceSettingsProps) {
-  const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
