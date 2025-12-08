@@ -39,6 +39,7 @@ serve(async (req: Request) => {
     const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY')
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const webhookUrl = Deno.env.get('SUPABASE_URL') + '/functions/v1/evolution-webhook'
 
     if (!evolutionApiUrl || !evolutionApiKey) {
       throw new Error('Evolution API credentials not configured')
@@ -254,6 +255,63 @@ serve(async (req: Request) => {
       // Limpar valores quando conectado
       qrCode = null
       pairingCode = null
+    }
+
+    // =====================================================
+    // CORREÇÃO CRÍTICA: Configurar webhook quando conectado
+    // =====================================================
+    if (connectionState === 'connected') {
+      console.log('Configuring webhook for connected instance:', instance.instance_name)
+      
+      // Eventos otimizados: apenas os necessários para o funcionamento
+      const events = [
+        'MESSAGES_UPSERT',      // Receber mensagens
+        'CONNECTION_UPDATE',    // Status da conexão
+        'QRCODE_UPDATED',       // Atualização do QR Code
+      ]
+
+      // Evolution API (algumas builds) exige a propriedade "webhook" no payload.
+      // Enviamos ambos formatos (aninhado e plano) para compatibilidade.
+      const webhookPayload = {
+        enabled: true,
+        url: webhookUrl,
+        webhookByEvents: true,
+        webhookBase64: true,
+        events,
+        webhook: {
+          enabled: true,
+          url: webhookUrl,
+          byEvents: true,
+          base64: true,
+          events,
+        },
+      }
+
+      try {
+        const webhookSetResponse = await fetch(
+          `${evolutionApiUrl}/webhook/set/${instance.instance_name}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': evolutionApiKey,
+            },
+            body: JSON.stringify(webhookPayload),
+          }
+        )
+
+        if (!webhookSetResponse.ok) {
+          const errorText = await webhookSetResponse.text()
+          console.error('Failed to configure webhook:', errorText)
+          // Não lança erro para não quebrar o fluxo, mas loga o problema
+        } else {
+          const webhookData = await webhookSetResponse.json()
+          console.log('✅ Webhook configured successfully:', webhookData)
+        }
+      } catch (webhookError) {
+        console.error('Error configuring webhook:', webhookError)
+        // Não propaga o erro para não quebrar a conexão
+      }
     }
 
     return new Response(

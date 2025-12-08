@@ -168,32 +168,53 @@ serve(async (req: Request) => {
 
     // Configurar webhook explicitamente após criação da instância
     console.log('Configuring webhook for instance:', instanceName)
-    const webhookSetResponse = await fetch(`${evolutionApiUrl}/webhook/set/${instanceName}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': evolutionApiKey,
-      },
-      body: JSON.stringify({
+    console.log('Webhook URL:', webhookUrl)
+    
+    try {
+      // Eventos otimizados: apenas os necessários para o funcionamento
+      const events = [
+        'MESSAGES_UPSERT',      // Receber mensagens
+        'CONNECTION_UPDATE',    // Status da conexão
+        'QRCODE_UPDATED',       // Atualização do QR Code
+      ]
+
+      const webhookPayload = {
         enabled: true,
         url: webhookUrl,
-        webhookByEvents: false,
+        webhookByEvents: true,
         webhookBase64: true,
-        events: [
-          'QRCODE_UPDATED',
-          'CONNECTION_UPDATE',
-          'MESSAGES_UPSERT',
-          'MESSAGES_UPDATE',
-          'MESSAGES_DELETE',
-          'SEND_MESSAGE',
-        ],
-      }),
-    })
+        events,
+        webhook: {
+          enabled: true,
+          url: webhookUrl,
+          byEvents: true,
+          base64: true,
+          events,
+        },
+      }
 
-    if (!webhookSetResponse.ok) {
-      console.warn('Failed to set webhook, but continuing:', await webhookSetResponse.text())
-    } else {
-      console.log('Webhook configured successfully')
+      const webhookSetResponse = await fetch(`${evolutionApiUrl}/webhook/set/${instanceName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': evolutionApiKey,
+        },
+        body: JSON.stringify(webhookPayload),
+      })
+
+      if (!webhookSetResponse.ok) {
+        const errorText = await webhookSetResponse.text()
+        console.error('❌ Failed to set webhook:', errorText)
+        console.error('Webhook URL attempted:', webhookUrl)
+        console.error('Instance:', instanceName)
+        // Continua mesmo com erro de webhook
+      } else {
+        const webhookData = await webhookSetResponse.json()
+        console.log('✅ Webhook configured successfully:', JSON.stringify(webhookData))
+      }
+    } catch (webhookError) {
+      console.error('❌ Exception during webhook configuration:', webhookError)
+      // Não propaga o erro para não quebrar a criação da instância
     }
 
     // Log completo da resposta para debug (Evolution API v2.3.7)

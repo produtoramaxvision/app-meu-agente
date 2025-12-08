@@ -20,6 +20,35 @@ export interface EvolutionInstance {
 }
 
 // =============================================================================
+// TIPOS PARA CONFIGURAÇÕES DA EVOLUTION API
+// =============================================================================
+
+/** Configurações de comportamento da instância Evolution */
+export interface EvolutionSettings {
+  rejectCall: boolean;        // Rejeitar chamadas de voz/vídeo automaticamente
+  msgCall: string;            // Mensagem a enviar ao rejeitar chamada
+  groupsIgnore: boolean;      // Ignorar mensagens de grupos
+  alwaysOnline: boolean;      // Manter status sempre online
+  readMessages: boolean;      // Marcar mensagens como lidas automaticamente
+  readStatus: boolean;        // Ler status de contatos
+  syncFullHistory: boolean;   // Sincronizar histórico completo de mensagens
+}
+
+/** Configurações de webhook da Evolution */
+export interface EvolutionWebhookConfig {
+  enabled: boolean;
+  webhookByEvents: boolean;
+  webhookBase64: boolean;
+  events: string[];
+}
+
+/** Payload para atualização de configurações */
+export interface UpdateEvolutionSettingsPayload {
+  settings?: Partial<EvolutionSettings>;
+  webhook?: Partial<EvolutionWebhookConfig>;
+}
+
+// =============================================================================
 // JSON SCHEMA PARA N8N - CONFIGURAÇÃO DO AGENTE SDR
 // =============================================================================
 

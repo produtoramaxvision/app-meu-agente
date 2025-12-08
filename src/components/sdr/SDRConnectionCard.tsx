@@ -1,24 +1,31 @@
 // =============================================================================
 // Componente: SDRConnectionCard
-// Card principal de conexão WhatsApp
+// Card principal de conexão WhatsApp com configurações avançadas
 // =============================================================================
 
-import { Wifi, WifiOff, RefreshCw, Phone, Plus } from 'lucide-react';
+import { useState } from 'react';
+import { Wifi, WifiOff, RefreshCw, Phone, Plus, Settings2, ChevronDown, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { SDRStatusBadge } from './SDRStatusBadge';
 import { SDRQRCodeDisplay } from './SDRQRCodeDisplay';
+import { SDRInstanceSettings } from './SDRInstanceSettings';
 import { useSDRAgent } from '@/hooks/useSDRAgent';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 export function SDRConnectionCard() {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  
   const {
     instance,
     isLoadingInstance,
     isCreating,
     isRefreshing,
+    isDisconnecting,
     connectionStatus,
     isConnected,
     hasInstance,
@@ -26,6 +33,7 @@ export function SDRConnectionCard() {
     pairingCode,
     createInstance,
     refreshConnection,
+    disconnectInstance,
   } = useSDRAgent();
 
   if (isLoadingInstance) {
@@ -146,19 +154,38 @@ export function SDRConnectionCard() {
               )}
             </Button>
           ) : (
-            <Button variant="outline" onClick={refreshConnection} disabled={isRefreshing}>
-              {isRefreshing ? (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Verificando...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Verificar Status
-                </>
-              )}
-            </Button>
+            <>
+              <Button variant="outline" onClick={refreshConnection} disabled={isRefreshing || isDisconnecting}>
+                {isRefreshing ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Verificando...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Verificar Status
+                  </>
+                )}
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={disconnectInstance} 
+                disabled={isRefreshing || isDisconnecting}
+              >
+                {isDisconnecting ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Desconectando...
+                  </>
+                ) : (
+                  <>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Desconectar
+                  </>
+                )}
+              </Button>
+            </>
           )}
         </div>
 
@@ -172,6 +199,52 @@ export function SDRConnectionCard() {
               <li>Mantenha o celular conectado à internet</li>
             </ul>
           </div>
+        )}
+
+        {/* Configurações Avançadas - Collapsible quando conectado */}
+        {hasInstance && (
+          <Collapsible 
+            open={settingsOpen} 
+            onOpenChange={setSettingsOpen}
+            className="border rounded-xl overflow-hidden"
+          >
+            <CollapsibleTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className={cn(
+                  "w-full justify-between p-4 h-auto hover:bg-muted/50",
+                  settingsOpen && "border-b"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "p-2 rounded-lg transition-colors",
+                    settingsOpen 
+                      ? "bg-primary/10 text-primary" 
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    <Settings2 className="h-4 w-4" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-medium text-sm">Configurações Avançadas</p>
+                    <p className="text-xs text-muted-foreground">
+                      Personalize o comportamento do WhatsApp
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown className={cn(
+                  "h-4 w-4 transition-transform duration-200",
+                  settingsOpen && "rotate-180"
+                )} />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="p-4 pt-2">
+              <SDRInstanceSettings 
+                instanceName={instance?.instance_name || ''}
+                isConnected={isConnected}
+              />
+            </CollapsibleContent>
+          </Collapsible>
         )}
       </CardContent>
     </Card>

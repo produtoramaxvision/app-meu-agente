@@ -170,6 +170,59 @@ export function useSDRAgent() {
   });
 
   // =====================================================
+  // Mutation: Configurar/Reconfigurar Webhook
+  // =====================================================
+  const configureWebhookMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('configure-evolution-webhook');
+
+      if (error) {
+        throw new Error(error.message || 'Failed to configure webhook');
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to configure webhook');
+      }
+
+      return data;
+    },
+    onSuccess: (data) => {
+      toast.success('Webhook configurado com sucesso!');
+      console.log('Webhook configured:', data);
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao configurar webhook: ${error.message}`);
+    },
+  });
+
+  // =====================================================
+  // Mutation: Desconectar instância Evolution
+  // =====================================================
+  const disconnectInstanceMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('disconnect-evolution-instance');
+
+      if (error) {
+        throw new Error(error.message || 'Failed to disconnect instance');
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to disconnect instance');
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['evolution-instance', phone] });
+      queryClient.invalidateQueries({ queryKey: ['sdr-config', phone] });
+      toast.success('WhatsApp desconectado com sucesso!');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao desconectar: ${error.message}`);
+    },
+  });
+
+  // =====================================================
   // Mutation: Salvar configuração SDR
   // =====================================================
   const saveConfigMutation = useMutation({
@@ -390,6 +443,14 @@ export function useSDRAgent() {
     toggleActiveMutation.mutate(isActive);
   }, [toggleActiveMutation]);
 
+  const configureWebhook = useCallback(() => {
+    configureWebhookMutation.mutate();
+  }, [configureWebhookMutation]);
+
+  const disconnectInstance = useCallback(() => {
+    disconnectInstanceMutation.mutate();
+  }, [disconnectInstanceMutation]);
+
   // =====================================================
   // Return
   // =====================================================
@@ -405,6 +466,7 @@ export function useSDRAgent() {
     isLoadingConfig,
     isCreating: createInstanceMutation.isPending,
     isRefreshing: refreshConnectionMutation.isPending,
+    isDisconnecting: disconnectInstanceMutation.isPending,
     isSaving: saveConfigMutation.isPending,
     
     // Status
@@ -427,6 +489,8 @@ export function useSDRAgent() {
     updateSection,
     updateIAConfig,
     toggleActive,
+    configureWebhook,
+    disconnectInstance,
     
     // Polling control
     pollingEnabled,
