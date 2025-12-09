@@ -12,6 +12,12 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
 }
 
+const DEFAULT_EVENTS = [
+  'MESSAGES_UPSERT',
+  'CONNECTION_UPDATE',
+  'QRCODE_UPDATED',
+]
+
 // =============================================================================
 // Helper: Sleep com delay
 // =============================================================================
@@ -65,30 +71,9 @@ async function configureWebhookWithRetry(
   evolutionApiUrl: string,
   evolutionApiKey: string,
   instanceName: string,
-  webhookUrl: string,
+  webhookPayload: any,
   maxRetries: number = 3
 ): Promise<{ success: boolean; data?: any; error?: string; attempts: number }> {
-  const events = [
-    'MESSAGES_UPSERT',
-    'CONNECTION_UPDATE',
-    'QRCODE_UPDATED',
-  ]
-
-  const webhookPayload = {
-    enabled: true,
-    url: webhookUrl,
-    webhookByEvents: false,
-    webhookBase64: true,
-    events,
-    webhook: {
-      enabled: true,
-      url: webhookUrl,
-      byEvents: false,
-      base64: true,
-      events,
-    },
-  }
-
   let lastError = ''
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -187,6 +172,13 @@ serve(async (req: Request) => {
   }
 
   try {
+    // Body opcional para habilitar/desabilitar
+    const requestBody = await req.json().catch(() => ({})) as { enabled?: boolean; events?: string[] }
+    const enabled = typeof requestBody.enabled === 'boolean' ? requestBody.enabled : true
+    const events = Array.isArray(requestBody.events) && requestBody.events.length > 0
+      ? requestBody.events
+      : DEFAULT_EVENTS
+
     // Obter variáveis de ambiente
     const evolutionApiUrl = Deno.env.get('EVOLUTION_API_URL')
     const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY')
@@ -195,6 +187,21 @@ serve(async (req: Request) => {
 
     // Agora apontamos o webhook diretamente para o N8N
     const webhookUrl = 'https://webhook.meuagente.api.br/webhook/agente-sdr'
+
+    const webhookPayload = {
+      enabled,
+      url: webhookUrl,
+      webhookByEvents: false,
+      webhookBase64: true,
+      events: enabled ? events : [],
+      webhook: {
+        enabled,
+        url: webhookUrl,
+        byEvents: false,
+        base64: true,
+        events: enabled ? events : [],
+      },
+    }
 
     if (!evolutionApiUrl || !evolutionApiKey) {
       throw new Error('Evolution API credentials not configured')
@@ -241,6 +248,7 @@ serve(async (req: Request) => {
 
     console.log('Configuring webhook for instance:', instance.instance_name)
     console.log('Webhook URL:', webhookUrl)
+    console.log('Webhook enabled:', enabled)
 
     // Verificar saúde da Evolution API e existência da instância
     const healthCheck = await checkEvolutionAPIHealth(
@@ -264,7 +272,7 @@ serve(async (req: Request) => {
       evolutionApiUrl,
       evolutionApiKey,
       instance.instance_name,
-      webhookUrl,
+      webhookPayload,
       3 // máximo 3 tentativas
     )
 
@@ -275,12 +283,24 @@ serve(async (req: Request) => {
 
     const webhookData = webhookResult.data
 
+    // Persistir estado do toggle sem mexer no billing (clientes.is_active)
+    const { error: updateConfigError } = await supabase
+      .from('sdr_agent_config')
+      .update({ is_active: enabled, updated_at: new Date().toISOString() })
+      .eq('phone', cliente.phone)
+
+    if (updateConfigError) {
+      console.error('Failed to update sdr_agent_config.is_active:', updateConfigError)
+      throw new Error('Webhook configurado, mas não foi possível salvar o status do agente')
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Webhook configured successfully',
+        message: enabled ? 'Webhook enabled successfully' : 'Webhook disabled successfully',
         webhook: webhookData,
         attempts: webhookResult.attempts,
+        enabled,
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

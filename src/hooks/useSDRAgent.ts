@@ -352,20 +352,36 @@ export function useSDRAgent() {
   // =====================================================
   const toggleActiveMutation = useMutation({
     mutationFn: async (isActive: boolean) => {
-      const { error } = await supabase
-        .from('sdr_agent_config' as any)
-        .update({ is_active: isActive })
-        .eq('phone', phone);
+      const { data, error } = await supabase.functions.invoke('configure-evolution-webhook', {
+        body: { enabled: isActive },
+      });
 
-      if (error) throw error;
-      return { success: true, isActive };
+      if (error) {
+        throw new Error(error.message || 'Falha ao atualizar notificações');
+      }
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Falha ao atualizar notificações');
+      }
+
+      // Garante que usamos o estado retornado pelo backend (caso o payload seja ignorado)
+      const effectiveStatus = typeof data.enabled === 'boolean' ? data.enabled : isActive;
+      return { success: true, isActive: effectiveStatus };
     },
     onSuccess: (data) => {
+      queryClient.setQueryData(['sdr-config', phone], (prev: SDRAgentConfig | null) => {
+        if (!prev) return prev;
+        return { ...prev, is_active: data.isActive } as SDRAgentConfig;
+      });
       queryClient.invalidateQueries({ queryKey: ['sdr-config', phone] });
-      toast.success(data.isActive ? 'Agente ativado!' : 'Agente pausado');
+      toast.success(
+        data.isActive
+          ? 'Agente ativado e notificações habilitadas!'
+          : 'Agente pausado e notificações desativadas'
+      );
     },
     onError: (error: Error) => {
-      toast.error(`Erro: ${error.message}`);
+      toast.error(`Erro ao atualizar notificações: ${error.message}`);
     },
   });
 

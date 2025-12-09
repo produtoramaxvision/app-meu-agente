@@ -38,7 +38,7 @@ export function EvolutionContactsList({
 }: EvolutionContactsListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterFavorites, setFilterFavorites] = useState(false);
-  const [showGroups, setShowGroups] = useState(true);
+  const [showGroupsOnly, setShowGroupsOnly] = useState(false);
 
   const {
     contacts,
@@ -70,8 +70,9 @@ export function EvolutionContactsList({
     // Filtro de favoritos
     if (filterFavorites && !contact.crm_favorite) return false;
 
-    // Filtro de grupos
-    if (!showGroups && contact.is_group) return false;
+    // Filtro de grupos x contatos (modo alternância)
+    if (showGroupsOnly && !contact.is_group) return false; // mostrar só grupos
+    if (!showGroupsOnly && contact.is_group) return false; // mostrar só contatos
 
     return matchesSearch;
   });
@@ -167,13 +168,17 @@ export function EvolutionContactsList({
           </Button>
 
           <Button
-            variant={showGroups ? 'default' : 'outline'}
+            variant={showGroupsOnly ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setShowGroups(!showGroups)}
-            className="gap-2"
+            onClick={() => setShowGroupsOnly(!showGroupsOnly)}
+            className="gap-2 min-w-[110px]"
           >
-            <Users className="h-4 w-4" />
-            {showGroups ? 'Com grupos' : 'Sem grupos'}
+            {showGroupsOnly ? (
+              <User className="h-4 w-4" />
+            ) : (
+              <Users className="h-4 w-4" />
+            )}
+            {showGroupsOnly ? 'Contatos' : 'Grupos'}
           </Button>
         </div>
       </CardHeader>
