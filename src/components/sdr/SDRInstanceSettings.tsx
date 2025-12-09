@@ -183,15 +183,12 @@ export function SDRInstanceSettings({
       setInitialSettings({ ...settings })
       setHasChanges(false)
       
-      toast({
-        title: 'Configurações salvas',
+      toast.success('Configurações salvas', {
         description: 'As configurações da instância foram atualizadas com sucesso.',
       })
     } catch (error) {
       console.error('Error saving settings:', error)
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao salvar',
+      toast.error('Erro ao salvar', {
         description: error instanceof Error ? error.message : 'Não foi possível salvar as configurações.',
       })
     } finally {

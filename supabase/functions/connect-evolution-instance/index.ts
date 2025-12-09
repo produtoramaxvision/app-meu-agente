@@ -39,7 +39,8 @@ serve(async (req: Request) => {
     const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY')
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    const webhookUrl = Deno.env.get('SUPABASE_URL') + '/functions/v1/evolution-webhook'
+    // Webhook direto para o N8N
+    const webhookUrl = 'https://webhook.meuagente.api.br/webhook/agente-sdr'
 
     if (!evolutionApiUrl || !evolutionApiKey) {
       throw new Error('Evolution API credentials not configured')
@@ -275,13 +276,13 @@ serve(async (req: Request) => {
       const webhookPayload = {
         enabled: true,
         url: webhookUrl,
-        webhookByEvents: true,
+        webhookByEvents: false,
         webhookBase64: true,
         events,
         webhook: {
           enabled: true,
           url: webhookUrl,
-          byEvents: true,
+          byEvents: false,
           base64: true,
           events,
         },

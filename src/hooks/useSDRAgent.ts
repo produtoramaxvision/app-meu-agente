@@ -53,7 +53,7 @@ export function useSDRAgent() {
     enabled: !!phone,
     staleTime: 1000 * 5, // 5 segundos (reduzido de 30s para manter dados mais atualizados)
     refetchOnWindowFocus: true, // Refetch ao focar na janela
-    refetchInterval: pollingEnabled ? 5000 : false, // Poll a cada 5s quando habilitado
+    refetchInterval: false, // Desabilitamos o polling padrão do React Query pois ele só lê o banco
   });
 
   // =====================================================
@@ -155,6 +155,8 @@ export function useSDRAgent() {
       if (data.instance?.connection_status === 'connected') {
         setPollingEnabled(false);
         toast.success('WhatsApp conectado com sucesso!');
+        // Forçar configuração do webhook para garantir rota correta (N8N)
+        configureWebhookMutation.mutate();
       }
     },
     onError: (error: Error) => {
@@ -168,6 +170,25 @@ export function useSDRAgent() {
       toast.error(`Erro ao verificar conexão: ${error.message}`);
     },
   });
+
+  // =====================================================
+  // Polling Ativo: Consultar API enquanto estiver conectando
+  // Necessário pois o webhook vai para o N8N e não atualiza o banco local
+  // =====================================================
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    if (pollingEnabled && !refreshConnectionMutation.isPending) {
+      intervalId = setInterval(() => {
+        console.log('Polling connection status...');
+        refreshConnectionMutation.mutate();
+      }, 5000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [pollingEnabled, refreshConnectionMutation.isPending]);
 
   // =====================================================
   // Mutation: Configurar/Reconfigurar Webhook
@@ -187,11 +208,11 @@ export function useSDRAgent() {
       return data;
     },
     onSuccess: (data) => {
-      toast.success('Webhook configurado com sucesso!');
+      toast.success('Conexão configurada com sucesso!');
       console.log('Webhook configured:', data);
     },
     onError: (error: Error) => {
-      toast.error(`Erro ao configurar webhook: ${error.message}`);
+      toast.error(`Erro ao configurar conexão: ${error.message}`);
     },
   });
 
