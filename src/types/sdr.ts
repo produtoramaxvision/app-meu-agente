@@ -20,6 +20,56 @@ export interface EvolutionInstance {
 }
 
 // =============================================================================
+// TIPOS PARA CONTATOS (CACHE EVOLUTION API)
+// =============================================================================
+
+export type LeadStatus = 'novo' | 'contatado' | 'negociando' | 'ganho' | 'perdido';
+export type SyncSource = 'manual' | 'auto' | 'webhook';
+
+export interface EvolutionContact {
+  id: string;
+  instance_id: string;
+  phone: string;
+  
+  // Dados do contato (source: Evolution API)
+  remote_jid: string;
+  push_name: string | null;
+  profile_pic_url: string | null;
+  is_group: boolean;
+  is_saved: boolean;
+  
+  // Metadata de cache
+  last_synced_at: string;
+  cache_ttl_minutes: number;
+  sync_source: SyncSource;
+  
+  // Dados extras do CRM
+  crm_notes: string | null;
+  crm_tags: string[] | null;
+  crm_favorite: boolean;
+  crm_last_interaction_at: string | null;
+  crm_lead_status: LeadStatus | null;
+  crm_lead_score: number;
+  
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EvolutionContactAPIResponse {
+  remoteJid: string;
+  pushName?: string;
+  profilePicUrl?: string;
+  id?: string;
+}
+
+export interface EvolutionContactsCache {
+  contacts: EvolutionContact[];
+  lastSyncedAt: Date | null;
+  cacheValid: boolean;
+  secondsSinceSync: number | null;
+}
+
+// =============================================================================
 // TIPOS PARA CONFIGURAÇÕES DA EVOLUTION API
 // =============================================================================
 

@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { ProtectedFeature } from '@/components/ProtectedFeature';
 import { SDRConnectionCard, SDRConfigForm, SDRPlayground, SDRStatusBadge } from '@/components/sdr';
+import { EvolutionContactsList } from '@/components/sdr/EvolutionContactsList';
 import { useSDRAgent } from '@/hooks/useSDRAgent';
 import { 
   Bot, 
@@ -23,7 +24,8 @@ import {
   AlertTriangle,
   CheckCircle2,
   Play,
-  Pause
+  Pause,
+  Users
 } from 'lucide-react';
 
 export default function AgenteSDR() {
@@ -141,7 +143,7 @@ export default function AgenteSDR() {
 
         {/* Tabs principais */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
+          <TabsList className="grid w-full grid-cols-5 lg:w-[600px]">
             <TabsTrigger value="conexao" className="flex items-center gap-2">
               <Zap className="h-4 w-4" />
               <span className="hidden sm:inline">Conexão</span>
@@ -149,6 +151,10 @@ export default function AgenteSDR() {
             <TabsTrigger value="config" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               <span className="hidden sm:inline">Configurar</span>
+            </TabsTrigger>
+            <TabsTrigger value="contatos" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Contatos</span>
             </TabsTrigger>
             <TabsTrigger value="playground" className="flex items-center gap-2">
               <TestTube2 className="h-4 w-4" />
@@ -175,6 +181,41 @@ export default function AgenteSDR() {
               </Card>
             ) : (
               <SDRConfigForm />
+            )}
+          </TabsContent>
+
+          {/* Contatos WhatsApp */}
+          <TabsContent value="contatos" className="space-y-6">
+            {!isConnected ? (
+              <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20 dark:border-yellow-900">
+                <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                  <AlertTriangle className="h-12 w-12 text-yellow-600 dark:text-yellow-400 mb-4" />
+                  <h3 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
+                    WhatsApp não conectado
+                  </h3>
+                  <p className="text-sm text-yellow-600 dark:text-yellow-400 max-w-md">
+                    Conecte seu WhatsApp na aba "Conexão" para visualizar os contatos sincronizados.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : instance ? (
+              <EvolutionContactsList
+                instanceId={instance.id}
+                instanceName={instance.instance_name}
+                evolutionApiUrl={import.meta.env.VITE_EVOLUTION_API_URL || 'https://evolution-api.com'}
+                evolutionApiKey={import.meta.env.VITE_EVOLUTION_API_KEY || ''}
+                cacheTtlMinutes={60}
+                onContactClick={(contact) => {
+                  console.log('Contato selecionado:', contact);
+                  // TODO: Abrir modal com detalhes do contato ou iniciar conversa
+                }}
+              />
+            ) : (
+              <Card>
+                <CardContent className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
 
