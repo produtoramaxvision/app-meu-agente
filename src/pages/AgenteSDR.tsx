@@ -60,25 +60,25 @@ export default function AgenteSDR() {
           </div>
 
           {/* Status e Controle */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full sm:w-auto">
+          <div className="flex flex-row items-center justify-between w-full sm:w-auto gap-4">
             {/* Status da Conexão */}
-            <div className="flex items-center gap-2 sm:mr-auto">
+            <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground whitespace-nowrap">WhatsApp:</span>
               <SDRStatusBadge status={instance?.connection_status || 'disconnected'} />
             </div>
 
             {/* Toggle Ativo/Pausado */}
-            <div className="flex items-center gap-3 bg-muted/50 rounded-lg px-4 py-2 w-full sm:w-auto justify-between sm:ml-auto">
-              <Label htmlFor="agent-active" className="flex items-center gap-2">
+            <div className="flex items-center gap-3 bg-muted/50 rounded-lg px-4 py-2 sm:w-auto">
+              <Label htmlFor="agent-active" className="flex items-center gap-2 cursor-pointer">
                 {isAgentActive ? (
                   <>
                     <Play className="h-4 w-4 text-green-500 flex-shrink-0" />
-                    <span className="text-sm font-medium">Ativo</span>
+                    <span className="text-sm font-medium hidden sm:inline">Ativo</span>
                   </>
                 ) : (
                   <>
                     <Pause className="h-4 w-4 text-yellow-500 flex-shrink-0" />
-                    <span className="text-sm font-medium">Pausado</span>
+                    <span className="text-sm font-medium hidden sm:inline">Pausado</span>
                   </>
                 )}
               </Label>
