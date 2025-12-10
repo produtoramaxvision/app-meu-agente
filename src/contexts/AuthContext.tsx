@@ -14,6 +14,7 @@ interface Cliente {
   subscription_active: boolean;
   is_active: boolean;
   plan_id?: string;
+  refund_period_ends_at?: string | null; // ✅ Período de garantia de 7 dias grátis
   created_at?: string;
   auth_user_id?: string; // Novo campo para integração
 }

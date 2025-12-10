@@ -19,22 +19,19 @@ export function usePlanInfo() {
   const { cliente } = useAuth();
 
   const getPlanInfo = (): PlanInfo => {
-    // Determinar o plano baseado no subscription_active e plan_id
+    // ✅ Determinar o plano baseado no subscription_active e plan_id
     const planId = cliente?.plan_id || 'free';
     const subscriptionActive = cliente?.subscription_active;
 
-    // Se subscription_active é true mas não há plan_id específico, é plano free
-    if (subscriptionActive === true && !cliente?.plan_id) {
-      return getFreePlanInfo();
-    }
-
-    // Se subscription_active é false, é plano free
-    if (subscriptionActive === false) {
+    // Se subscription_active é false, retornar free
+    if (!subscriptionActive) {
       return getFreePlanInfo();
     }
 
     // Mapear plan_id para informações do plano
     switch (planId) {
+      case 'lite':
+        return getLitePlanInfo();
       case 'basic':
         return getBasicPlanInfo();
       case 'business':
@@ -45,6 +42,25 @@ export function usePlanInfo() {
         return getFreePlanInfo();
     }
   };
+
+  const getLitePlanInfo = (): PlanInfo => ({
+    name: 'lite',
+    displayName: 'Plano Lite',
+    color: 'cyan',
+    features: [
+      'Tudo do plano Free',
+      'Recursos iniciais de agendamento',
+      'Notificações básicas'
+    ],
+    limits: {
+      maxRecords: -1,
+      maxExports: -1,
+      maxAgendaEvents: -1,
+      hasWhatsApp: false,
+      hasSupport: false,
+      hasAdvancedFeatures: false
+    }
+  });
 
   const getFreePlanInfo = (): PlanInfo => ({
     name: 'free',
@@ -132,13 +148,24 @@ export function usePlanInfo() {
   });
 
   const planInfo = getPlanInfo();
+  const refundPeriodEndsAt = cliente?.refund_period_ends_at;
+  const isInRefundPeriod = refundPeriodEndsAt && new Date(refundPeriodEndsAt) > new Date();
+  
+  // ✅ Calcular dias restantes do período de arrependimento
+  const refundDaysRemaining = isInRefundPeriod 
+    ? Math.ceil((new Date(refundPeriodEndsAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
 
   return {
     planInfo,
     isFreePlan: planInfo.name === 'free',
+    isLitePlan: planInfo.name === 'lite',
     isBasicPlan: planInfo.name === 'basic',
     isBusinessPlan: planInfo.name === 'business',
     isPremiumPlan: planInfo.name === 'premium',
+    isInRefundPeriod, // ✅ Período de arrependimento ativo
+    refundPeriodEndsAt, // ✅ Data final do período
+    refundDaysRemaining, // ✅ Dias restantes para cancelamento
     getPlanColor: () => planInfo.color,
     getPlanDisplayName: () => planInfo.displayName,
     getPlanFeatures: () => planInfo.features,

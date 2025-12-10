@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { DashboardGoalCard } from '@/components/DashboardGoalCard';
 import { DashboardUpcomingBills } from '@/components/DashboardUpcomingBills';
 import { UpcomingTasksCard } from '@/components/UpcomingTasksCard';
+import { TrialBanner } from '@/components/TrialBanner';
 import { sanitizeText } from '@/lib/sanitize';
 
 const EXPENSE_COLORS = [
@@ -196,6 +197,9 @@ export default function Dashboard() {
 
   return (
     <div className="py-4 sm:py-6 lg:py-8 space-y-8">
+      {/* Banner de Trial */}
+      <TrialBanner />
+      
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div className="animate-fade-in">
           <h1 className="text-4xl font-extrabold bg-gradient-to-br from-text via-brand-700 to-brand-500 bg-clip-text text-transparent drop-shadow-sm">Dashboard</h1>

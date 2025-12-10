@@ -27,7 +27,8 @@ import {
   MessageSquare,
   BarChart3,
   Settings,
-  Crown
+  Crown,
+  Bell
 } from 'lucide-react';
 
 interface PlanFeature {
@@ -110,7 +111,7 @@ export function PlansSection() {
       id: 'free',
       name: 'Plano Free',
       price: 'Gratuito',
-      description: 'Acesso completo ao app com todos os recursos básicos para começar a usar o Meu Agente.',
+      description: 'Acesso completo ao app com todos os recursos básicos. Todos os planos pagos possuem 7 dias grátis de garantia.',
       color: 'orange',
       badge: 'Gratuito',
       features: [
@@ -138,12 +139,39 @@ export function PlansSection() {
       maintenance: 'Não incluído'
     },
     {
+      id: 'lite',
+      name: 'Plano Lite',
+      price: 'R$ 97,90/mês',
+      description: 'Plano leve com recursos iniciais de agendamento e notificações. 🎁 7 dias grátis de garantia.',
+      color: 'cyan',
+      badge: '7 Dias Grátis',
+      features: [
+        { name: 'Tudo do plano Free', included: true, icon: <CheckCircle className="h-4 w-4" /> },
+        { name: 'Recursos iniciais de agendamento', included: true, icon: <Calendar className="h-4 w-4" /> },
+        { name: 'Notificações básicas', included: true, icon: <Bell className="h-4 w-4" /> },
+        { name: 'Agente de Agendamento', included: false, icon: <Bot className="h-4 w-4" /> },
+        { name: 'Número WhatsApp dedicado', included: false, icon: <MessageSquare className="h-4 w-4" /> },
+        { name: 'Suporte prioritário', included: false, icon: <Shield className="h-4 w-4" /> }
+      ],
+      subAgents: [],
+      limits: {
+        maxRecords: 'Ilimitados',
+        maxExports: 'Ilimitadas',
+        maxAgendaEvents: 'Ilimitados',
+        hasWhatsApp: false,
+        hasSupport: false,
+        hasAdvancedFeatures: false
+      },
+      setup: 'Não incluído',
+      maintenance: 'Não incluído'
+    },
+    {
       id: 'basic',
       name: 'Plano Básico',
       price: 'R$ 497,00/mês',
-      description: 'Para profissionais e pequenas equipes que desejam começar com agentes de IA no WhatsApp usando infraestrutura em nuvem.',
+      description: 'Para profissionais e pequenas equipes que desejam começar com agentes de IA no WhatsApp. 🎁 7 dias grátis de garantia.',
       color: 'blue',
-      badge: 'Básico',
+      badge: '7 Dias Grátis',
       features: [
         { name: 'Tudo do plano Free', included: true, icon: <CheckCircle className="h-4 w-4" /> },
         { name: 'Agente Financeiro completo', included: true, icon: <DollarSign className="h-4 w-4" /> },
@@ -175,9 +203,9 @@ export function PlansSection() {
       id: 'business',
       name: 'Plano Business',
       price: 'R$ 997,00/mês',
-      description: 'Para empresas que precisam de número WhatsApp dedicado, suporte prioritário 24/7 e sub-agentes adicionais.',
+      description: 'Para empresas que precisam de número WhatsApp dedicado, suporte prioritário 24/7 e sub-agentes adicionais. 🎁 7 dias grátis de garantia.',
       color: 'green',
-      badge: 'Business',
+      badge: '7 Dias Grátis',
       isPopular: true,
       features: [
         { name: 'Tudo do plano Básico', included: true, icon: <CheckCircle className="h-4 w-4" /> },
@@ -211,9 +239,9 @@ export function PlansSection() {
       id: 'premium',
       name: 'Plano Premium',
       price: 'R$ 1.497,00/mês',
-      description: 'Tudo do Business, com camada avançada adicional nos agentes de Web Search e Scrape, automações estendidas e governança ampliada.',
+      description: 'Tudo do Business, com camada avançada adicional nos agentes de Web Search e Scrape, automações estendidas e governança ampliada. 🎁 7 dias grátis de garantia.',
       color: 'purple',
-      badge: 'Premium',
+      badge: '7 Dias Grátis',
       features: [
         { name: 'Tudo do plano Business', included: true, icon: <CheckCircle className="h-4 w-4" /> },
         { name: 'Web Search avançado', included: true, icon: <Search className="h-4 w-4" /> },
