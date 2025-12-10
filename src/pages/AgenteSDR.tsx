@@ -6,7 +6,6 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -265,28 +264,6 @@ export default function AgenteSDR() {
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Footer com informações */}
-        <Card className="bg-muted/30">
-          <CardContent className="py-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Bot className="h-4 w-4" />
-                <span>
-                  Modelo: {config?.config_json?.ia_config?.model || 'gpt-4o-mini'}
-                </span>
-              </div>
-              <div className="flex items-center gap-4">
-                <Badge variant="outline">
-                  Powered by Evolution API
-                </Badge>
-                <Badge variant="outline">
-                  N8N Webhooks
-                </Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </ProtectedFeature>
   );
