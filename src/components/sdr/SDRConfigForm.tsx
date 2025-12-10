@@ -11,23 +11,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { SliderWithTooltip } from './SliderWithTooltip';
 import { TextareaWithCharacterLimit } from './TextareaWithCharacterLimit';
 import { useSDRAgent } from '@/hooks/useSDRAgent';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  AI_MODELS,
   SLIDER_CONFIGS,
   DEFAULT_CONFIG_JSON,
   type AgenteConfigJSON,
-  type IAConfig,
 } from '@/types/sdr';
 import { cn } from '@/lib/utils';
 
@@ -71,7 +62,15 @@ export function SDRConfigForm() {
 
   // Salvar configuração
   const handleSave = () => {
-    saveConfig(formData);
+    // Força o modelo a null (controle interno via N8N)
+    const payload = {
+      ...formData,
+      ia_config: {
+        ...formData.ia_config,
+        model: null as any,
+      },
+    };
+    saveConfig(payload);
     setHasChanges(false);
   };
 
@@ -217,32 +216,6 @@ export function SDRConfigForm() {
 
           {/* TAB: IA Config (SLIDERS) */}
           <TabsContent value="ia" className="space-y-6">
-            <div className="space-y-2">
-              <Label>Modelo de IA</Label>
-              <Select
-                value={formData.ia_config.model}
-                onValueChange={(value: IAConfig['model']) =>
-                  updateField('ia_config', 'model', value)
-                }
-              >
-                <SelectTrigger className="h-auto min-h-[2.5rem]">
-                  <SelectValue placeholder="Selecione o modelo" />
-                </SelectTrigger>
-                <SelectContent>
-                  {AI_MODELS.map((model) => (
-                    <SelectItem key={model.value} value={model.value}>
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2 py-1">
-                        <span className="font-medium whitespace-nowrap">{model.label}</span>
-                        <span className="text-xs text-muted-foreground sm:border-l sm:pl-2 sm:border-border">
-                          {model.description}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             <div className="border rounded-lg p-4 space-y-6 bg-muted/30">
               <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
                 Parâmetros Avançados
