@@ -7,7 +7,6 @@ import { useState } from 'react';
 import { Wifi, WifiOff, RefreshCw, Phone, Plus, Settings2, ChevronDown, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { SDRStatusBadge } from './SDRStatusBadge';
 import { SDRQRCodeDisplay } from './SDRQRCodeDisplay';
 import { SDRInstanceSettings } from './SDRInstanceSettings';
 import { useSDRAgent } from '@/hooks/useSDRAgent';
@@ -69,7 +68,6 @@ export function SDRConnectionCard() {
                 : 'Conecte seu WhatsApp para ativar o Agente SDR'}
             </CardDescription>
           </div>
-          <SDRStatusBadge status={connectionStatus} />
         </div>
       </CardHeader>
 
@@ -111,7 +109,7 @@ export function SDRConnectionCard() {
         )}
 
         {/* Botões de ação */}
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 w-full">
           {!hasInstance ? (
             <Button
               onClick={() => createInstance()}
@@ -135,6 +133,7 @@ export function SDRConnectionCard() {
               variant="outline"
               onClick={refreshConnection}
               disabled={isRefreshing || isCreating}
+              className="w-full sm:w-auto"
             >
               {isRefreshing ? (
                 <>
@@ -155,7 +154,12 @@ export function SDRConnectionCard() {
             </Button>
           ) : (
             <>
-              <Button variant="outline" onClick={refreshConnection} disabled={isRefreshing || isDisconnecting}>
+              <Button 
+                variant="outline" 
+                onClick={refreshConnection} 
+                disabled={isRefreshing || isDisconnecting}
+                className="w-full sm:w-auto flex-1"
+              >
                 {isRefreshing ? (
                   <>
                     <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
@@ -172,6 +176,7 @@ export function SDRConnectionCard() {
                 variant="destructive" 
                 onClick={disconnectInstance} 
                 disabled={isRefreshing || isDisconnecting}
+                className="w-full sm:w-auto flex-1"
               >
                 {isDisconnecting ? (
                   <>

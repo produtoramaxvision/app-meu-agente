@@ -4,7 +4,7 @@
 // =============================================================================
 
 import { useState, useEffect } from 'react';
-import { Save, RotateCcw, Power, PowerOff } from 'lucide-react';
+import { Save, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -37,10 +37,8 @@ export function SDRConfigForm() {
     configJson,
     isLoadingConfig,
     isSaving,
-    isAgentActive,
     saveConfig,
     updateIAConfig,
-    toggleActive,
   } = useSDRAgent();
 
   // Estado local para o formulário
@@ -108,34 +106,12 @@ export function SDRConfigForm() {
               Personalize como seu Agente SDR se comporta e responde
             </CardDescription>
           </div>
-
-          {/* Toggle Ativo/Inativo */}
-          <div className="flex items-center gap-3">
-            <Label htmlFor="agent-active" className="text-sm">
-              {isAgentActive ? (
-                <span className="text-green-600 flex items-center gap-1">
-                  <Power className="h-4 w-4" />
-                  Ativo
-                </span>
-              ) : (
-                <span className="text-muted-foreground flex items-center gap-1">
-                  <PowerOff className="h-4 w-4" />
-                  Pausado
-                </span>
-              )}
-            </Label>
-            <Switch
-              id="agent-active"
-              checked={isAgentActive}
-              onCheckedChange={toggleActive}
-            />
-          </div>
         </div>
       </CardHeader>
 
       <CardContent>
         <Tabs defaultValue="identidade" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-6">
+          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-6 h-auto">
             <TabsTrigger value="identidade">Identidade</TabsTrigger>
             <TabsTrigger value="mensagens">Mensagens</TabsTrigger>
             <TabsTrigger value="ia">IA Config</TabsTrigger>
@@ -249,15 +225,15 @@ export function SDRConfigForm() {
                   updateField('ia_config', 'model', value)
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-auto min-h-[2.5rem]">
                   <SelectValue placeholder="Selecione o modelo" />
                 </SelectTrigger>
                 <SelectContent>
                   {AI_MODELS.map((model) => (
                     <SelectItem key={model.value} value={model.value}>
-                      <div className="flex flex-col">
-                        <span>{model.label}</span>
-                        <span className="text-xs text-muted-foreground">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2 py-1">
+                        <span className="font-medium whitespace-nowrap">{model.label}</span>
+                        <span className="text-xs text-muted-foreground sm:border-l sm:pl-2 sm:border-border">
                           {model.description}
                         </span>
                       </div>
@@ -469,26 +445,31 @@ export function SDRConfigForm() {
         </Tabs>
 
         {/* Botões de ação */}
-        <div className="flex justify-between items-center mt-6 pt-6 border-t">
-          <Button variant="outline" onClick={handleReset} disabled={!hasChanges}>
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Restaurar Padrões
+        <div className="flex flex-col-reverse sm:flex-row justify-between items-center mt-6 pt-6 border-t gap-3 w-full">
+          <Button 
+            variant="outline" 
+            onClick={handleReset} 
+            disabled={!hasChanges}
+            className="w-full sm:w-auto overflow-hidden"
+          >
+            <RotateCcw className="h-4 w-4 mr-2 flex-shrink-0" />
+            <span className="truncate">Restaurar Padrões</span>
           </Button>
 
           <Button
             onClick={handleSave}
             disabled={!hasChanges || isSaving}
-            className={cn(!hasChanges && 'opacity-50')}
+            className={cn('w-full sm:w-auto overflow-hidden', !hasChanges && 'opacity-50')}
           >
             {isSaving ? (
               <>
-                <Save className="h-4 w-4 mr-2 animate-pulse" />
-                Salvando...
+                <Save className="h-4 w-4 mr-2 animate-pulse flex-shrink-0" />
+                <span className="truncate">Salvando...</span>
               </>
             ) : (
               <>
-                <Save className="h-4 w-4 mr-2" />
-                Salvar Configurações
+                <Save className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Salvar Configurações</span>
               </>
             )}
           </Button>

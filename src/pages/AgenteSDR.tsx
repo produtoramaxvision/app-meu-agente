@@ -48,7 +48,7 @@ export default function AgenteSDR() {
     <ProtectedFeature permission="canAccessSDRAgent" featureName="Agente SDR">
       <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6 mt-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
           <div className="space-y-1">
             <h1 className="text-3xl font-bold flex items-center gap-3">
               <Bot className="h-8 w-8 text-primary" />
@@ -60,24 +60,24 @@ export default function AgenteSDR() {
           </div>
 
           {/* Status e Controle */}
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full sm:w-auto">
             {/* Status da Conexão */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">WhatsApp:</span>
+            <div className="flex items-center gap-2 sm:mr-auto">
+              <span className="text-sm text-muted-foreground whitespace-nowrap">WhatsApp:</span>
               <SDRStatusBadge status={instance?.connection_status || 'disconnected'} />
             </div>
 
             {/* Toggle Ativo/Pausado */}
-            <div className="flex items-center gap-3 bg-muted/50 rounded-lg px-4 py-2">
+            <div className="flex items-center gap-3 bg-muted/50 rounded-lg px-4 py-2 w-full sm:w-auto justify-between sm:ml-auto">
               <Label htmlFor="agent-active" className="flex items-center gap-2">
                 {isAgentActive ? (
                   <>
-                    <Play className="h-4 w-4 text-green-500" />
+                    <Play className="h-4 w-4 text-green-500 flex-shrink-0" />
                     <span className="text-sm font-medium">Ativo</span>
                   </>
                 ) : (
                   <>
-                    <Pause className="h-4 w-4 text-yellow-500" />
+                    <Pause className="h-4 w-4 text-yellow-500 flex-shrink-0" />
                     <span className="text-sm font-medium">Pausado</span>
                   </>
                 )}

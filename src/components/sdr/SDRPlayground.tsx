@@ -12,12 +12,16 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSDRAgent } from '@/hooks/useSDRAgent';
 import { cn } from '@/lib/utils';
 import type { PlaygroundMessage } from '@/types/sdr';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Gerar ID único
 const generateId = () => `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+const WEBHOOK_URL = 'https://webhook.meuagente.api.br/webhook/agente-sdr-playground';
+
 export function SDRPlayground() {
   const { configJson, isAgentActive } = useSDRAgent();
+  const { cliente } = useAuth();
   const [messages, setMessages] = useState<PlaygroundMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -46,52 +50,65 @@ export function SDRPlayground() {
     }
   }, [configJson]);
 
-  // Simular resposta do agente
-  const simulateAgentResponse = async (userMessage: string) => {
+  // Enviar para webhook do playground e exibir resposta do agente real
+  const sendToWebhook = async (userMessage: string) => {
     setIsLoading(true);
 
-    // Simular delay de processamento
-    await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 1500));
-
-    // Gerar resposta baseada na configuração
-    let response = '';
-
-    if (!configJson) {
-      response = 'Configuração não encontrada. Por favor, configure o agente primeiro.';
-    } else {
-      // Resposta contextualizada básica
-      const lowerMessage = userMessage.toLowerCase();
-
-      if (lowerMessage.includes('olá') || lowerMessage.includes('oi') || lowerMessage.includes('bom dia')) {
-        response = `Olá! Tudo bem? 😊 Sou ${configJson.identidade.nome_agente} da ${configJson.identidade.nome_empresa}. ${configJson.identidade.descricao_empresa ? `Nós ${configJson.identidade.descricao_empresa.toLowerCase()}` : ''} Como posso ajudar você hoje?`;
-      } else if (lowerMessage.includes('preço') || lowerMessage.includes('valor') || lowerMessage.includes('quanto')) {
-        response = `Ótima pergunta! Para te passar valores precisos, preciso entender melhor o seu projeto. Pode me contar um pouco mais sobre o que você precisa?`;
-      } else if (lowerMessage.includes('reunião') || lowerMessage.includes('agendar') || lowerMessage.includes('conversar')) {
-        response = `Perfeito! Vamos agendar um bate-papo para entender melhor suas necessidades. Qual seria o melhor dia e horário para você?`;
-      } else if (lowerMessage.includes('obrigado') || lowerMessage.includes('valeu') || lowerMessage.includes('agradeço')) {
-        response = configJson.mensagens.encerramento || `Por nada! Foi um prazer conversar com você. Se precisar de mais alguma coisa, é só chamar! 👋`;
-      } else {
-        // Usar fallback ou resposta genérica
-        const genericResponses = [
-          `Interessante! Me conta mais sobre isso...`,
-          `Entendi! E o que mais você gostaria de saber?`,
-          `Legal! Posso te ajudar com mais detalhes. O que você precisa?`,
-          `Certo! Vamos explorar isso melhor. Qual o seu objetivo principal?`,
-        ];
-        response = genericResponses[Math.floor(Math.random() * genericResponses.length)];
-      }
-    }
-
-    // Adicionar resposta do agente
-    const agentMessage: PlaygroundMessage = {
-      id: generateId(),
-      role: 'assistant',
-      content: response,
-      timestamp: new Date(),
+    const payload = {
+      message: userMessage,
+      phone: cliente?.phone,
+      agent: configJson?.identidade?.nome_agente,
+      empresa: configJson?.identidade?.nome_empresa,
+      origem: 'playground-web',
+      timestamp: new Date().toISOString(),
     };
 
-    setMessages((prev) => [...prev, agentMessage]);
-    setIsLoading(false);
+    try {
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      let replyText = '';
+
+      if (response.ok) {
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const json = await response.json().catch(() => ({} as any));
+          replyText = json.reply || json.message || JSON.stringify(json);
+        } else {
+          replyText = await response.text();
+        }
+
+        if (!replyText) {
+          replyText = 'O webhook não retornou mensagem.';
+        }
+      } else {
+        replyText = `Erro do webhook (${response.status})`;
+      }
+
+      const agentMessage: PlaygroundMessage = {
+        id: generateId(),
+        role: 'assistant',
+        content: replyText,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, agentMessage]);
+    } catch (error) {
+      const agentMessage: PlaygroundMessage = {
+        id: generateId(),
+        role: 'assistant',
+        content: `Falha ao contatar webhook: ${error instanceof Error ? error.message : 'erro desconhecido'}`,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, agentMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Enviar mensagem
@@ -109,8 +126,8 @@ export function SDRPlayground() {
     setMessages((prev) => [...prev, userMessage]);
     setInputValue('');
 
-    // Simular resposta
-    await simulateAgentResponse(userMessage.content);
+    // Disparar webhook para obter resposta real do agente
+    await sendToWebhook(userMessage.content);
     
     // Focar no input
     inputRef.current?.focus();
