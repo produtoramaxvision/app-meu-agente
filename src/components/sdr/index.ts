@@ -15,6 +15,7 @@ export { SDRPlayground } from './SDRPlayground';
 
 // Componentes de UI (MAGIC-MCP)
 export { SliderWithTooltip } from './SliderWithTooltip';
+export { AnimatedSlider } from './AnimatedSlider';
 export { TextareaWithCharacterLimit } from './TextareaWithCharacterLimit';
 
 // Hooks

@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { SliderWithTooltip } from './SliderWithTooltip';
+import { AnimatedSlider } from './AnimatedSlider';
 import { TextareaWithCharacterLimit } from './TextareaWithCharacterLimit';
 import { useSDRAgent } from '@/hooks/useSDRAgent';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -221,7 +221,7 @@ export function SDRConfigForm() {
                 Parâmetros Avançados
               </h4>
 
-              <SliderWithTooltip
+              <AnimatedSlider
                 value={formData.ia_config.temperature}
                 onChange={(value) => updateField('ia_config', 'temperature', value)}
                 min={SLIDER_CONFIGS.temperature.min}
@@ -229,9 +229,10 @@ export function SDRConfigForm() {
                 step={SLIDER_CONFIGS.temperature.step}
                 label={SLIDER_CONFIGS.temperature.label}
                 description={SLIDER_CONFIGS.temperature.description}
+                disabled={isSaving}
               />
 
-              <SliderWithTooltip
+              <AnimatedSlider
                 value={formData.ia_config.top_p}
                 onChange={(value) => updateField('ia_config', 'top_p', value)}
                 min={SLIDER_CONFIGS.top_p.min}
@@ -239,9 +240,10 @@ export function SDRConfigForm() {
                 step={SLIDER_CONFIGS.top_p.step}
                 label={SLIDER_CONFIGS.top_p.label}
                 description={SLIDER_CONFIGS.top_p.description}
+                disabled={isSaving}
               />
 
-              <SliderWithTooltip
+              <AnimatedSlider
                 value={formData.ia_config.frequency_penalty}
                 onChange={(value) =>
                   updateField('ia_config', 'frequency_penalty', value)
@@ -251,9 +253,10 @@ export function SDRConfigForm() {
                 step={SLIDER_CONFIGS.frequency_penalty.step}
                 label={SLIDER_CONFIGS.frequency_penalty.label}
                 description={SLIDER_CONFIGS.frequency_penalty.description}
+                disabled={isSaving}
               />
 
-              <SliderWithTooltip
+              <AnimatedSlider
                 value={formData.ia_config.presence_penalty}
                 onChange={(value) =>
                   updateField('ia_config', 'presence_penalty', value)
@@ -263,9 +266,10 @@ export function SDRConfigForm() {
                 step={SLIDER_CONFIGS.presence_penalty.step}
                 label={SLIDER_CONFIGS.presence_penalty.label}
                 description={SLIDER_CONFIGS.presence_penalty.description}
+                disabled={isSaving}
               />
 
-              <SliderWithTooltip
+              <AnimatedSlider
                 value={formData.ia_config.max_tokens}
                 onChange={(value) => updateField('ia_config', 'max_tokens', value)}
                 min={SLIDER_CONFIGS.max_tokens.min}
@@ -274,6 +278,7 @@ export function SDRConfigForm() {
                 label={SLIDER_CONFIGS.max_tokens.label}
                 description={SLIDER_CONFIGS.max_tokens.description}
                 formatValue={(v) => v.toString()}
+                disabled={isSaving}
               />
             </div>
           </TabsContent>
@@ -359,7 +364,7 @@ export function SDRConfigForm() {
             </div>
 
             {formData.conducao.usar_reacoes && (
-              <SliderWithTooltip
+              <AnimatedSlider
                 value={formData.conducao.frequencia_reacoes}
                 onChange={(value) =>
                   updateField('conducao', 'frequencia_reacoes', value)
@@ -370,6 +375,7 @@ export function SDRConfigForm() {
                 label="Frequência de Reações"
                 description="A cada quantas mensagens reagir"
                 formatValue={(v) => `A cada ${v} mensagens`}
+                disabled={isSaving}
               />
             )}
           </TabsContent>
