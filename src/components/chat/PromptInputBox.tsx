@@ -812,39 +812,41 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
             </PromptInputAction>
 
             <div className="flex items-center">
-              <button
-                type="button"
-                onClick={() => handleToggleChange("search")}
-                disabled={disabled}
-                className={cn(
-                  "rounded-full transition-all flex items-center gap-1 px-2 py-1 border h-8",
-                  showSearch
-                    ? "bg-[#1EAEDB]/15 border-[#1EAEDB] text-[#1EAEDB]"
-                    : "bg-transparent border-transparent text-[#9CA3AF] hover:text-[#D1D5DB]"
-                )}
-              >
-                <div className="w-5 h-5 flex items-center justify-center flex-shrink-0 pointer-events-none">
-                  <motion.div
-                    animate={{ rotate: showSearch ? 360 : 0, scale: showSearch ? 1.1 : 1 }}
-                    transition={{ type: "spring", stiffness: 260, damping: 25 }}
-                  >
-                    <Globe className={cn("w-4 h-4", showSearch ? "text-[#1EAEDB]" : "text-inherit")} />
-                  </motion.div>
-                </div>
-                <AnimatePresence>
-                  {showSearch && (
-                    <motion.span
-                      initial={{ width: 0, opacity: 0 }}
-                      animate={{ width: "auto", opacity: 1 }}
-                      exit={{ width: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="text-xs overflow-hidden whitespace-nowrap text-[#1EAEDB] flex-shrink-0"
-                    >
-                      Search
-                    </motion.span>
+              <PromptInputAction tooltip="Pesquisar na web">
+                <button
+                  type="button"
+                  onClick={() => handleToggleChange("search")}
+                  disabled={disabled}
+                  className={cn(
+                    "rounded-full transition-all flex items-center gap-1 px-2 py-1 border h-8",
+                    showSearch
+                      ? "bg-[#1EAEDB]/15 border-[#1EAEDB] text-[#1EAEDB]"
+                      : "bg-transparent border-transparent text-[#9CA3AF] hover:text-[#D1D5DB]"
                   )}
-                </AnimatePresence>
-              </button>
+                >
+                  <div className="w-5 h-5 flex items-center justify-center flex-shrink-0 pointer-events-none">
+                    <motion.div
+                      animate={{ rotate: showSearch ? 360 : 0, scale: showSearch ? 1.1 : 1 }}
+                      transition={{ type: "spring", stiffness: 260, damping: 25 }}
+                    >
+                      <Globe className={cn("w-4 h-4", showSearch ? "text-[#1EAEDB]" : "text-inherit")} />
+                    </motion.div>
+                  </div>
+                  <AnimatePresence>
+                    {showSearch && (
+                      <motion.span
+                        initial={{ width: 0, opacity: 0 }}
+                        animate={{ width: "auto", opacity: 1 }}
+                        exit={{ width: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="text-xs overflow-hidden whitespace-nowrap text-[#1EAEDB] flex-shrink-0"
+                      >
+                        Search
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </button>
+              </PromptInputAction>
 
               <CustomDivider />
 
