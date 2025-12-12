@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, User, LogOut, Wallet, Target, Bell, CheckSquare, CalendarDays, X, Loader2, MessageCircle, ChevronDown, Bot } from 'lucide-react';
+import { LayoutDashboard, FileText, User, LogOut, Wallet, Target, Bell, CheckSquare, CalendarDays, X, Loader2, MessageCircle, ChevronDown, Bot, Kanban } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { useNotificationsData } from '@/hooks/useNotificationsData';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/Logo';
@@ -17,6 +18,7 @@ import {
 const navigation = [
   { name: 'Chat IA', href: '/chat', icon: MessageCircle },
   { name: 'Agente SDR', href: '/agente-sdr', icon: Bot },
+  { name: 'CRM', href: '/crm', icon: Kanban },
   { name: 'Agenda', href: '/agenda', icon: CalendarDays },
   { name: 'Tarefas', href: '/tarefas', icon: CheckSquare },
   { name: 'Notificações', href: '/notificacoes', icon: Bell },
@@ -54,6 +56,9 @@ export function AppSidebar({ collapsed, onToggle, showCloseButton = false }: App
   const location = useLocation();
   const navigate = useNavigate();
   const { unreadCount } = useNotificationsData();
+  const { hasPermission } = usePermissions();
+
+  const canSeeBusinessFeatures = hasPermission('canAccessSDRAgent');
   
   // Estado para controlar os submenus
   const [dashboardOpen, setDashboardOpen] = useState(false);
@@ -404,6 +409,7 @@ export function AppSidebar({ collapsed, onToggle, showCloseButton = false }: App
 
         {/* Item: Agenda (mover para baixo de Contas) */}
         {navigation.slice(1, 2).map((item) => {
+          if (!canSeeBusinessFeatures && item.name === 'Agente SDR') return null;
           const isActive = location.pathname === item.href;
           return (
           <NavLink
@@ -428,6 +434,7 @@ export function AppSidebar({ collapsed, onToggle, showCloseButton = false }: App
         
         {/* Renderizar itens de navegação depois de Contas (Tarefas, Notificações, Perfil) */}
         {navigation.slice(2).map((item) => {
+          if (!canSeeBusinessFeatures && (item.name === 'Agente SDR' || item.name === 'CRM')) return null;
           const isActive = location.pathname === item.href;
           const isNotifications = item.name === 'Notificações';
           return (

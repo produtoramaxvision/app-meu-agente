@@ -1,4 +1,4 @@
-# 🎁 Documentação de Implantação: Trial Gratuito de 7 Dias
+# 🛡️ Documentação de Implantação: Período de Arrependimento de 7 Dias (CDC)
 
 ## 📋 Índice
 1. [Visão Geral](#visão-geral)
@@ -14,79 +14,65 @@
 
 ## 🎯 Visão Geral
 
-O sistema de trial gratuito oferece:
-- ✅ **7 dias de teste grátis** em todos os planos pagos (Basic, Business, Premium)
-- ✅ **Conversão automática** para plano Free após expiração do trial (se não houver pagamento)
-- ✅ **Banner visual** no Dashboard mostrando dias restantes
-- ✅ **Webhook do Stripe** para sincronização automática de status
-- ✅ **Edge Functions Supabase** para checkout e gerenciamento de assinaturas
+O produto usa **Período de Arrependimento (CDC) de 7 dias** — **não é trial gratuito**. O cliente paga imediatamente, tem acesso ao plano contratado e pode pedir reembolso integral dentro de 7 dias.
+
+- ✅ **Cobrança imediata** no Stripe (sem `trial_period_days`)
+- ✅ **Garantia/arrependimento de 7 dias** controlada pelo backend (`refund_period_ends_at`)
+- ✅ **Banner de garantia** no Dashboard mostrando dias restantes
+- ✅ **Webhook do Stripe** sincroniza assinatura e expira acesso quando aplicável
+- ✅ **Edge Functions Supabase** para checkout, portal e webhook
 
 ---
 
 ## 🔧 Mudanças Implementadas
 
-### 1. **Banco de Dados (Migration)**
-- ✅ **Função `is_trial_active()`**: Verifica se o trial está ativo
-- ✅ **Função `has_active_access()`**: Verifica acesso (trial OU assinatura)
-- ✅ **Função `expire_trials()`**: Expira trials automaticamente
-- ✅ **View `cliente_access_status`**: Visão consolidada do status de acesso
-- ✅ **Trigger `handle_new_auth_user`**: Inicia trial de 7 dias automaticamente
-- ✅ **Índices otimizados**: Para queries de trial
+### 1. Banco de Dados (Migration)
+- ✅ Substituição de trial por período de arrependimento
+- ✅ Campo `trial_ends_at` renomeado para `refund_period_ends_at`
+- ✅ Funções novas: `is_in_refund_period()`, `refund_period_days_remaining()`, `has_active_subscription()`
+- ✅ Trigger `handle_new_auth_user`: novos usuários iniciam em `plan_id = 'free'` sem período ativo
+- ✅ View `cliente_subscription_status` para monitoramento de assinaturas/garantia
 
-**Arquivo:** `supabase/migrations/20251210000000_add_trial_support_to_clientes.sql`
+**Arquivo:** `supabase/migrations/20251210000001_fix_trial_to_refund_period.sql`
 
-### 2. **Edge Functions Supabase**
+### 2. Edge Functions Supabase
 
 #### `create-checkout-session`
 - Cria sessão de checkout no Stripe
-- **Lógica do trial:**
-  - Se o usuário **nunca teve trial**: adiciona `trial_period_days: 7`
-  - Se o usuário **já teve trial**: checkout direto sem trial
-  - Se o usuário **está em trial ativo**: não adiciona novo trial
+- **Sem** `trial_period_days` — cobrança imediata
+- Define metadados de `refund_period_start` e respeita período de arrependimento no backend
 
 **Arquivo:** `supabase/functions/create-checkout-session/index.ts`
 
 #### `stripe-webhook`
-- Recebe eventos do Stripe e atualiza banco de dados
-- **Eventos tratados:**
-  - `checkout.session.completed`: Atualiza status após checkout
-  - `customer.subscription.created/updated`: Sincroniza status da assinatura
-  - `customer.subscription.deleted`: Move para plano Free
-  - `customer.subscription.trial_will_end`: Notificação de fim de trial
-  - `invoice.payment_succeeded`: Confirma pagamento
-  - `invoice.payment_failed`: Registra falha
+- Atualiza status após eventos Stripe:
+  - `checkout.session.completed`: ativa assinatura, grava `refund_period_ends_at = NOW() + 7 dias`
+  - `customer.subscription.created/updated`: mantém assinatura ativa sem trial do Stripe
+  - `customer.subscription.deleted`: volta para `free` e limpa `refund_period_ends_at`
+  - `customer.subscription.trial_will_end`: ignorado (não usamos trial)
+  - `invoice.payment_succeeded` / `invoice.payment_failed`: sincroniza faturas
 
 **Arquivo:** `supabase/functions/stripe-webhook/index.ts`
 
 #### `create-portal-session`
-- Cria sessão do portal do cliente Stripe
-- Permite que o usuário gerencie sua assinatura
+- Portal do cliente no Stripe para gerenciar assinatura
 
 **Arquivo:** `supabase/functions/create-portal-session/index.ts`
 
-### 3. **Frontend**
+### 3. Frontend
 
 #### `usePlanInfo.ts` (Hook)
-- ✅ Atualizado para detectar trial ativo
-- ✅ Novo método `getTrialPlanInfo()`
-- ✅ Propriedades adicionadas:
-  - `isInActiveTrial`: boolean
-  - `isTrialPlan`: boolean
-  - `trialEndsAt`: string | null
-  - `trialDaysRemaining`: number
+- Removeu propriedades de trial
+- Adicionou `refundPeriodEndsAt`, `refundDaysRemaining`, `isInRefundPeriod`
 
 #### `TrialBanner.tsx` (Componente)
-- Banner visual no topo do Dashboard
-- Mostra dias restantes do trial
-- Barra de progresso
-- Botão "Fazer Upgrade"
+- Exibe período de arrependimento (dias restantes) com CTA adequado
 
 #### `PlansSection.tsx`
-- Atualizado para mostrar "🎁 7 dias grátis" em todos os planos pagos
-- Badge "Trial 7 dias"
+- Badges atualizadas para “Garantia CDC 7 dias” em planos pagos
 
 #### `AuthContext.tsx`
-- Interface `Cliente` atualizada com `trial_ends_at`
+- Interface `Cliente` usa `refund_period_ends_at`
 
 ---
 
@@ -230,52 +216,30 @@ supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
 
 ## ✅ Testes
 
-### 1. **Teste de Trial (Modo Teste Stripe)**
-
-1. **Criar usuário novo no app**
-2. **Verificar no banco:**
+### 1. Fluxo de compra (modo teste Stripe)
+1. Criar usuário novo no app (deve ficar em `plan_id = 'free'`, `refund_period_ends_at IS NULL`)
+2. Iniciar checkout de um plano com cartão teste `4242 4242 4242 4242`
+3. Após `checkout.session.completed`, verificar no banco:
    ```sql
-   SELECT phone, plan_id, trial_ends_at, subscription_active 
-   FROM clientes 
-   WHERE phone = '+5511999999999';
+   SELECT plan_id, subscription_active, refund_period_ends_at
+   FROM clientes WHERE phone = '+5511999999999';
    ```
-   - Deve ter: `plan_id = 'trial'`, `trial_ends_at` = 7 dias no futuro
+   - Esperado: `subscription_active = true`, `plan_id = '<plano escolhido>'`, `refund_period_ends_at = NOW() + 7 dias`
+4. Confirmar log no `stripe-webhook` (Supabase → Functions → stripe-webhook → Logs)
 
-3. **Iniciar checkout de um plano:**
-   - Usar cartão de teste: `4242 4242 4242 4242`
-   - Verificar que o trial de 7 dias é aplicado
-
-4. **Verificar webhook:**
-   - Checar logs no Supabase: Functions → stripe-webhook → Logs
-   - Verificar se `checkout.session.completed` foi recebido
-
-### 2. **Teste de Expiração do Trial**
-
-Para testar sem esperar 7 dias:
-
+### 2. Expiração do período de arrependimento (simulação)
 ```sql
--- Simular expiração (mudar trial_ends_at para ontem)
-UPDATE clientes 
-SET trial_ends_at = NOW() - INTERVAL '1 day'
+UPDATE clientes
+SET refund_period_ends_at = NOW() - INTERVAL '1 day'
 WHERE phone = '+5511999999999';
 
--- Executar função de expiração
-SELECT expire_trials();
-
--- Verificar resultado
-SELECT phone, plan_id, subscription_active 
-FROM clientes 
-WHERE phone = '+5511999999999';
--- Deve ter: plan_id = 'free'
+SELECT refund_period_days_remaining(refund_period_ends_at) FROM clientes WHERE phone = '+5511999999999';
+-- Esperado: 0
 ```
 
-### 3. **Teste de Conversão (Trial → Paid)**
-
-1. Durante o trial, complete o pagamento no Stripe
-2. Webhook `invoice.payment_succeeded` deve atualizar:
-   - `subscription_active = true`
-   - `plan_id = 'basic'` (ou outro plano)
-   - `trial_ends_at = NULL`
+### 3. Cancelamento dentro de 7 dias
+- Cancelar pelo Portal do Cliente (ou via Stripe Dashboard em modo teste)
+- Esperado: assinatura cancelada, reembolso manual no Stripe (se aplicável), `plan_id = 'free'`, `subscription_active = false`, `refund_period_ends_at = NULL`
 
 ---
 

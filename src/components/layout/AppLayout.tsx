@@ -1,4 +1,5 @@
 import { ReactNode, useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { AppSidebar } from './AppSidebar';
 import { AppHeader } from './AppHeader';
 import { AppFooter } from './AppFooter';
@@ -16,6 +17,8 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const location = useLocation();
+  const isCRM = location.pathname.startsWith('/crm');
 
   // Hook para scroll automático para o topo em mudanças de rota
   useScrollToTop();
@@ -50,7 +53,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <NotificationProvider>
-      <div className="flex h-screen w-full bg-bg overflow-x-visible">
+      <div className="flex h-screen w-full bg-[hsl(var(--sidebar-bg))] overflow-x-visible">
         {/* Desktop Sidebar - Height to stop exactly at footer line */}
         <div className="hidden md:block h-[calc(100vh-2.6rem)]">
           <AppSidebar 
@@ -83,7 +86,7 @@ export function AppLayout({ children }: AppLayoutProps) {
         )}
         
         {/* Main content area */}
-        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-[hsl(var(--sidebar-bg))]">
           <AppHeader 
             onMenuClick={handleSidebarToggle} 
             isMenuOpen={sidebarOpen}
@@ -91,7 +94,13 @@ export function AppLayout({ children }: AppLayoutProps) {
           {/* Scrollbar grudada na borda da viewport; padding fica dentro do conteúdo */}
           <main className="flex-1 overflow-y-auto overflow-x-hidden">
             <div className="w-full">
-              <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 h-full flex flex-col min-w-0">
+              <div
+                className={`h-full flex flex-col min-w-0 ${
+                  isCRM
+                    ? 'w-full max-w-none p-0'
+                    : 'max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8'
+                }`}
+              >
                 {children}
               </div>
             </div>

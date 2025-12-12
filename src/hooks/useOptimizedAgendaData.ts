@@ -53,6 +53,7 @@ export interface Event {
   rdates: string[] | null;
   exdates: string[] | null;
   series_master_id: string | null;
+  lead_remote_jid?: string | null; // Added for CRM
   created_at: string;
   updated_at: string;
 }
@@ -85,6 +86,7 @@ export interface EventFormData {
   status: string;
   calendar_id: string;
   color?: string;
+  lead_remote_jid?: string; // Added for CRM
 }
 
 export interface UseOptimizedAgendaDataOptions {
@@ -478,6 +480,7 @@ export function useOptimizedAgendaData(options: UseOptimizedAgendaDataOptions) {
           privacy: eventData.privacy || 'default',
           status: eventData.status || 'confirmed',
           color: eventData.color || null,
+          lead_remote_jid: eventData.lead_remote_jid || null, // Added for CRM
         })
         .select()
         .single();
@@ -529,6 +532,7 @@ export function useOptimizedAgendaData(options: UseOptimizedAgendaDataOptions) {
           status: (updates as any).status || 'confirmed',
           color: (updates as any).color || null,
           calendar_id: (updates as any).calendar_id,
+          lead_remote_jid: (updates as any).lead_remote_jid, // Added for CRM
         };
       } else {
         // Formato parcial - apenas atualizar os campos fornecidos
@@ -639,6 +643,7 @@ export function useOptimizedAgendaData(options: UseOptimizedAgendaDataOptions) {
           privacy: event.privacy,
           status: event.status,
           color: event.color,
+          lead_remote_jid: event.lead_remote_jid, // Copy lead association
         })
         .select()
         .single();

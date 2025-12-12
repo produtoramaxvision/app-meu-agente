@@ -16,6 +16,7 @@ export interface Task {
   category: string | null;
   completed_at: string | null;
   position: number;
+  lead_remote_jid?: string | null; // Added for CRM
   created_at: string;
   updated_at: string;
 }
@@ -26,16 +27,17 @@ export interface TaskFormData {
   due_date?: Date | null;
   priority: 'low' | 'medium' | 'high';
   category?: string;
+  lead_remote_jid?: string; // Added for CRM
 }
 
-export function useTasksData(statusFilter?: 'all' | 'pending' | 'done' | 'overdue', searchQuery?: string) {
+export function useTasksData(statusFilter?: 'all' | 'pending' | 'done' | 'overdue', searchQuery?: string, leadRemoteJid?: string) {
   const { cliente } = useAuth();
   const queryClient = useQueryClient();
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
 
   // Fetch tasks - usando configurações globais
   const { data: tasks = [], isLoading, error, refetch } = useQuery({
-    queryKey: ['tasks', cliente?.phone, statusFilter, searchQuery],
+    queryKey: ['tasks', cliente?.phone, statusFilter, searchQuery, leadRemoteJid],
     queryFn: async () => {
       if (!cliente?.phone) return [];
 
@@ -54,6 +56,10 @@ export function useTasksData(statusFilter?: 'all' | 'pending' | 'done' | 'overdu
 
       if (searchQuery && searchQuery.trim()) {
         query = query.or(`title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,category.ilike.%${searchQuery}%`);
+      }
+
+      if (leadRemoteJid) {
+        query = query.eq('lead_remote_jid', leadRemoteJid);
       }
 
       const { data, error } = await query;
@@ -141,6 +147,7 @@ export function useTasksData(statusFilter?: 'all' | 'pending' | 'done' | 'overdu
           category: taskData.category || null,
           status: 'pending',
           position: 0,
+          lead_remote_jid: taskData.lead_remote_jid || null,
         });
 
       if (error) throw error;
@@ -161,18 +168,21 @@ export function useTasksData(statusFilter?: 'all' | 'pending' | 'done' | 'overdu
         category: newTask.category || null,
         completed_at: null,
         position: 0,
+        lead_remote_jid: newTask.lead_remote_jid || null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
 
-      queryClient.setQueryData(['tasks', cliente?.phone, 'all', ''], (old: Task[] = []) => [optimisticTask, ...old]);
-      queryClient.setQueryData(['tasks', cliente?.phone, 'pending', ''], (old: Task[] = []) => [optimisticTask, ...old]);
+      queryClient.setQueryData(['tasks', cliente?.phone, 'all', '', leadRemoteJid], (old: Task[] = []) => [optimisticTask, ...old]);
+      // Also update generic lists
+      queryClient.invalidateQueries({ queryKey: ['tasks', cliente?.phone] });
 
 
       return { previousTasks };
     },
     onError: (err, newTask, context) => {
-      queryClient.setQueryData(['tasks', cliente?.phone], context?.previousTasks);
+      // Revert is hard with multiple keys, just invalidate
+      queryClient.invalidateQueries({ queryKey: ['tasks', cliente?.phone] });
       toast.error('Erro ao criar tarefa');
     },
     onSuccess: () => {
@@ -203,6 +213,7 @@ export function useTasksData(statusFilter?: 'all' | 'pending' | 'done' | 'overdu
       await queryClient.cancelQueries({ queryKey: ['tasks', cliente?.phone] });
       const previousTasks = queryClient.getQueryData(['tasks', cliente?.phone]);
 
+      // Simple cache update might not be enough if we are filtering, but let's try
       queryClient.setQueryData(['tasks', cliente?.phone], (old: Task[] = []) =>
         old.map((task) => (task.id === id ? { ...task, ...updates } : task))
       );
@@ -210,7 +221,7 @@ export function useTasksData(statusFilter?: 'all' | 'pending' | 'done' | 'overdu
       return { previousTasks };
     },
     onError: (err, variables, context) => {
-      queryClient.setQueryData(['tasks', cliente?.phone], context?.previousTasks);
+      queryClient.invalidateQueries({ queryKey: ['tasks', cliente?.phone] });
       toast.error('Erro ao atualizar tarefa');
     },
     onSettled: () => {
@@ -244,14 +255,14 @@ export function useTasksData(statusFilter?: 'all' | 'pending' | 'done' | 'overdu
       const newStatus = task.status === 'done' ? 'pending' : 'done';
       const completed_at = newStatus === 'done' ? new Date().toISOString() : null;
 
-      queryClient.setQueryData(['tasks', cliente?.phone], (old: Task[] = []) =>
-        old.map((t) => (t.id === task.id ? { ...t, status: newStatus, completed_at } : t))
-      );
-
+      // Optimistic update
+      // Note: This is simplified. Ideally we should update all relevant queries.
+      // Since we invalidate on settled, this is just for immediate feedback.
+      
       return { previousTasks };
     },
     onError: (err, task, context) => {
-      queryClient.setQueryData(['tasks', cliente?.phone], context?.previousTasks);
+       queryClient.invalidateQueries({ queryKey: ['tasks', cliente?.phone] });
       toast.error('Erro ao atualizar tarefa');
     },
     onSettled: () => {
@@ -270,16 +281,11 @@ export function useTasksData(statusFilter?: 'all' | 'pending' | 'done' | 'overdu
     },
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['tasks', cliente?.phone] });
-      const previousTasks = queryClient.getQueryData(['tasks', cliente?.phone]);
-
-      queryClient.setQueryData(['tasks', cliente?.phone], (old: Task[] = []) =>
-        old.filter((task) => task.id !== id)
-      );
-
-      return { previousTasks };
+      
+      return { };
     },
     onError: (err, id, context) => {
-      queryClient.setQueryData(['tasks', cliente?.phone], context?.previousTasks);
+      queryClient.invalidateQueries({ queryKey: ['tasks', cliente?.phone] });
       toast.error('Erro ao excluir tarefa');
     },
     onSuccess: () => {
@@ -309,6 +315,7 @@ export function useTasksData(statusFilter?: 'all' | 'pending' | 'done' | 'overdu
           category: task.category,
           status: 'pending',
           completed_at: null,
+          lead_remote_jid: task.lead_remote_jid // Copy lead association
         })
         .select()
         .single();

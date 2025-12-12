@@ -23,7 +23,7 @@ export interface EvolutionInstance {
 // TIPOS PARA CONTATOS (CACHE EVOLUTION API)
 // =============================================================================
 
-export type LeadStatus = 'novo' | 'contatado' | 'negociando' | 'ganho' | 'perdido';
+export type LeadStatus = 'novo' | 'contatado' | 'qualificado' | 'proposta' | 'negociando' | 'ganho' | 'perdido';
 export type SyncSource = 'manual' | 'auto' | 'webhook';
 
 export interface EvolutionContact {

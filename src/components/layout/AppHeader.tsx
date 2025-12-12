@@ -285,8 +285,8 @@ export function AppHeader({ onMenuClick, isMenuOpen = false }: AppHeaderProps) {
         "flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8 gap-4 relative z-50",
         // Chat page: transparent background on desktop, normal on mobile
         isChatPage 
-          ? "md:bg-transparent md:border-0 border-b border-border bg-bg" 
-          : "border-b border-border bg-bg"
+          ? "md:bg-transparent md:border-0 border-b border-border bg-[hsl(var(--sidebar-bg))]" 
+          : "border-b border-border bg-[hsl(var(--sidebar-bg))]"
       )}>
         
         {/* Mobile Menu Button */}

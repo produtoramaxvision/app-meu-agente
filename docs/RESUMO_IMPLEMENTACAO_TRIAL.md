@@ -1,31 +1,28 @@
-# 📋 Resumo da Implementação do Trial Gratuito de 7 Dias
+# 📋 Resumo da Implementação do Período de Arrependimento de 7 Dias (CDC)
 
-## ✅ O que foi implementado
+## ✅ O que está implementado
 
 ### 1. **Banco de Dados** ✅
-- ✅ Migration completa aplicada (`add_trial_support_to_clientes`)
-- ✅ Funções SQL criadas:
-  - `is_trial_active()` - Verifica se trial está ativo
-  - `has_active_access()` - Verifica acesso (trial OU assinatura)
-  - `expire_trials()` - Expira trials automaticamente
-- ✅ Trigger atualizado: `handle_new_auth_user` inicia trial de 7 dias automaticamente
-- ✅ View criada: `cliente_access_status` para monitoramento
-- ✅ Índices otimizados para queries de trial
+- ✅ Migration ativa: `20251210000001_fix_trial_to_refund_period.sql`
+- ✅ Campo `refund_period_ends_at` (substitui `trial_ends_at`)
+- ✅ Funções SQL: `is_in_refund_period()`, `refund_period_days_remaining()`, `has_active_subscription()`
+- ✅ Trigger `handle_new_auth_user`: novos usuários iniciam em `plan_id = 'free'` sem período ativo
+- ✅ View `cliente_subscription_status` para monitoramento
 
 ### 2. **Edge Functions Supabase** ✅
-- ✅ `create-checkout-session/index.ts` - Checkout com lógica de trial
-- ✅ `stripe-webhook/index.ts` - Webhook completo do Stripe
-- ✅ `create-portal-session/index.ts` - Portal do cliente
+- ✅ `create-checkout-session/index.ts` — cobrança imediata, sem `trial_period_days`; define metadados de início do período de arrependimento
+- ✅ `stripe-webhook/index.ts` — sincroniza assinatura, grava `refund_period_ends_at = NOW() + 7 dias`, ignora `trial_will_end`
+- ✅ `create-portal-session/index.ts` — portal do cliente
 
 ### 3. **Frontend** ✅
-- ✅ `usePlanInfo.ts` - Hook atualizado com suporte a trial
-- ✅ `TrialBanner.tsx` - Banner visual no Dashboard
-- ✅ `PlansSection.tsx` - Cards de planos com badges "Trial 7 dias"
-- ✅ `AuthContext.tsx` - Interface Cliente com `trial_ends_at`
-- ✅ `Dashboard.tsx` - Banner de trial integrado
+- ✅ `usePlanInfo.ts` — propriedades de trial removidas; adiciona `refundPeriodEndsAt`, `refundDaysRemaining`, `isInRefundPeriod`
+- ✅ `TrialBanner.tsx` — exibe período de arrependimento (7 dias) no Dashboard
+- ✅ `PlansSection.tsx` — badges “Garantia CDC 7 dias” em planos pagos
+- ✅ `AuthContext.tsx` — interface `Cliente` usa `refund_period_ends_at`
+- ✅ `Dashboard.tsx` — integra banner de arrependimento
 
 ### 4. **Documentação** ✅
-- ✅ `docs/IMPLANTACAO_TRIAL_7_DIAS.md` - Guia completo de implantação
+- ✅ `docs/IMPLANTACAO_TRIAL_7_DIAS.md` - Guia atualizado para período de arrependimento
 
 ---
 
@@ -62,57 +59,47 @@ Eventos:
 - customer.subscription.created
 - customer.subscription.updated
 - customer.subscription.deleted
-- customer.subscription.trial_will_end
+- customer.subscription.trial_will_end (ignoramos trial; manter apenas se quiser auditar)
 - invoice.payment_succeeded
 - invoice.payment_failed
 ```
 
 ### 5. **Testar**
 ```sql
--- Verificar trial de novo usuário
-SELECT phone, plan_id, trial_ends_at, subscription_active 
-FROM clientes 
+-- Verificar novo usuário (deve estar em free, sem período aberto)
+SELECT phone, plan_id, refund_period_ends_at, subscription_active
+FROM clientes
 WHERE phone = '+5511999999999';
 
--- Simular expiração
-UPDATE clientes 
-SET trial_ends_at = NOW() - INTERVAL '1 day'
+-- Simular expiração do período de arrependimento
+UPDATE clientes
+SET refund_period_ends_at = NOW() - INTERVAL '1 day'
 WHERE phone = '+5511999999999';
 
-SELECT expire_trials();
+SELECT refund_period_days_remaining(refund_period_ends_at)
+FROM clientes
+WHERE phone = '+5511999999999';
 ```
 
 ---
 
-## 🎯 Fluxo do Trial
+## 🎯 Fluxo do Período de Arrependimento (CDC)
 
 ### Novo Usuário
-1. ✅ Usuário se cadastra no app
-2. ✅ Trigger `handle_new_auth_user` executa automaticamente
-3. ✅ Define: `plan_id = 'trial'`, `trial_ends_at = NOW() + 7 dias`
-4. ✅ Banner aparece no Dashboard mostrando dias restantes
+1. ✅ Cadastro no app → `plan_id = 'free'`, sem período ativo
 
-### Durante o Trial
-1. ✅ Usuário tem acesso a todos os recursos do plano
-2. ✅ Banner mostra progresso e dias restantes
-3. ✅ Botão "Fazer Upgrade" disponível
+### Compra de Plano
+1. ✅ Checkout no Stripe (cobrança imediata, sem trial)
+2. ✅ `checkout.session.completed` → `subscription_active = true`, `plan_id` do plano escolhido, `refund_period_ends_at = NOW() + 7 dias`
+3. ✅ Banner mostra dias restantes de garantia
 
-### Conversão (Trial → Pago)
-1. ✅ Usuário clica em "Fazer Upgrade"
-2. ✅ Redirecionado para Stripe Checkout
-3. ✅ Stripe processa pagamento
-4. ✅ Webhook atualiza banco:
-   - `subscription_active = true`
-   - `plan_id = 'basic'/'business'/'premium'`
-   - `trial_ends_at = NULL`
+### Cancelamento dentro de 7 dias
+1. ✅ Cliente solicita via Portal ou suporte
+2. ✅ Cancelar assinatura no Stripe; reembolsar se aplicável
+3. ✅ Banco: `plan_id = 'free'`, `subscription_active = false`, `refund_period_ends_at = NULL`
 
-### Expiração do Trial
-1. ✅ Trial expira após 7 dias
-2. ✅ Função `expire_trials()` executa (manual ou cron)
-3. ✅ Atualiza banco:
-   - `plan_id = 'free'`
-   - `subscription_active = false`
-4. ✅ Usuário volta ao plano Free
+### Após 7 dias
+- ✅ Acesso segue normal enquanto assinatura ativa e paga
 
 ---
 
@@ -120,18 +107,18 @@ SELECT expire_trials();
 
 ### Queries Úteis
 ```sql
--- Ver status de todos os clientes
-SELECT * FROM cliente_access_status;
+-- Ver status de todos os clientes (view nova)
+SELECT * FROM cliente_subscription_status;
 
 -- Contar usuários por status
-SELECT access_status, COUNT(*) 
-FROM cliente_access_status 
-GROUP BY access_status;
+SELECT subscription_status, COUNT(*)
+FROM cliente_subscription_status
+GROUP BY subscription_status;
 
--- Trials expirando hoje
-SELECT phone, name, trial_ends_at 
-FROM clientes 
-WHERE trial_ends_at::date = CURRENT_DATE;
+-- Períodos de arrependimento expirando hoje
+SELECT phone, name, refund_period_ends_at
+FROM clientes
+WHERE refund_period_ends_at::date = CURRENT_DATE;
 ```
 
 ### Logs
@@ -150,7 +137,7 @@ supabase functions logs create-checkout-session --follow
 1. **Teste em modo sandbox do Stripe primeiro** antes de produção
 2. **Backup do banco** antes de aplicar migration em produção
 3. **Monitore os logs das Edge Functions** após deploy
-4. **Configure cron job** para expirar trials automaticamente
+4. **Configure cron job** se desejar tarefas periódicas de limpeza/consistência (opcional)
 5. **Verifique que o webhook está recebendo eventos** do Stripe
 
 ---
@@ -158,20 +145,20 @@ supabase functions logs create-checkout-session --follow
 ## 📝 Arquivos Modificados
 
 ### Backend/Database
-- `supabase/migrations/20251210000000_add_trial_support_to_clientes.sql` ✅
-- `supabase/functions/create-checkout-session/index.ts` ✅ (novo)
-- `supabase/functions/stripe-webhook/index.ts` ✅ (novo)
-- `supabase/functions/create-portal-session/index.ts` ✅ (novo)
+- `supabase/migrations/20251210000001_fix_trial_to_refund_period.sql` ✅
+- `supabase/functions/create-checkout-session/index.ts` ✅
+- `supabase/functions/stripe-webhook/index.ts` ✅
+- `supabase/functions/create-portal-session/index.ts` ✅
 
 ### Frontend
 - `src/contexts/AuthContext.tsx` ✅
 - `src/hooks/usePlanInfo.ts` ✅
-- `src/components/TrialBanner.tsx` ✅ (novo)
+- `src/components/TrialBanner.tsx` ✅
 - `src/components/PlansSection.tsx` ✅
 - `src/pages/Dashboard.tsx` ✅
 
 ### Documentação
-- `docs/IMPLANTACAO_TRIAL_7_DIAS.md` ✅ (novo)
+- `docs/IMPLANTACAO_TRIAL_7_DIAS.md` ✅ (atualizado)
 - `docs/RESUMO_IMPLEMENTACAO_TRIAL.md` ✅ (este arquivo)
 
 ---
@@ -188,16 +175,14 @@ Antes de deploy em produção:
 - [ ] Webhook configurado no Stripe
 - [ ] Webhook secret configurado
 - [ ] Testes realizados (cartão de teste)
-- [ ] Banner de trial visível no Dashboard
-- [ ] Conversão trial→pago funcionando
-- [ ] Expiração de trial funcionando
-- [ ] Cron job configurado (opcional)
+- [ ] Banner de arrependimento visível no Dashboard
+- [ ] Fluxo de cancelamento/reembolso em até 7 dias validado
 - [ ] Backup do banco realizado
 - [ ] Logs monitorados
-- [ ] Usuários comunicados sobre o trial
+- [ ] Usuários comunicados sobre o período de arrependimento
 
 ---
 
-**Status:** ✅ Implementação completa - Pronto para deploy
+**Status:** ✅ Implementação completa (Período de Arrependimento)
 **Data:** 10/12/2025
-**Versão:** 1.0.0
+**Versão:** 1.0.1
