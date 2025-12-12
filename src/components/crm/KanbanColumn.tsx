@@ -1,5 +1,4 @@
 import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { EvolutionContact, LeadStatus } from '@/types/sdr';
 import { KanbanCard } from './KanbanCard';
 import { cn } from '@/lib/utils';
@@ -21,7 +20,10 @@ export function KanbanColumn({ id, title, color, contacts, onCardClick }: Kanban
   const totalValue = 0; // Placeholder for future use
 
   return (
-    <div className="flex flex-col min-w-[280px] max-w-[280px] bg-muted/30 rounded-xl border border-border/50 backdrop-blur-sm self-start">
+    <div
+      ref={setNodeRef}
+      className="flex h-full flex-col min-w-[280px] max-w-[280px] bg-muted/30 rounded-xl border border-border/50 backdrop-blur-sm"
+    >
       {/* Header */}
       <div className={cn("p-3 border-b flex items-center justify-between rounded-t-xl", isOver && "bg-muted/50")}>
         <div className="flex items-center gap-2">
@@ -37,14 +39,13 @@ export function KanbanColumn({ id, title, color, contacts, onCardClick }: Kanban
       </div>
 
       {/* Droppable Area */}
-      <div 
-        ref={setNodeRef} 
+      <div
         className={cn(
-          "p-2 transition-colors",
+          "flex flex-1 flex-col p-2 transition-colors min-h-0",
           isOver ? "bg-primary/5" : ""
         )}
       >
-        <div className="flex flex-col gap-2 pb-2 pr-2.5">
+        <div className="flex flex-1 flex-col gap-2 pb-2 pr-2.5 min-h-0">
           {contacts.map((contact) => (
             <KanbanCard 
               key={contact.id} 
@@ -53,7 +54,7 @@ export function KanbanColumn({ id, title, color, contacts, onCardClick }: Kanban
             />
           ))}
           {contacts.length === 0 && (
-            <div className="h-24 border-2 border-dashed border-muted-foreground/10 rounded-lg flex items-center justify-center text-muted-foreground/30 text-xs italic">
+            <div className="flex-1 h-24 border-2 border-dashed border-muted-foreground/10 rounded-lg flex items-center justify-center text-muted-foreground/30 text-xs italic">
               Arraste leads para cá
             </div>
           )}

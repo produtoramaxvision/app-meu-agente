@@ -23,9 +23,9 @@ export function KanbanCard({ contact, onClick }: KanbanCardProps) {
   const style = transform
     ? {
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        transition: 'transform 140ms ease',
+        transition: isDragging ? undefined : 'transform 140ms ease',
       }
-    : { transition: 'transform 140ms ease' };
+    : { transition: isDragging ? undefined : 'transform 140ms ease' };
 
   // Temperature logic (mocked for now based on score or default)
   const temperatureColor = 

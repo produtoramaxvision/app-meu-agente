@@ -7,6 +7,8 @@ import {
   TouchSensor,
   DragStartEvent,
   DragEndEvent,
+  closestCenter,
+  pointerWithin,
   defaultDropAnimationSideEffects,
   DropAnimation
 } from '@dnd-kit/core';
@@ -87,6 +89,10 @@ export function KanbanBoard({ onCardClick, columns, moveCard }: KanbanBoardProps
       sensors={sensors} 
       onDragStart={handleDragStart} 
       onDragEnd={handleDragEnd}
+      collisionDetection={(args) => {
+        const pointerCollisions = pointerWithin(args);
+        return pointerCollisions.length > 0 ? pointerCollisions : closestCenter(args);
+      }}
     >
       <div className="flex h-full items-start gap-4 overflow-x-auto pb-4 px-6 pt-6 snap-x">
         {columns.map((col) => (
