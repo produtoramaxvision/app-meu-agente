@@ -30,10 +30,13 @@ interface KanbanBoardProps {
 }
 
 const dropAnimation: DropAnimation = {
+  duration: 180,
+  easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)',
   sideEffects: defaultDropAnimationSideEffects({
     styles: {
       active: {
-        opacity: '0.5',
+        opacity: '0.6',
+        transform: 'scale(1.02)',
       },
     },
   }),
@@ -45,13 +48,13 @@ export function KanbanBoard({ onCardClick, columns, moveCard }: KanbanBoardProps
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // Require movement of 8px before drag starts (prevents accidental drags on clicks)
+        distance: 2, // start drag sooner for sensação mais fluida
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 250, // Delay for touch to allow scrolling
-        tolerance: 5,
+        delay: 100, // responde mais rápido em touch
+        tolerance: 8,
       },
     })
   );
@@ -85,9 +88,9 @@ export function KanbanBoard({ onCardClick, columns, moveCard }: KanbanBoardProps
       onDragStart={handleDragStart} 
       onDragEnd={handleDragEnd}
     >
-      <div className="flex h-full gap-4 overflow-x-auto pb-4 px-6 pt-6 snap-x">
+      <div className="flex h-full items-start gap-4 overflow-x-auto pb-4 px-6 pt-6 snap-x">
         {columns.map((col) => (
-          <div key={col.id} className="snap-center h-full">
+          <div key={col.id} className="snap-center">
             <KanbanColumn
               id={col.id}
               title={col.label}

@@ -103,9 +103,9 @@ export type Database = {
           name: string
           phone: string
           plan_id: string | null
+          refund_period_ends_at: string | null
           stripe_customer_id: string | null
           subscription_active: boolean
-          trial_ends_at: string | null
           updated_at: string
         }
         Insert: {
@@ -121,9 +121,9 @@ export type Database = {
           name: string
           phone: string
           plan_id?: string | null
+          refund_period_ends_at?: string | null
           stripe_customer_id?: string | null
           subscription_active?: boolean
-          trial_ends_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -139,9 +139,9 @@ export type Database = {
           name?: string
           phone?: string
           plan_id?: string | null
+          refund_period_ends_at?: string | null
           stripe_customer_id?: string | null
           subscription_active?: boolean
-          trial_ends_at?: string | null
           updated_at?: string
         }
         Relationships: []

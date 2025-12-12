@@ -20,9 +20,12 @@ export function KanbanCard({ contact, onClick }: KanbanCardProps) {
     data: { contact }
   });
 
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-  } : undefined;
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        transition: 'transform 140ms ease',
+      }
+    : { transition: 'transform 140ms ease' };
 
   // Temperature logic (mocked for now based on score or default)
   const temperatureColor = 
@@ -37,8 +40,8 @@ export function KanbanCard({ contact, onClick }: KanbanCardProps) {
       {...listeners}
       {...attributes}
       className={cn(
-        "group relative mb-3 touch-none",
-        isDragging && "opacity-50 z-50 rotate-2 scale-105"
+        "group relative mb-3 touch-none will-change-transform",
+        isDragging && "opacity-60 z-50 rotate-1 scale-[1.03]"
       )}
     >
       <Card 

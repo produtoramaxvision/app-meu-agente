@@ -125,7 +125,22 @@ export default function Profile() {
     try {
       const { data, error } = await supabase
         .from('clientes')
-        .select('phone, name, email, cpf, avatar_url, subscription_active, is_active, created_at, plan_id')
+        .select(`
+          phone,
+          name,
+          email,
+          cpf,
+          avatar_url,
+          subscription_active,
+          is_active,
+          plan_id,
+          refund_period_ends_at,
+          billing_provider,
+          external_subscription_id,
+          stripe_customer_id,
+          created_at,
+          updated_at
+        `)
         .eq('phone', cliente.phone)
         .single();
 

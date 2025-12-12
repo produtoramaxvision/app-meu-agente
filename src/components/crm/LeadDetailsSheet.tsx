@@ -13,12 +13,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageCircle, Phone, Calendar, CheckSquare, Plus, Mail } from 'lucide-react';
+import { MessageCircle, Phone, Calendar, CheckSquare, Plus, Mail, Loader2 } from 'lucide-react';
 import { useTasksData, TaskFormData } from '@/hooks/useTasksData';
 import { Input } from '@/components/ui/input';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useSDRAgent } from '@/hooks/useSDRAgent';
+import { toast } from 'sonner';
 
 interface LeadDetailsSheetProps {
   contact: EvolutionContact | null;
@@ -28,6 +30,16 @@ interface LeadDetailsSheetProps {
 
 export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsSheetProps) {
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
+  const { instance } = useSDRAgent();
+  const evolutionApiUrl = useMemo(
+    () => import.meta.env.VITE_EVOLUTION_API_URL || 'https://evolution-api.com',
+    []
+  );
+  const evolutionApiKey = useMemo(
+    () => import.meta.env.VITE_EVOLUTION_API_KEY || '',
+    []
+  );
   
   // Use tasks filtered by this lead
   const { tasks, createTask, toggleTaskCompletion } = useTasksData(
@@ -37,6 +49,57 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
   );
 
   if (!contact) return null;
+
+  const handleSendWhatsapp = async () => {
+    const instanceName = instance?.instance_name;
+    const phone = contact.remote_jid.split('@')[0] || contact.phone;
+    if (!instanceName) {
+      toast.error('Instância Evolution não configurada.');
+      return;
+    }
+    if (!phone) {
+      toast.error('Contato sem número de telefone válido.');
+      return;
+    }
+    if (!evolutionApiKey) {
+      toast.error('Chave da Evolution API não configurada.');
+      return;
+    }
+
+    setSendingWhatsapp(true);
+    try {
+      const payload = {
+        number: phone,
+        text: `Olá ${contact.push_name || ''}!`,
+      };
+
+      const response = await fetch(
+        `${evolutionApiUrl}/message/sendText/${instanceName}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: evolutionApiKey,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Falha ao enviar mensagem.');
+      }
+
+      toast.success('Mensagem enviada via WhatsApp.');
+    } catch (error: any) {
+      console.error('Erro ao enviar WhatsApp:', error);
+      toast.error('Erro ao enviar mensagem.', {
+        description: error?.message || 'Verifique a configuração da Evolution API.',
+      });
+    } finally {
+      setSendingWhatsapp(false);
+    }
+  };
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,9 +144,18 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
           </div>
 
           <div className="flex gap-2 mt-6">
-            <Button className="flex-1 gap-2" variant="default">
-              <MessageCircle className="h-4 w-4" />
-              WhatsApp
+            <Button 
+              className="flex-1 gap-2" 
+              variant="default" 
+              onClick={handleSendWhatsapp}
+              disabled={sendingWhatsapp}
+            >
+              {sendingWhatsapp ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <MessageCircle className="h-4 w-4" />
+              )}
+              {sendingWhatsapp ? 'Enviando...' : 'WhatsApp'}
             </Button>
             <Button className="flex-1 gap-2" variant="outline">
               <Phone className="h-4 w-4" />

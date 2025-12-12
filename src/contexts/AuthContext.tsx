@@ -14,8 +14,13 @@ interface Cliente {
   subscription_active: boolean;
   is_active: boolean;
   plan_id?: string;
+  billing_provider?: string | null;
+  external_subscription_id?: string | null;
+  stripe_customer_id?: string | null;
+  last_seen_at?: string | null;
   refund_period_ends_at?: string | null; // ✅ Período de garantia de 7 dias grátis
   created_at?: string;
+  updated_at?: string;
   auth_user_id?: string; // Novo campo para integração
 }
 
@@ -178,7 +183,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { data, error } = await supabase
         .from('clientes')
-        .select('phone, name, email, cpf, avatar_url, subscription_active, is_active, plan_id, created_at, auth_user_id')
+        .select(`
+          phone,
+          name,
+          email,
+          cpf,
+          avatar_url,
+          subscription_active,
+          is_active,
+          plan_id,
+          refund_period_ends_at,
+          billing_provider,
+          external_subscription_id,
+          stripe_customer_id,
+          last_seen_at,
+          created_at,
+          updated_at,
+          auth_user_id
+        `)
         .eq('auth_user_id', authUser.id)
             .eq('is_active', true)
             .single();
