@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { LayoutDashboard, FileText, User, LogOut, Wallet, Target, CheckSquare, CalendarDays, X, Loader2, MessageCircle, ChevronDown, Bot, Kanban } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { LayoutDashboard, FileText, User, LogOut, Wallet, Target, Bell, CheckSquare, CalendarDays, X, Loader2, MessageCircle, ChevronDown, Bot, Kanban } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePermissions } from '@/hooks/usePermissions';
 import { useSidebar } from '@/contexts/SidebarContext';
+import { usePermissions } from '@/hooks/usePermissions';
+import { useNotificationsData } from '@/hooks/useNotificationsData';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/Logo';
 import { QuickActions } from '@/components/QuickActions';
@@ -22,6 +23,8 @@ const navigation = [
   { name: 'CRM', href: '/crm', icon: Kanban },
   { name: 'Agenda', href: '/agenda', icon: CalendarDays },
   { name: 'Tarefas', href: '/tarefas', icon: CheckSquare },
+  { name: 'Notificações', href: '/notificacoes', icon: Bell },
+  { name: 'Perfil', href: '/perfil', icon: User },
 ];
 
 // Item de menu "Dashboard" com submenu "Relatórios"
@@ -50,18 +53,11 @@ interface AppSidebarProps {
 
 export function AppSidebar({ showCloseButton = false }: AppSidebarProps) {
   const { logout, isLoggingOut } = useAuth();
+  const { open, setOpen, isMobile } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
+  const { unreadCount } = useNotificationsData();
   const { hasPermission } = usePermissions();
-  const { 
-    effectiveCollapsed, 
-    setHovering, 
-    setMobileOpen,
-    isMobile 
-  } = useSidebar();
-
-  // Use effectiveCollapsed for rendering
-  const collapsed = effectiveCollapsed;
 
   const canSeeBusinessFeatures = hasPermission('canAccessSDRAgent');
   
@@ -84,76 +80,91 @@ export function AppSidebar({ showCloseButton = false }: AppSidebarProps) {
   
   // Abrir automaticamente o submenu quando estiver na seção de Contas/Metas
   useEffect(() => {
-    if (isInContasSection) {
+    if (isInContasSection && open) {
       setContasOpen(true);
     }
-  }, [isInContasSection]);
+  }, [isInContasSection, open]);
 
-  // Fechar submenus quando sidebar colapsar (Option A)
+  // Fechar submenus quando sidebar colapsar (Opção A)
   useEffect(() => {
-    if (collapsed) {
+    if (!open) {
       setDashboardOpen(false);
       setContasOpen(false);
     }
-  }, [collapsed]);
+  }, [open]);
 
   const handleLogout = async () => {
-    /**
-     * CORREÇÃO DO LOGOUT - FASE 2
-     * Adicionando tratamento de erro robusto
-     * Data: 2025-01-16
-     */
     try {
       await logout();
     } catch (error) {
       console.error('Logout failed:', error);
-      // Fallback: navegar manualmente se logout falhar
       navigate('/auth/login');
     }
   };
 
-  // Hover handlers para desktop
-  const handleMouseEnter = () => {
-    if (!isMobile) {
-      setHovering(true);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (!isMobile) {
-      setHovering(false);
-    }
-  };
-
-  // Handler para fechar sidebar no mobile ao clicar em link
-  const handleMobileLinkClick = () => {
-    if (isMobile) {
-      setMobileOpen(false);
-    }
+  // Handler para fechar sidebar ao clicar em link (mantém página limpa)
+  const handleLinkClick = () => {
+    setOpen(false);
   };
 
   return (
-    <motion.aside
-      initial={false}
-      animate={{ 
-        width: collapsed ? 64 : 256 
+    <aside
+      onClick={(e) => {
+        const target = e.target as HTMLElement;
+        
+        // CORREÇÃO CRÍTICA - Melhorar detecção de elementos interativos
+        // Problema: onClick do aside interferia com NavLinks causando múltiplos cliques
+        // Solução: Detecção mais precisa de elementos interativos
+        // Data: 2025-01-16
+        
+        // Verificar se o clique foi em um elemento interativo
+        const isInteractive = target.closest(`
+          a, button, input, textarea, select, 
+          [role="button"], [role="link"], [role="menuitem"], [role="tab"],
+          [data-radix-portal], [role="dialog"], [data-state],
+          .group, [class*="hover:"], [class*="transition"]
+        `);
+        
+        // Verificar se o clique foi especificamente em um NavLink
+        const isNavLink = target.closest('a[href]');
+        
+        // Verificar se há algum modal/dialog aberto (incluindo popovers)
+        const hasOpenModal = document.querySelector('[role="dialog"][data-state="open"]');
+        const hasOpenPopover = document.querySelector('[data-radix-popper-content-wrapper]');
+        const hasOpenTooltip = document.querySelector('[data-radix-tooltip-content]');
+        
+        // Verificar se o clique foi em uma área vazia (background do sidebar)
+        const isInEmptyArea = target === e.currentTarget || 
+          (target.classList.contains('relative') && 
+          !target.closest('nav, button, a, [role="button"]'));
+        
+        // Permitir toggle apenas quando colapsado, em áreas vazias e sem elementos interativos
+        const shouldToggle = collapsed && 
+                           !isInteractive && 
+                           !isNavLink && 
+                           !hasOpenModal && 
+                           !hasOpenPopover && 
+                           !hasOpenTooltip &&
+                           isInEmptyArea;
+        
+        if (shouldToggle) {
+          onToggle();
+        }
       }}
-      transition={{ 
-        duration: 0.3, 
-        ease: 'easeInOut' 
-      }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
       className={cn(
-        'relative flex flex-col border-r flex-shrink-0 h-full overflow-hidden',
-        'bg-[hsl(var(--sidebar-bg))] border-[hsl(var(--sidebar-border))]'
+        'relative flex flex-col border-r transition-all duration-300 flex-shrink-0 h-full',
+        'bg-[hsl(var(--sidebar-bg))] border-[hsl(var(--sidebar-border))]',
+        collapsed ? 'w-16 cursor-pointer' : 'w-64'
       )}
     >
       {/* Mobile Header with X button and Logo */}
       {showCloseButton && (
         <div className="flex items-center justify-between p-4 md:hidden border-b border-[hsl(var(--sidebar-border))]">
           <button
-            onClick={() => setMobileOpen(false)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle();
+            }}
             className="p-2 rounded-md hover:bg-[hsl(var(--sidebar-hover))] transition-colors"
             aria-label="Fechar menu"
           >
@@ -161,7 +172,7 @@ export function AppSidebar({ showCloseButton = false }: AppSidebarProps) {
           </button>
           <NavLink 
             to="/chat" 
-            onClick={handleMobileLinkClick}
+            onClick={(e) => e.stopPropagation()}
             className="transition-transform hover:scale-105"
           >
             <Logo showText={true} size="md" />
@@ -171,58 +182,59 @@ export function AppSidebar({ showCloseButton = false }: AppSidebarProps) {
 
       {/* Desktop Logo */}
       {!showCloseButton && (
-        <div className="flex h-16 items-center border-b border-[hsl(var(--sidebar-border))] transition-all px-3">
+        <div className={cn(
+          "flex h-16 items-center border-b border-[hsl(var(--sidebar-border))] transition-all",
+          collapsed ? 'px-2 justify-center' : 'px-6'
+        )}>
           <NavLink 
             to="/chat" 
+            onClick={(e) => e.stopPropagation()}
             className="transition-transform hover:scale-105"
           >
             <Logo showText={!collapsed} size={collapsed ? 'sm' : 'md'} />
           </NavLink>
+          
+          {/* Área clicável para expandir quando colapsado */}
+          {collapsed && (
+            <div 
+              className="absolute inset-0 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggle();
+              }}
+              title="Clique para expandir sidebar"
+            />
+          )}
         </div>
       )}
 
       {/* Quick Actions */}
       <div className="border-b border-[hsl(var(--sidebar-border))] py-4">
-        <QuickActions />
+        <QuickActions collapsed={collapsed} />
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 min-h-0 space-y-1 relative overflow-y-auto scrollbar-hide p-2">
-        {/* Itens de navegação principais */}
-        {navigation.map((item) => {
-          if (item.name === 'Dashboard' || item.name === 'Contas') return null;
-          if (!canSeeBusinessFeatures && (item.name === 'Agente SDR' || item.name === 'CRM')) return null;
-          
+      <nav className={cn("flex-1 space-y-1 transition-all relative", collapsed ? 'p-2' : 'p-4')}>
+        {/* Primeiro item: Chat IA */}
+        {navigation.slice(0, 1).map((item) => {
           const isActive = location.pathname === item.href;
-          
           return (
           <NavLink
             key={item.name}
             to={item.href}
-            onClick={handleMobileLinkClick}
+            onClick={(e) => e.stopPropagation()}
             className={cn(
-              'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 overflow-hidden',
+              'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
               isActive
                 ? 'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
-                : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md'
+                : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
+              collapsed && 'justify-center'
             )}
           >
-            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
             <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
               <item.icon className={cn('h-5 w-5 flex-shrink-0', isActive && 'text-white')} />
             </div>
-            <motion.span
-              initial={false}
-              animate={{
-                opacity: collapsed ? 0 : 1,
-                width: collapsed ? 0 : 'auto',
-              }}
-              transition={{ duration: 0.2, ease: 'easeInOut' }}
-              className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5 whitespace-pre !p-0 !m-0 inline-block overflow-hidden"
-              style={{ whiteSpace: 'nowrap' }}
-            >
-              {item.name}
-            </motion.span>
+            {!collapsed && <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">{item.name}</span>}
           </NavLink>
           );
         })}
@@ -238,35 +250,31 @@ export function AppSidebar({ showCloseButton = false }: AppSidebarProps) {
             <div className="flex items-center">
               <NavLink
                 to={dashboardMenuItem.href}
-                onClick={handleMobileLinkClick}
+                onClick={(e) => e.stopPropagation()}
                 className={cn(
-                  'group relative flex flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 overflow-hidden',
+                  'group relative flex flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                   location.pathname === dashboardMenuItem.href
                     ? 'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
-                    : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md'
+                    : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
+                  collapsed && 'justify-center'
                 )}
               >
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
                 <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
                   <dashboardMenuItem.icon className={cn('h-5 w-5 flex-shrink-0', location.pathname === dashboardMenuItem.href && 'text-white')} />
                 </div>
-                <motion.span
-                  initial={false}
-                  animate={{
-                    opacity: collapsed ? 0 : 1,
-                    width: collapsed ? 0 : 'auto',
-                  }}
-                  transition={{ duration: 0.2, ease: 'easeInOut' }}
-                  className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5 whitespace-pre !p-0 !m-0 inline-block overflow-hidden"
-                  style={{ whiteSpace: 'nowrap' }}
-                >
-                  {dashboardMenuItem.name}
-                </motion.span>
+                {!collapsed && (
+                  <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">
+                    {dashboardMenuItem.name}
+                  </span>
+                )}
               </NavLink>
               
               {/* Botão de toggle do submenu Dashboard - visível apenas quando não colapsado */}
               {!collapsed && (
-                <CollapsibleTrigger asChild>
+                <CollapsibleTrigger 
+                  asChild
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button
                     className={cn(
                       'p-1.5 rounded-md transition-all duration-200 mr-1',
@@ -296,7 +304,7 @@ export function AppSidebar({ showCloseButton = false }: AppSidebarProps) {
                       <NavLink
                         key={subItem.name}
                         to={subItem.href}
-                        onClick={handleMobileLinkClick}
+                        onClick={(e) => e.stopPropagation()}
                         className={cn(
                           'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                           isSubActive
@@ -330,35 +338,31 @@ export function AppSidebar({ showCloseButton = false }: AppSidebarProps) {
             <div className="flex items-center">
               <NavLink
                 to={contasMenuItem.href}
-                onClick={handleMobileLinkClick}
+                onClick={(e) => e.stopPropagation()}
                 className={cn(
-                  'group relative flex flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 overflow-hidden',
+                  'group relative flex flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                   location.pathname === contasMenuItem.href
                     ? 'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
-                    : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md'
+                    : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
+                  collapsed && 'justify-center'
                 )}
               >
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
                 <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
                   <contasMenuItem.icon className={cn('h-5 w-5 flex-shrink-0', location.pathname === contasMenuItem.href && 'text-white')} />
                 </div>
-                <motion.span
-                  initial={false}
-                  animate={{
-                    opacity: collapsed ? 0 : 1,
-                    width: collapsed ? 0 : 'auto',
-                  }}
-                  transition={{ duration: 0.2, ease: 'easeInOut' }}
-                  className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5 whitespace-pre !p-0 !m-0 inline-block overflow-hidden"
-                  style={{ whiteSpace: 'nowrap' }}
-                >
-                  {contasMenuItem.name}
-                </motion.span>
+                {!collapsed && (
+                  <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">
+                    {contasMenuItem.name}
+                  </span>
+                )}
               </NavLink>
               
               {/* Botão de toggle do submenu - visível apenas quando não colapsado */}
               {!collapsed && (
-                <CollapsibleTrigger asChild>
+                <CollapsibleTrigger 
+                  asChild
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button
                     className={cn(
                       'p-1.5 rounded-md transition-all duration-200 mr-1',
@@ -388,7 +392,7 @@ export function AppSidebar({ showCloseButton = false }: AppSidebarProps) {
                       <NavLink
                         key={subItem.name}
                         to={subItem.href}
-                        onClick={handleMobileLinkClick}
+                        onClick={(e) => e.stopPropagation()}
                         className={cn(
                           'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                           isSubActive
@@ -399,18 +403,9 @@ export function AppSidebar({ showCloseButton = false }: AppSidebarProps) {
                         <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
                           <subItem.icon className={cn('h-4 w-4 flex-shrink-0', isSubActive && 'text-white')} />
                         </div>
-                        <motion.span
-                          initial={false}
-                          animate={{
-                            opacity: collapsed ? 0 : 1,
-                            width: collapsed ? 0 : 'auto',
-                          }}
-                          transition={{ duration: 0.2, ease: 'easeInOut' }}
-                          className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5 whitespace-pre !p-0 !m-0 inline-block overflow-hidden"
-                          style={{ whiteSpace: 'nowrap' }}
-                        >
+                        <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">
                           {subItem.name}
-                        </motion.span>
+                        </span>
                       </NavLink>
                     );
                   })}
@@ -420,55 +415,98 @@ export function AppSidebar({ showCloseButton = false }: AppSidebarProps) {
           </div>
         </Collapsible>
 
-        {/* Perfil - logo após Contas */}
-        <NavLink
-          to="/perfil"
-          onClick={handleMobileLinkClick}
-          className={cn(
-            'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 overflow-hidden',
-            location.pathname === '/perfil'
-              ? 'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
-              : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md'
-          )}
-        >
-          <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
-          <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
-            <User className={cn('h-5 w-5 flex-shrink-0', location.pathname === '/perfil' && 'text-white')} />
-          </div>
-          <motion.span
-            initial={false}
-            animate={{
-              opacity: collapsed ? 0 : 1,
-              width: collapsed ? 0 : 'auto',
-            }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
-            className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5 whitespace-pre !p-0 !m-0 inline-block overflow-hidden"
-            style={{ whiteSpace: 'nowrap' }}
+        {/* Item: Agenda (mover para baixo de Contas) */}
+        {navigation.slice(1, 2).map((item) => {
+          if (!canSeeBusinessFeatures && item.name === 'Agente SDR') return null;
+          const isActive = location.pathname === item.href;
+          return (
+          <NavLink
+            key={item.name}
+            to={item.href}
+            onClick={(e) => e.stopPropagation()}
+            className={cn(
+              'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+              isActive
+                ? 'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
+                : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
+              collapsed && 'justify-center'
+            )}
           >
-            Perfil
-          </motion.span>
-        </NavLink>
+            <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
+              <item.icon className={cn('h-5 w-5 flex-shrink-0', isActive && 'text-white')} />
+            </div>
+            {!collapsed && <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">{item.name}</span>}
+          </NavLink>
+          );
+        })}
+        
+        {/* Renderizar itens de navegação depois de Contas (Tarefas, Notificações, Perfil) */}
+        {navigation.slice(2).map((item) => {
+          if (!canSeeBusinessFeatures && (item.name === 'Agente SDR' || item.name === 'CRM')) return null;
+          const isActive = location.pathname === item.href;
+          const isNotifications = item.name === 'Notificações';
+          return (
+          <NavLink
+            key={item.name}
+            to={item.href}
+            onClick={(e) => e.stopPropagation()}
+            className={cn(
+              'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+              isActive
+                ? 'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
+                : 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
+              collapsed && 'justify-center'
+            )}
+          >
+            <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
+              <item.icon className={cn('h-5 w-5 flex-shrink-0', isActive && 'text-white')} />
+              {isNotifications && unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-2 w-2 z-20">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                </span>
+              )}
+            </div>
+            {!collapsed && <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">{item.name}</span>}
+          </NavLink>
+          );
+        })}
+        
+        {/* Área clicável para expandir quando colapsado */}
+        {collapsed && (
+          <div 
+            className="absolute inset-0 cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle();
+            }}
+            title="Clique para expandir sidebar"
+          />
+        )}
       </nav>
 
       {/* Help and Logout Section */}
-      <div className="mt-auto flex-shrink-0">
+      <div className="mt-auto">
         {/* Help */}
-        <div className="p-2">
-          <HelpAndSupport mode="sidebar" />
+        <div className={cn("transition-all", collapsed ? 'p-2' : 'p-4')}>
+          <HelpAndSupport collapsed={collapsed} mode="sidebar" />
         </div>
 
         {/* Logout */}
-        <div className="border-t border-[hsl(var(--sidebar-border))] p-2">
+        <div className={cn("border-t border-[hsl(var(--sidebar-border))] transition-all", collapsed ? 'p-2' : 'p-4')}>
           <button
-            onClick={handleLogout}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleLogout();
+            }}
             disabled={isLoggingOut}
             className={cn(
-              "group relative overflow-hidden flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+              "group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
               'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
-              'disabled:opacity-50 disabled:pointer-events-none'
+              'disabled:opacity-50 disabled:pointer-events-none',
+              collapsed && 'justify-center'
             )}
           >
-            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
             <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
               {isLoggingOut ? (
                 <Loader2 className="h-5 w-5 flex-shrink-0 animate-spin" />
@@ -476,21 +514,14 @@ export function AppSidebar({ showCloseButton = false }: AppSidebarProps) {
                 <LogOut className="h-5 w-5 flex-shrink-0" />
               )}
             </div>
-            <motion.span
-              initial={false}
-              animate={{
-                opacity: collapsed ? 0 : 1,
-                width: collapsed ? 0 : 'auto',
-              }}
-              transition={{ duration: 0.2, ease: 'easeInOut' }}
-              className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5 whitespace-pre !p-0 !m-0 inline-block overflow-hidden"
-              style={{ whiteSpace: 'nowrap' }}
-            >
-              {isLoggingOut ? 'Saindo...' : 'Sair'}
-            </motion.span>
+            {!collapsed && (
+              <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">
+                {isLoggingOut ? 'Saindo...' : 'Sair'}
+              </span>
+            )}
           </button>
         </div>
       </div>
-    </motion.aside>
+    </aside>
   );
 }

@@ -6,19 +6,19 @@ import { GoalForm } from '@/components/GoalForm';
 import { TaskForm } from '@/components/TaskForm';
 import { EventForm } from '@/components/EventForm';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSidebar } from '@/contexts/SidebarContext';
 import { useOptimizedAgendaData, EventFormData } from '@/hooks/useOptimizedAgendaData';
 import { useTasksData, TaskFormData } from '@/hooks/useTasksData';
 import { useGoalsData } from '@/hooks/useGoalsData';
 import { useFinancialData } from '@/hooks/useFinancialData';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 import { startOfMonth, endOfMonth } from 'date-fns';
 
-interface QuickActionsProps {
-  collapsed?: boolean;
-}
-
-export function QuickActions({ collapsed = false }: QuickActionsProps) {
+export function QuickActions() {
   const { cliente } = useAuth();
+  const { effectiveCollapsed } = useSidebar();
+  const collapsed = effectiveCollapsed;
 
   // States for all dialogs
   const [isActionHubOpen, setIsActionHubOpen] = useState(false);
@@ -108,12 +108,6 @@ export function QuickActions({ collapsed = false }: QuickActionsProps) {
   return (
     <>
       <div className={cn("space-y-2", collapsed ? "px-2" : "px-4")}>
-        {!collapsed && (
-          <h3 className="text-xs font-semibold text-[hsl(var(--sidebar-text-muted))] uppercase tracking-wider mb-3">
-            Ações Rápidas
-          </h3>
-        )}
-        
         <div className="grid grid-cols-1 gap-2">
           <button
             key={mainAction.id}
@@ -122,20 +116,27 @@ export function QuickActions({ collapsed = false }: QuickActionsProps) {
               mainAction.onClick();
             }}
             className={cn(
-              'group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
-              'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
-              collapsed && 'justify-center'
+              'group relative overflow-hidden flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+              'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md'
             )}
             title={collapsed ? mainAction.label : undefined}
           >
+            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
             <div className="relative z-10 transition-transform duration-200 group-hover:scale-110">
               <mainAction.icon className="h-5 w-5 flex-shrink-0" />
             </div>
-            {!collapsed && (
-              <span className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5">
-                {mainAction.label}
-              </span>
-            )}
+            <motion.span
+              initial={false}
+              animate={{
+                opacity: collapsed ? 0 : 1,
+                width: collapsed ? 0 : 'auto',
+              }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+              className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5 whitespace-pre !p-0 !m-0 inline-block overflow-hidden"
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              {mainAction.label}
+            </motion.span>
           </button>
         </div>
       </div>

@@ -45,8 +45,10 @@ export function KanbanCard({ contact, onClick }: KanbanCardProps) {
       )}
     >
       <Card 
-        className="cursor-grab active:cursor-grabbing hover:shadow-md transition-all border-l-4"
-        style={{ borderLeftColor: contact.crm_lead_score > 0 ? undefined : 'transparent' }}
+        className={cn(
+          "cursor-grab active:cursor-grabbing hover:shadow-md transition-all",
+          contact.crm_lead_score > 0 && "border-l-4"
+        )}
         onClick={() => onClick(contact)}
       >
         <CardContent className="p-3 space-y-3">

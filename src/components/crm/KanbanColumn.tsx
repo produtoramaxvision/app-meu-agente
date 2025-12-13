@@ -54,7 +54,7 @@ export function KanbanColumn({ id, title, color, contacts, onCardClick }: Kanban
             />
           ))}
           {contacts.length === 0 && (
-            <div className="flex-1 h-24 border-2 border-dashed border-muted-foreground/10 rounded-lg flex items-center justify-center text-muted-foreground/30 text-xs italic">
+	            <div className="h-[100px] mb-3 border-2 border-dashed border-muted-foreground/10 rounded-lg flex items-center justify-center text-muted-foreground/30 text-xs italic">
               Arraste leads para cá
             </div>
           )}

@@ -18,17 +18,19 @@ export function CRMLayout({ children, headerStats, viewMode, onViewChange, searc
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-[hsl(var(--sidebar-bg))]">
       {/* CRM Header */}
-      <div className="border-b px-6 py-3 flex items-center justify-between bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
-        <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+      <div className="border-b px-4 md:px-6 h-[74px] min-h-[74px] flex items-center justify-between gap-4 bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-10">
+        <div className="flex items-center gap-3 min-w-0">
+          <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent whitespace-nowrap">
             Pipeline
           </h1>
           <Separator orientation="vertical" className="h-6" />
-          {headerStats}
+          <div className="flex items-center gap-3 min-w-0">
+            {headerStats}
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="relative w-64 hidden md:block">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="relative hidden md:block w-56 lg:w-64 max-w-xs shrink-0">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por nome ou telefone..."

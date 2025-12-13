@@ -1,6 +1,7 @@
 import { Search, AlertCircle, Menu, X, Command as CommandIcon } from 'lucide-react';
 import { ThemeSwitch } from '@/components/ds/ThemeSwitch';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSidebar } from '@/contexts/SidebarContext';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -19,11 +20,6 @@ import {
   CommandList,
   CommandShortcut,
 } from '@/components/ui/command';
-
-interface AppHeaderProps {
-  onMenuClick?: () => void;
-  isMenuOpen?: boolean;
-}
 
 type UniversalCommand = {
   id: string;
@@ -139,8 +135,9 @@ function parseCommand(raw: string): ParsedCommand | null {
   };
 }
 
-export function AppHeader({ onMenuClick, isMenuOpen = false }: AppHeaderProps) {
+export function AppHeader() {
   const { cliente } = useAuth();
+  const { toggleMobileOpen, mobileOpen, isMobile } = useSidebar();
   const {
     searchQuery,
     setSearchQuery,
@@ -290,26 +287,28 @@ export function AppHeader({ onMenuClick, isMenuOpen = false }: AppHeaderProps) {
       )}>
         
         {/* Mobile Menu Button */}
-        <button
-          onClick={onMenuClick}
-          className="md:hidden p-2 rounded-md hover:bg-surface transition-colors group"
-          aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
-        >
-          <div className="relative w-5 h-5">
-            <Menu 
-              className={cn(
-                "h-5 w-5 absolute inset-0 transition-all duration-300 text-text",
-                isMenuOpen && "opacity-0 rotate-90 scale-0"
-              )} 
-            />
-            <X 
-              className={cn(
-                "h-5 w-5 absolute inset-0 transition-all duration-300 text-text",
-                !isMenuOpen && "opacity-0 rotate-90 scale-0"
-              )} 
-            />
-          </div>
-        </button>
+        {isMobile && (
+          <button
+            onClick={toggleMobileOpen}
+            className="md:hidden p-2 rounded-md hover:bg-surface transition-colors group"
+            aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
+          >
+            <div className="relative w-5 h-5">
+              <Menu 
+                className={cn(
+                  "h-5 w-5 absolute inset-0 transition-all duration-300 text-text",
+                  mobileOpen && "opacity-0 rotate-90 scale-0"
+                )} 
+              />
+              <X 
+                className={cn(
+                  "h-5 w-5 absolute inset-0 transition-all duration-300 text-text",
+                  !mobileOpen && "opacity-0 rotate-90 scale-0"
+                )} 
+              />
+            </div>
+          </button>
+        )}
         
         {/* Search - Hidden on desktop for Chat page */}
         <div className={cn(

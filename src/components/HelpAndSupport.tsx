@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import {
   Dialog,
   DialogContent,
@@ -20,9 +21,9 @@ import { Badge } from '@/components/ui/badge';
 import { HelpCircle, MessageSquare, Bug, Lightbulb, FileText, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SupportDialog } from './SupportDialog';
+import { useSidebar } from '@/contexts/SidebarContext';
 
 type HelpAndSupportProps = {
-  collapsed?: boolean;
   mode: 'sidebar' | 'floatingAuth';
 };
 
@@ -50,7 +51,7 @@ const supportOptions = [
   },
 ];
 
-export function HelpAndSupport({ collapsed = false, mode }: HelpAndSupportProps) {
+function HelpAndSupportContent({ mode, collapsed }: HelpAndSupportProps & { collapsed: boolean }) {
   const [open, setOpen] = useState(false);
   const [showSupport, setShowSupport] = useState(false);
 
@@ -64,17 +65,28 @@ export function HelpAndSupport({ collapsed = false, mode }: HelpAndSupportProps)
       variant="ghost"
       aria-label="Abrir menu de ajuda e suporte"
       className={cn(
-        'group relative overflow-hidden flex w-full items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200',
+        'group relative overflow-hidden flex w-full items-center justify-start gap-3 rounded-lg text-sm font-medium transition-all duration-200',
         mode === 'sidebar' && 'px-3 py-2.5 text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:scale-105 hover:shadow-lg',
-        mode === 'sidebar' && !collapsed && 'justify-start',
-        mode === 'sidebar' && collapsed && 'justify-center',
         mode === 'floatingAuth' && 'fixed bottom-6 left-6 h-12 w-12 rounded-full bg-surface shadow-lg border hover:scale-110 hover:bg-surface-hover z-50'
       )}
       size={mode === 'floatingAuth' ? 'icon' : 'default'}
     >
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
       <HelpCircle className={cn('h-5 w-5 flex-shrink-0 relative z-10 transition-transform group-hover:scale-110', mode === 'floatingAuth' && 'text-text-muted')} />
-      {mode === 'sidebar' && !collapsed && <span className="relative z-10">Ajuda</span>}
+      {mode === 'sidebar' && (
+        <motion.span
+          initial={false}
+          animate={{
+            opacity: collapsed ? 0 : 1,
+            width: collapsed ? 0 : 'auto',
+          }}
+          transition={{ duration: 0.2, ease: 'easeInOut' }}
+          className="relative z-10 whitespace-pre !p-0 !m-0 inline-block overflow-hidden"
+          style={{ whiteSpace: 'nowrap' }}
+        >
+          Ajuda
+        </motion.span>
+      )}
     </Button>
   );
 
@@ -169,4 +181,15 @@ export function HelpAndSupport({ collapsed = false, mode }: HelpAndSupportProps)
       />
     </>
   );
+}
+
+export function HelpAndSupport({ mode }: HelpAndSupportProps) {
+  // For sidebar mode, get collapsed state from context
+  if (mode === 'sidebar') {
+    const { effectiveCollapsed } = useSidebar();
+    return <HelpAndSupportContent mode={mode} collapsed={effectiveCollapsed} />;
+  }
+  
+  // For floatingAuth mode, no context needed
+  return <HelpAndSupportContent mode={mode} collapsed={false} />;
 }
