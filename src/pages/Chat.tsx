@@ -19,6 +19,8 @@ export default function Chat() {
     retryMessage,
     clearMessages,
     selectSession,
+    createNewSession,
+    deleteSession,
     isLoading,
     messagesEndRef,
     isWebhookConfigured,
@@ -57,6 +59,12 @@ export default function Chat() {
     },
     [selectSession]
   );
+
+  const handleBackToHome = useCallback(() => {
+    // Reset to intro screen
+    createNewSession();
+    setShowChatView(false);
+  }, [createNewSession]);
 
   // Always show intro first, until user starts a chat or selects from history
   const showIntro = !showChatView;
@@ -99,6 +107,7 @@ export default function Chat() {
               <ChatIntroAnimation
                 onSend={handleSendMessage}
                 onSelectSession={handleSelectSession}
+                onDeleteSession={deleteSession}
                 isLoading={isLoading}
                 disabled={!isWebhookConfigured}
                 chatSessions={chatSessions}
@@ -122,6 +131,7 @@ export default function Chat() {
                       clearMessages();
                       setShowChatView(false);
                     }}
+                    onBackToHome={handleBackToHome}
                     messageCount={messages.length}
                     isWebhookConfigured={isWebhookConfigured}
                   />
@@ -159,8 +169,11 @@ export default function Chat() {
                     <div className="w-full">
                       <PromptInputBox
                         onSend={handleSendMessage}
+                        onSelectSession={handleSelectSession}
+                        onDeleteSession={deleteSession}
                         isLoading={isLoading}
                         disabled={!isWebhookConfigured}
+                        chatSessions={chatSessions}
                         placeholder={
                           isWebhookConfigured
                             ? 'Digite sua mensagem para o Agente de Scrape...'

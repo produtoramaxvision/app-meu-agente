@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bot, Trash2, MoreVertical, Info } from 'lucide-react';
+import { Bot, Trash2, MoreVertical, Info, ArrowLeft } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,12 +17,14 @@ import {
 
 interface ChatHeaderProps {
   onClearHistory: () => void;
+  onBackToHome?: () => void;
   messageCount: number;
   isWebhookConfigured: boolean;
 }
 
 export function ChatHeader({
   onClearHistory,
+  onBackToHome,
   messageCount,
   isWebhookConfigured,
 }: ChatHeaderProps) {
@@ -30,6 +32,25 @@ export function ChatHeader({
     <div className="flex items-center justify-between px-4 py-2 border-b border-border/50 bg-bg">
       {/* Agent info */}
       <div className="flex items-center gap-3">
+        {/* Back button */}
+        {onBackToHome && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={onBackToHome}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p className="text-xs">Voltar para a tela inicial</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+        
         <div className="relative">
           <Avatar className="h-10 w-10 ring-2 ring-brand-500/20">
             <AvatarFallback className="bg-gradient-to-br from-brand-500 to-brand-700 text-white">

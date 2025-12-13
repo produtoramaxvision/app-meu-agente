@@ -60,42 +60,34 @@ export function useChatAgent() {
   });
 
   // =====================================================
-  // Query: Buscar sessão ativa ou criar uma nova
+  // Query: Buscar sessão ativa (apenas se já tiver sido selecionada)
   // =====================================================
   const { data: session, isLoading: isLoadingSession } = useQuery({
-    queryKey: ['chat-session', phone],
+    queryKey: ['chat-session', currentSessionId],
     queryFn: async (): Promise<ChatSession | null> => {
-      if (!phone) return null;
+      if (!currentSessionId) return null;
 
-      // Buscar sessão mais recente do usuário
-      const { data: sessions, error } = await supabase
+      const { data: dbSession, error } = await supabase
         .from('chat_ia_sessions')
         .select('*')
-        .eq('phone', phone)
-        .order('updated_at', { ascending: false })
-        .limit(1);
+        .eq('id', currentSessionId)
+        .single();
 
       if (error) {
         console.error('Error fetching session:', error);
-        throw error;
+        return null;
       }
 
-      if (sessions && sessions.length > 0) {
-        const dbSession = sessions[0];
-        setCurrentSessionId(dbSession.id);
-        return {
-          id: dbSession.id,
-          phone: dbSession.phone,
-          title: dbSession.title,
-          messages: [],
-          createdAt: new Date(dbSession.created_at || Date.now()),
-          updatedAt: new Date(dbSession.updated_at || Date.now()),
-        };
-      }
-
-      return null;
+      return {
+        id: dbSession.id,
+        phone: dbSession.phone,
+        title: dbSession.title,
+        messages: [],
+        createdAt: new Date(dbSession.created_at || Date.now()),
+        updatedAt: new Date(dbSession.updated_at || Date.now()),
+      };
     },
-    enabled: !!phone,
+    enabled: !!currentSessionId,
     staleTime: 1000 * 60 * 5, // 5 minutos
   });
 
@@ -159,11 +151,49 @@ export function useChatAgent() {
     },
     onSuccess: (sessionId) => {
       setCurrentSessionId(sessionId);
-      queryClient.invalidateQueries({ queryKey: ['chat-session', phone] });
+      setOptimisticMessages([]);
+      queryClient.invalidateQueries({ queryKey: ['chat-sessions-all', phone] });
+      queryClient.invalidateQueries({ queryKey: ['chat-session', sessionId] });
     },
     onError: (error) => {
       console.error('Error creating session:', error);
       toast.error('Erro ao criar sessão de chat');
+    },
+  });
+
+  // =====================================================
+  // Mutation: Deletar sessão
+  // =====================================================
+  const deleteSessionMutation = useMutation({
+    mutationFn: async (sessionId: string): Promise<void> => {
+      // Deletar todas as mensagens da sessão primeiro
+      const { error: messagesError } = await supabase
+        .from('chat_ia_messages')
+        .delete()
+        .eq('session_id', sessionId);
+
+      if (messagesError) throw messagesError;
+
+      // Deletar a sessão
+      const { error: sessionError } = await supabase
+        .from('chat_ia_sessions')
+        .delete()
+        .eq('id', sessionId);
+
+      if (sessionError) throw sessionError;
+    },
+    onSuccess: (_, sessionId) => {
+      // Se a sessão deletada for a atual, limpar o estado
+      if (currentSessionId === sessionId) {
+        setCurrentSessionId(null);
+        setOptimisticMessages([]);
+      }
+      queryClient.invalidateQueries({ queryKey: ['chat-sessions-all', phone] });
+      toast.success('Conversa deletada com sucesso');
+    },
+    onError: (error) => {
+      console.error('Error deleting session:', error);
+      toast.error('Erro ao deletar conversa');
     },
   });
 
@@ -195,6 +225,32 @@ export function useChatAgent() {
         .single();
 
       if (userError) throw userError;
+
+      // 1.5. Verificar se é a primeira mensagem e atualizar título da sessão
+      const { count: messageCount, error: countError } = await supabase
+        .from('chat_ia_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('session_id', sessionId);
+
+      // Se for a primeira mensagem (count === 1), gerar título a partir do conteúdo
+      if (!countError && messageCount === 1) {
+        const title = content.trim().slice(0, 50) + (content.length > 50 ? '...' : '');
+        
+        console.log('📝 Gerando título para sessão:', { sessionId, title });
+        
+        const { error: updateError } = await supabase
+          .from('chat_ia_sessions')
+          .update({ title })
+          .eq('id', sessionId);
+        
+        if (updateError) {
+          console.error('❌ Erro ao atualizar título:', updateError);
+        } else {
+          console.log('✅ Título atualizado com sucesso');
+          // Invalidar query das sessões para atualizar o histórico
+          queryClient.invalidateQueries({ queryKey: ['chat-sessions-all', phone] });
+        }
+      }
 
       // Limpar mensagem otimista do usuário imediatamente após inserir no banco
       setOptimisticMessages(prev => prev.filter(m => m.content !== content || m.role !== 'user'));
@@ -268,6 +324,8 @@ export function useChatAgent() {
       // Limpar mensagens otimistas e recarregar do banco
       setOptimisticMessages([]);
       queryClient.invalidateQueries({ queryKey: ['chat-messages', currentSessionId] });
+      // Invalidar lista de sessões para atualizar o título
+      queryClient.invalidateQueries({ queryKey: ['chat-sessions-all', phone] });
     },
     onError: (error: Error, variables) => {
       console.error('Chat error:', error);
@@ -411,6 +469,15 @@ export function useChatAgent() {
     await sendMessage(errorMessage.content);
   }, [optimisticMessages, sendMessage]);
 
+  const createNewSession = useCallback(async () => {
+    setCurrentSessionId(null);
+    setOptimisticMessages([]);
+  }, []);
+
+  const deleteSession = useCallback(async (sessionId: string) => {
+    await deleteSessionMutation.mutateAsync(sessionId);
+  }, [deleteSessionMutation]);
+
   const clearMessages = useCallback(() => {
     clearHistoryMutation.mutate();
   }, [clearHistoryMutation]);
@@ -434,6 +501,8 @@ export function useChatAgent() {
     retryMessage,
     clearMessages,
     selectSession,
+    createNewSession,
+    deleteSession,
     isLoading: sendMessageMutation.isPending || isLoadingSession || isLoadingMessages,
     messagesEndRef,
     isWebhookConfigured: !!N8N_WEBHOOK_URL,

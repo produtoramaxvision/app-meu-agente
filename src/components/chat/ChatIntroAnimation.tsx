@@ -13,6 +13,7 @@ interface ChatSession {
 interface ChatIntroAnimationProps {
   onSend: (message: string) => void;
   onSelectSession?: (sessionId: string) => void;
+  onDeleteSession?: (sessionId: string) => void;
   isLoading?: boolean;
   disabled?: boolean;
   chatSessions?: ChatSession[];
@@ -38,6 +39,7 @@ const generateStarPositions = (count: number) => {
 export function ChatIntroAnimation({ 
   onSend, 
   onSelectSession,
+  onDeleteSession,
   isLoading = false, 
   disabled = false,
   chatSessions = []
@@ -205,6 +207,7 @@ export function ChatIntroAnimation({
               <PromptInputBox
                 onSend={handleSend}
                 onSelectSession={handleSelectSession}
+                onDeleteSession={onDeleteSession}
                 isLoading={isLoading}
                 disabled={disabled}
                 placeholder="Digite sua mensagem..."

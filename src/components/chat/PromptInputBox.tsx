@@ -2,11 +2,17 @@ import React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
-import { ArrowUp, Paperclip, Square, X, StopCircle, Mic, Globe, BrainCog, FolderCode, History, MessageSquare, Clock, Lock, Crown } from "lucide-react";
+import { ArrowUp, Paperclip, Square, X, StopCircle, Mic, Globe, BrainCog, FolderCode, History, MessageSquare, Clock, Lock, Crown, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/hooks/usePermissions";
 import { toast } from "sonner";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 
 // Textarea Component
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -448,7 +454,14 @@ interface ChatHistoryMenuProps {
   disabled?: boolean;
 }
 
-const ChatHistoryMenu: React.FC<ChatHistoryMenuProps> = ({ sessions, onSelectSession, disabled }) => {
+interface ChatHistoryMenuProps {
+  sessions: ChatSession[];
+  onSelectSession: (sessionId: string) => void;
+  onDeleteSession?: (sessionId: string) => void;
+  disabled?: boolean;
+}
+
+const ChatHistoryMenu: React.FC<ChatHistoryMenuProps> = ({ sessions, onSelectSession, onDeleteSession, disabled }) => {
   const formatRelativeTime = (date: Date) => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
@@ -473,41 +486,84 @@ const ChatHistoryMenu: React.FC<ChatHistoryMenuProps> = ({ sessions, onSelectSes
     );
   }
 
+  const handleDeleteEmptySessions = () => {
+    const emptySessions = sessions.filter(s => !s.messageCount || s.messageCount === 0);
+    if (emptySessions.length > 0 && onDeleteSession) {
+      emptySessions.forEach(session => {
+        onDeleteSession(session.id);
+      });
+    }
+  };
+
+  const hasEmptySessions = sessions.some(s => !s.messageCount || s.messageCount === 0);
+
   return (
     <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-[#333] scrollbar-track-transparent">
-      <div className="px-2 py-1.5 text-xs font-medium text-gray-500 uppercase tracking-wider">
-        Chats Recentes
+      <div className="px-2 py-1.5 flex items-center justify-between">
+        <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+          Chats Recentes
+        </span>
+        {hasEmptySessions && onDeleteSession && (
+          <button
+            onClick={handleDeleteEmptySessions}
+            className="text-xs text-gray-500 hover:text-red-500 transition-colors"
+            title="Limpar conversas vazias"
+          >
+            <Trash2 className="w-3 h-3" />
+          </button>
+        )}
       </div>
       {sessions.map((session) => (
-        <button
-          key={session.id}
-          onClick={() => onSelectSession(session.id)}
-          disabled={disabled}
-          className="w-full px-3 py-2.5 text-left rounded-lg hover:bg-[#232326] transition-colors group flex items-start gap-3"
-        >
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500/20 to-brand-700/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <MessageSquare className="w-4 h-4 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-200 truncate group-hover:text-white transition-colors">
-              {session.title || "Nova conversa"}
-            </p>
-            <div className="flex items-center gap-2 mt-0.5">
-              <Clock className="w-3 h-3 text-gray-500" />
-              <span className="text-xs text-gray-500">
-                {formatRelativeTime(session.updatedAt)}
-              </span>
-              {session.messageCount && (
-                <>
-                  <span className="text-gray-600">•</span>
+        <ContextMenu key={session.id}>
+          <ContextMenuTrigger asChild>
+            <button
+              onClick={() => onSelectSession(session.id)}
+              disabled={disabled}
+              className="w-full px-3 py-2.5 text-left rounded-lg hover:bg-[#232326] transition-colors group flex items-start gap-3"
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500/20 to-brand-700/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <MessageSquare className="w-4 h-4 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-gray-200 truncate group-hover:text-white transition-colors">
+                  {session.title || "Nova conversa"}
+                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <Clock className="w-3 h-3 text-gray-500" />
                   <span className="text-xs text-gray-500">
-                    {session.messageCount} msgs
+                    {formatRelativeTime(session.updatedAt)}
                   </span>
-                </>
-              )}
-            </div>
-          </div>
-        </button>
+                  {session.messageCount && session.messageCount > 0 && (
+                    <>
+                      <span className="text-gray-600">•</span>
+                      <span className="text-xs text-gray-500">
+                        {session.messageCount} msgs
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </button>
+          </ContextMenuTrigger>
+          <ContextMenuContent className="w-48">
+            <ContextMenuItem
+              onClick={() => onSelectSession(session.id)}
+              className="cursor-pointer"
+            >
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Abrir conversa
+            </ContextMenuItem>
+            {onDeleteSession && (
+              <ContextMenuItem
+                onClick={() => onDeleteSession(session.id)}
+                className="cursor-pointer text-red-600 focus:text-red-600"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Deletar conversa
+              </ContextMenuItem>
+            )}
+          </ContextMenuContent>
+        </ContextMenu>
       ))}
     </div>
   );
@@ -517,6 +573,7 @@ const ChatHistoryMenu: React.FC<ChatHistoryMenuProps> = ({ sessions, onSelectSes
 interface PromptInputBoxProps {
   onSend?: (message: string, files?: File[]) => void;
   onSelectSession?: (sessionId: string) => void;
+  onDeleteSession?: (sessionId: string) => void;
   isLoading?: boolean;
   placeholder?: string;
   className?: string;
@@ -524,7 +581,7 @@ interface PromptInputBoxProps {
   chatSessions?: ChatSession[];
 }
 export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref: React.Ref<HTMLDivElement>) => {
-  const { onSend = () => {}, onSelectSession, isLoading = false, placeholder = "Digite sua mensagem...", className, disabled = false, chatSessions = [] } = props;
+  const { onSend = () => {}, onSelectSession, onDeleteSession, isLoading = false, placeholder = "Digite sua mensagem...", className, disabled = false, chatSessions = [] } = props;
   const [input, setInput] = React.useState("");
   const [files, setFiles] = React.useState<File[]>([]);
   const [filePreviews, setFilePreviews] = React.useState<{ [key: string]: string }>({});
@@ -1040,6 +1097,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                       setShowHistory(false);
                       onSelectSession?.(sessionId);
                     }}
+                    onDeleteSession={onDeleteSession}
                     disabled={disabled}
                   />
                 </PopoverContent>

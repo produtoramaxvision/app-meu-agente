@@ -400,11 +400,11 @@ export function AppHeader() {
           
           {cliente && (
             <div className="flex items-center gap-3">
-              <div className={cn("text-right hidden sm:block", isChatPage && "md:hidden")}>
-                <p className="text-sm font-medium">{cliente.name}</p>
-                <p className="text-xs text-text-muted">{cliente.phone}</p>
+              <div className={cn("text-right hidden sm:block self-center", isChatPage && "md:hidden")}>
+                <p className="text-sm font-medium leading-tight">{cliente.name}</p>
+                <p className="text-xs text-text-muted leading-tight">{cliente.phone}</p>
               </div>
-              <Link to="/perfil" className="transition-transform duration-300 ease-in-out hover:scale-110 block">
+              <Link to="/perfil" className="transition-transform duration-300 ease-in-out hover:scale-110 block self-center">
                 <Avatar className="ring-2 ring-border/30 hover:ring-border/60 transition-all">
                   {cliente.avatar_url && (
                     <AvatarImage 
