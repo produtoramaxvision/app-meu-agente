@@ -168,8 +168,7 @@ export interface AgenteConfigJSON {
     frequencia_reacoes: number; // A cada X mensagens
   };
   qualificacao: {
-    requisitos_minimos: string[];
-    perguntas_mapeamento: PerguntaMapeamento[];
+    requisitos: string[];
   };
   mensagens: {
     saudacao: string | null;
@@ -390,8 +389,13 @@ export const DEFAULT_CONFIG_JSON: AgenteConfigJSON = {
     frequencia_reacoes: 3,
   },
   qualificacao: {
-    requisitos_minimos: [],
-    perguntas_mapeamento: [],
+    requisitos: [
+      'Endereço, data e horário da gravação',
+      'O que a empresa faz',
+      'Redes sociais / site + uso do material',
+      'Objetivo principal do vídeo',
+      'Referências visuais',
+    ],
   },
   mensagens: {
     saudacao: null,

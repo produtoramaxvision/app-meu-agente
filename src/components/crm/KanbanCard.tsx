@@ -1,10 +1,10 @@
-import { useDraggable } from '@dnd-kit/core';
+import { useState } from 'react';
 import { EvolutionContact } from '@/types/sdr';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Phone, MessageCircle, Calendar, CheckSquare, Sparkles } from 'lucide-react';
+import { Phone, MessageCircle, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -12,20 +12,26 @@ import { ptBR } from 'date-fns/locale';
 interface KanbanCardProps {
   contact: EvolutionContact;
   onClick: (contact: EvolutionContact) => void;
+  onDragStart?: (contact: EvolutionContact) => void;
+  onDragEnd?: () => void;
+  isDragging?: boolean;
 }
 
-export function KanbanCard({ contact, onClick }: KanbanCardProps) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: contact.id,
-    data: { contact }
-  });
+export function KanbanCard({ contact, onClick, onDragStart, onDragEnd, isDragging = false }: KanbanCardProps) {
+  const [isDraggingLocal, setIsDraggingLocal] = useState(false);
 
-  const style = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        transition: isDragging ? undefined : 'transform 140ms ease',
-      }
-    : { transition: isDragging ? undefined : 'transform 140ms ease' };
+  const handleDragStart = (e: React.DragEvent) => {
+    setIsDraggingLocal(true);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('contactId', contact.id);
+    e.dataTransfer.setData('currentStatus', contact.crm_lead_status || 'novo');
+    onDragStart?.(contact);
+  };
+
+  const handleDragEnd = () => {
+    setIsDraggingLocal(false);
+    onDragEnd?.();
+  };
 
   // Temperature logic (mocked for now based on score or default)
   const temperatureColor = 
@@ -33,23 +39,29 @@ export function KanbanCard({ contact, onClick }: KanbanCardProps) {
     contact.crm_lead_score > 50 ? 'bg-orange-500' :
     'bg-blue-500';
 
+  const isCurrentlyDragging = isDragging || isDraggingLocal;
+
   return (
     <div
-      ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
+      draggable
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       className={cn(
-        "group relative mb-3 touch-none will-change-transform",
-        isDragging && "opacity-60 z-50 rotate-1 scale-[1.03]"
+        "group relative mb-3 transition-all cursor-move",
+        isCurrentlyDragging && "opacity-50 scale-95"
       )}
     >
       <Card 
         className={cn(
-          "cursor-grab active:cursor-grabbing hover:shadow-md transition-all",
+          "cursor-grab active:cursor-grabbing hover:shadow-md transition-all hover:border-primary/50",
           contact.crm_lead_score > 0 && "border-l-4"
         )}
-        onClick={() => onClick(contact)}
+        onClick={(e) => {
+          if (!isCurrentlyDragging) {
+            onClick(contact);
+          }
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
       >
         <CardContent className="p-3 space-y-3">
           {/* Header */}

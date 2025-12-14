@@ -4,7 +4,7 @@
 // =============================================================================
 
 import { useState, useEffect } from 'react';
-import { Save, RotateCcw } from 'lucide-react';
+import { Save, RotateCcw, GripVertical, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -35,14 +35,68 @@ export function SDRConfigForm() {
   // Estado local para o formulário
   const [formData, setFormData] = useState<AgenteConfigJSON>(DEFAULT_CONFIG_JSON);
   const [hasChanges, setHasChanges] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   // Inicializar com dados do banco
   useEffect(() => {
     if (configJson) {
-      setFormData(configJson);
+      // Garantir que a estrutura de qualificação existe (migração de dados antigos)
+      const mergedConfig = {
+        ...DEFAULT_CONFIG_JSON,
+        ...configJson,
+        qualificacao: {
+          requisitos: configJson.qualificacao?.requisitos || DEFAULT_CONFIG_JSON.qualificacao.requisitos,
+        },
+      };
+      setFormData(mergedConfig);
       setHasChanges(false);
     }
   }, [configJson]);
+
+  // Handlers para drag & drop
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+
+    const newRequisitos = [...formData.qualificacao.requisitos];
+    const draggedItem = newRequisitos[draggedIndex];
+    
+    newRequisitos.splice(draggedIndex, 1);
+    newRequisitos.splice(index, 0, draggedItem);
+
+    setFormData((prev) => ({
+      ...prev,
+      qualificacao: {
+        requisitos: newRequisitos,
+      },
+    }));
+    setDraggedIndex(index);
+    setHasChanges(true);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
+  const handleAddRequisito = () => {
+    const newRequisitos = [...formData.qualificacao.requisitos, ''];
+    updateField('qualificacao', 'requisitos', newRequisitos);
+  };
+
+  const handleRemoveRequisito = (index: number) => {
+    const newRequisitos = formData.qualificacao.requisitos.filter((_, i) => i !== index);
+    updateField('qualificacao', 'requisitos', newRequisitos);
+  };
+
+  const handleUpdateRequisito = (index: number, value: string) => {
+    const newRequisitos = [...formData.qualificacao.requisitos];
+    newRequisitos[index] = value;
+    updateField('qualificacao', 'requisitos', newRequisitos);
+  };
 
   // Atualizar campo genérico
   const updateField = <K extends keyof AgenteConfigJSON>(
@@ -382,13 +436,85 @@ export function SDRConfigForm() {
 
           {/* TAB: Qualificação */}
           <TabsContent value="qualificacao" className="space-y-6">
-            <div className="text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
-              <p>
-                Configure os requisitos mínimos e perguntas de mapeamento para qualificar leads.
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">
+                  ✅ Requisitos de Qualificação
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Defina as perguntas que o agente deve fazer para qualificar o lead. 
+                  Arraste para reordenar.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                {formData.qualificacao.requisitos.map((requisito, index) => (
+                  <div
+                    key={index}
+                    draggable
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDragEnd={handleDragEnd}
+                    className={cn(
+                      'flex items-start gap-3 p-3 border rounded-lg bg-card transition-all',
+                      'hover:border-primary/50 hover:shadow-sm cursor-move',
+                      draggedIndex === index && 'opacity-50 scale-95'
+                    )}
+                  >
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <GripVertical className="h-5 w-5 text-muted-foreground hover:text-primary cursor-grab active:cursor-grabbing" />
+                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold">
+                        {index + 1}
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <Input
+                        value={requisito}
+                        onChange={(e) => handleUpdateRequisito(index, e.target.value)}
+                        placeholder={`Requisito ${index + 1}`}
+                        className="text-sm"
+                        onMouseDown={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveRequisito(index)}
+                      className="flex-shrink-0 h-9 w-9 text-muted-foreground hover:text-destructive"
+                      disabled={formData.qualificacao.requisitos.length === 1}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAddRequisito}
+                className="w-full"
+              >
+                + Adicionar Requisito
+              </Button>
+            </div>
+
+            {/* Info Box */}
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4 space-y-2">
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                💡 Como Funciona
               </p>
-              <p className="mt-2 text-xs">
-                💡 Esta funcionalidade será expandida em uma próxima versão.
-              </p>
+              <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
+                <li>
+                  <strong>Requisitos de Qualificação:</strong> Lista de perguntas que o agente fará para coletar informações do lead
+                </li>
+                <li>
+                  <strong>Ordem das Perguntas:</strong> Clique e arraste o ícone de grade para reordenar as perguntas
+                </li>
+                <li>
+                  Os dados coletados serão salvos no CRM e usados para qualificar o lead automaticamente
+                </li>
+              </ul>
             </div>
           </TabsContent>
 
