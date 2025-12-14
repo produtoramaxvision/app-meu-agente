@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,66 +12,149 @@ import type {
 
 // =============================================================================
 // Hook: useSDRAgent
-// Gerencia conexão WhatsApp via Evolution API e configuração do agente SDR
-// Nota: Tabelas novas usam 'as any' até regenerar tipos do Supabase
+// Gerencia múltiplas conexões WhatsApp via Evolution API e configuração do agente SDR
+// Atualizado: 2025-12-13 - Suporte a múltiplas instâncias
 // =============================================================================
+
+const SELECTED_INSTANCE_KEY = 'sdr_selected_instance_id';
 
 export function useSDRAgent() {
   const { cliente } = useAuth();
   const queryClient = useQueryClient();
   const phone = cliente?.phone || '';
+  const planId = cliente?.plan_id || 'free';
+  
+  // Estado para instância selecionada (persistido no localStorage)
+  const [selectedInstanceId, setSelectedInstanceIdState] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(SELECTED_INSTANCE_KEY);
+    }
+    return null;
+  });
   
   const [pollingEnabled, setPollingEnabled] = useState(false);
-  // Evita loop de auto-refresh quando instância está desconectada
   const [autoRefreshedInstanceId, setAutoRefreshedInstanceId] = useState<string | null>(null);
 
+  const [lastPolledInstanceId, setLastPolledInstanceId] = useState<string | null>(null);
+
+  // Estados por-instância para loading (evita que todos os cards mostrem loading ao mesmo tempo)
+  const [refreshingInstanceId, setRefreshingInstanceId] = useState<string | null>(null);
+  const [disconnectingInstanceId, setDisconnectingInstanceId] = useState<string | null>(null);
+  const [deletingInstanceId, setDeletingInstanceId] = useState<string | null>(null);
+  const [updatingNameInstanceId, setUpdatingNameInstanceId] = useState<string | null>(null);
+
+  // Persistir seleção no localStorage
+  const setSelectedInstanceId = useCallback((instanceId: string | null) => {
+    setSelectedInstanceIdState(instanceId);
+    if (instanceId) {
+      localStorage.setItem(SELECTED_INSTANCE_KEY, instanceId);
+    } else {
+      localStorage.removeItem(SELECTED_INSTANCE_KEY);
+    }
+  }, []);
+
   // =====================================================
-  // Query: Buscar instância Evolution
+  // Query: Buscar TODAS as instâncias Evolution do usuário
   // =====================================================
   const { 
-    data: instance, 
-    isLoading: isLoadingInstance,
-    refetch: refetchInstance,
+    data: instances = [], 
+    isLoading: isLoadingInstances,
+    refetch: refetchInstances,
   } = useQuery({
-    queryKey: ['evolution-instance', phone],
-    queryFn: async (): Promise<EvolutionInstance | null> => {
-      if (!phone) return null;
+    queryKey: ['evolution-instances', phone],
+    queryFn: async (): Promise<EvolutionInstance[]> => {
+      if (!phone) return [];
 
       const { data, error } = await supabase
         .from('evolution_instances' as any)
         .select('*')
         .eq('phone', phone)
-        .maybeSingle();
+        .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('Error fetching evolution instance:', error);
+        console.error('Error fetching evolution instances:', error);
         throw error;
       }
 
-      return data as unknown as EvolutionInstance | null;
+      return (data || []) as unknown as EvolutionInstance[];
     },
     enabled: !!phone,
-    staleTime: 1000 * 5, // 5 segundos (reduzido de 30s para manter dados mais atualizados)
-    refetchOnWindowFocus: true, // Refetch ao focar na janela
-    refetchInterval: false, // Desabilitamos o polling padrão do React Query pois ele só lê o banco
+    staleTime: 1000 * 5,
+    refetchOnWindowFocus: true,
+  });
+
+  // Instância selecionada atual
+  const selectedInstance = useMemo(() => {
+    if (!instances.length) return null;
+    
+    // Se há um ID selecionado válido, usar
+    if (selectedInstanceId) {
+      const found = instances.find(i => i.id === selectedInstanceId);
+      if (found) return found;
+    }
+    
+    // Fallback: primeira instância
+    return instances[0];
+  }, [instances, selectedInstanceId]);
+
+  const hasAnyConnectingInstance = useMemo(() => {
+    return instances.some((i) => i.connection_status === 'connecting');
+  }, [instances]);
+
+  // Auto-selecionar primeira instância se não há seleção
+  useEffect(() => {
+    if (instances.length > 0 && !selectedInstanceId) {
+      setSelectedInstanceId(instances[0].id);
+    }
+    // Se a instância selecionada foi deletada, selecionar a primeira
+    if (selectedInstanceId && instances.length > 0 && !instances.find(i => i.id === selectedInstanceId)) {
+      setSelectedInstanceId(instances[0].id);
+    }
+  }, [instances, selectedInstanceId, setSelectedInstanceId]);
+
+  // =====================================================
+  // Query: Buscar limite de instâncias do plano
+  // =====================================================
+  const { data: maxInstances = 0 } = useQuery({
+    queryKey: ['max-instances', phone],
+    queryFn: async (): Promise<number> => {
+      if (!phone) return 0;
+
+      const { data, error } = await (supabase.rpc as any)('get_max_instances_for_user', {
+        p_phone: phone,
+      });
+
+      if (error) {
+        console.error('Error fetching max instances:', error);
+        // Fallback baseado no plano local
+        if (planId === 'business') return 2;
+        if (planId === 'premium') return 5;
+        return 0;
+      }
+
+      return data || 0;
+    },
+    enabled: !!phone,
+    staleTime: 1000 * 60 * 5, // 5 minutos
   });
 
   // =====================================================
-  // Query: Buscar configuração SDR
+  // Query: Buscar configuração SDR da instância selecionada
   // =====================================================
   const { 
     data: config, 
     isLoading: isLoadingConfig,
     refetch: refetchConfig,
   } = useQuery({
-    queryKey: ['sdr-config', phone],
+    queryKey: ['sdr-config', phone, selectedInstance?.id],
     queryFn: async (): Promise<SDRAgentConfig | null> => {
-      if (!phone) return null;
+      if (!phone || !selectedInstance?.id) return null;
 
       const { data, error } = await supabase
         .from('sdr_agent_config' as any)
         .select('*')
         .eq('phone', phone)
+        .eq('instance_id', selectedInstance.id)
         .maybeSingle();
 
       if (error) {
@@ -81,17 +164,17 @@ export function useSDRAgent() {
 
       return data as unknown as SDRAgentConfig | null;
     },
-    enabled: !!phone,
-    staleTime: 1000 * 60, // 1 minuto
+    enabled: !!phone && !!selectedInstance?.id,
+    staleTime: 1000 * 60,
   });
 
   // =====================================================
-  // Mutation: Criar instância Evolution
+  // Mutation: Criar nova instância Evolution
   // =====================================================
   const createInstanceMutation = useMutation({
-    mutationFn: async (instanceName?: string) => {
+    mutationFn: async (displayName?: string) => {
       const { data, error } = await supabase.functions.invoke('create-evolution-instance', {
-        body: { instance_name: instanceName },
+        body: { display_name: displayName },
       });
 
       if (error) {
@@ -105,8 +188,12 @@ export function useSDRAgent() {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['evolution-instance', phone] });
-      setPollingEnabled(true); // Iniciar polling após criar
+      queryClient.invalidateQueries({ queryKey: ['evolution-instances', phone] });
+      // Selecionar a nova instância automaticamente
+      if (data.instance?.id) {
+        setSelectedInstanceId(data.instance.id);
+      }
+      setPollingEnabled(true);
       toast.success('Instância criada! Escaneie o QR Code para conectar.');
     },
     onError: (error: Error) => {
@@ -118,8 +205,12 @@ export function useSDRAgent() {
   // Mutation: Buscar status de conexão e QR Code
   // =====================================================
   const refreshConnectionMutation = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('connect-evolution-instance');
+    mutationFn: async (instanceId?: string) => {
+      const targetId = instanceId || selectedInstance?.id;
+      
+      const { data, error } = await supabase.functions.invoke('connect-evolution-instance', {
+        body: { instance_id: targetId },
+      });
 
       if (error) {
         throw new Error(error.message || 'Failed to refresh connection');
@@ -127,7 +218,6 @@ export function useSDRAgent() {
 
       if (!data.success) {
         if (data.needsCreate) {
-          // Retornar objeto especial para indicar que precisa criar
           return { needsCreate: true };
         }
         throw new Error(data.error || 'Failed to refresh connection');
@@ -135,67 +225,82 @@ export function useSDRAgent() {
 
       return data;
     },
+    onMutate: async (instanceId?: string) => {
+      const targetId = instanceId || selectedInstance?.id || null;
+      setRefreshingInstanceId(targetId);
+    },
     onSuccess: (data) => {
-      // Se precisa criar nova instância, criar automaticamente
       if (data.needsCreate) {
         console.log('Instance needs to be created, auto-creating...');
-        queryClient.invalidateQueries({ queryKey: ['evolution-instance', phone] });
-        // Criar nova instância automaticamente
+        queryClient.invalidateQueries({ queryKey: ['evolution-instances', phone] });
         createInstanceMutation.mutate(undefined);
         return;
       }
 
-      // Atualizar cache imediato com a instância retornada (inclui QR / pairing)
-      if (data.instance) {
-        queryClient.setQueryData(['evolution-instance', phone], data.instance);
-      }
-      queryClient.invalidateQueries({ queryKey: ['evolution-instance', phone] });
+      queryClient.invalidateQueries({ queryKey: ['evolution-instances', phone] });
       
-      // Parar polling se conectado
       if (data.instance?.connection_status === 'connected') {
-        setPollingEnabled(false);
         toast.success('WhatsApp conectado com sucesso!');
-        // Forçar configuração do webhook para garantir rota correta (N8N)
-        configureWebhookMutation.mutate();
+        configureWebhookMutation.mutate(data.instance.id);
       }
     },
     onError: (error: Error) => {
       if (error.message === 'NO_INSTANCE') {
-        // Criar instância automaticamente quando não existe
         console.log('No instance found, auto-creating...');
-        queryClient.invalidateQueries({ queryKey: ['evolution-instance', phone] });
+        queryClient.invalidateQueries({ queryKey: ['evolution-instances', phone] });
         createInstanceMutation.mutate(undefined);
         return;
       }
       toast.error(`Erro ao verificar conexão: ${error.message}`);
     },
+    onSettled: (_data, _error, instanceId) => {
+      const targetId = instanceId || selectedInstance?.id || null;
+      setRefreshingInstanceId((prev) => (prev === targetId ? null : prev));
+    },
   });
 
   // =====================================================
-  // Polling Ativo: Consultar API enquanto estiver conectando
-  // Necessário pois o webhook vai para o N8N e não atualiza o banco local
+  // Polling Ativo
   // =====================================================
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
 
     if (pollingEnabled && !refreshConnectionMutation.isPending) {
       intervalId = setInterval(() => {
-        console.log('Polling connection status...');
-        refreshConnectionMutation.mutate();
+        const connecting = instances.filter((i) => i.connection_status === 'connecting');
+        if (!connecting.length) return;
+
+        // Round-robin simples para não ficar preso em uma só instância
+        let next = connecting[0];
+        if (lastPolledInstanceId) {
+          const idx = connecting.findIndex((i) => i.id === lastPolledInstanceId);
+          if (idx >= 0) {
+            next = connecting[(idx + 1) % connecting.length];
+          }
+        }
+
+        // Evita disparar para a mesma instância que já está em loading
+        if (refreshingInstanceId && refreshingInstanceId === next.id) return;
+
+        console.log('Polling connection status for:', next.id);
+        setLastPolledInstanceId(next.id);
+        refreshConnectionMutation.mutate(next.id);
       }, 5000);
     }
 
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [pollingEnabled, refreshConnectionMutation.isPending]);
+  }, [pollingEnabled, refreshConnectionMutation.isPending, instances, lastPolledInstanceId, refreshingInstanceId]);
 
   // =====================================================
-  // Mutation: Configurar/Reconfigurar Webhook
+  // Mutation: Configurar Webhook
   // =====================================================
   const configureWebhookMutation = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('configure-evolution-webhook');
+    mutationFn: async (instanceId?: string) => {
+      const { data, error } = await supabase.functions.invoke('configure-evolution-webhook', {
+        body: { instance_id: instanceId || selectedInstance?.id },
+      });
 
       if (error) {
         throw new Error(error.message || 'Failed to configure webhook');
@@ -207,9 +312,8 @@ export function useSDRAgent() {
 
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success('Conexão configurada com sucesso!');
-      console.log('Webhook configured:', data);
     },
     onError: (error: Error) => {
       toast.error(`Erro ao configurar conexão: ${error.message}`);
@@ -217,11 +321,13 @@ export function useSDRAgent() {
   });
 
   // =====================================================
-  // Mutation: Desconectar instância Evolution
+  // Mutation: Desconectar instância
   // =====================================================
   const disconnectInstanceMutation = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('disconnect-evolution-instance');
+    mutationFn: async (instanceId?: string) => {
+      const { data, error } = await supabase.functions.invoke('disconnect-evolution-instance', {
+        body: { instance_id: instanceId || selectedInstance?.id },
+      });
 
       if (error) {
         throw new Error(error.message || 'Failed to disconnect instance');
@@ -233,13 +339,89 @@ export function useSDRAgent() {
 
       return data;
     },
+    onMutate: async (instanceId?: string) => {
+      const targetId = instanceId || selectedInstance?.id || null;
+      setDisconnectingInstanceId(targetId);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['evolution-instance', phone] });
+      queryClient.invalidateQueries({ queryKey: ['evolution-instances', phone] });
       queryClient.invalidateQueries({ queryKey: ['sdr-config', phone] });
       toast.success('WhatsApp desconectado com sucesso!');
     },
     onError: (error: Error) => {
       toast.error(`Erro ao desconectar: ${error.message}`);
+    },
+    onSettled: (_data, _error, instanceId) => {
+      const targetId = instanceId || selectedInstance?.id || null;
+      setDisconnectingInstanceId((prev) => (prev === targetId ? null : prev));
+    },
+  });
+
+  // =====================================================
+  // Mutation: Deletar instância completamente
+  // =====================================================
+  const deleteInstanceMutation = useMutation({
+    mutationFn: async (instanceId: string) => {
+      const { data, error } = await supabase.functions.invoke('disconnect-evolution-instance', {
+        body: { instance_id: instanceId, delete: true },
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to delete instance');
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to delete instance');
+      }
+
+      return { instanceId };
+    },
+    onMutate: async (instanceId: string) => {
+      setDeletingInstanceId(instanceId);
+    },
+    onSuccess: ({ instanceId }) => {
+      // Se deletou a instância selecionada, selecionar outra
+      if (selectedInstanceId === instanceId) {
+        const remaining = instances.filter(i => i.id !== instanceId);
+        setSelectedInstanceId(remaining[0]?.id || null);
+      }
+      queryClient.invalidateQueries({ queryKey: ['evolution-instances', phone] });
+      queryClient.invalidateQueries({ queryKey: ['sdr-config', phone] });
+      toast.success('Instância removida com sucesso!');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao remover instância: ${error.message}`);
+    },
+    onSettled: () => {
+      setDeletingInstanceId(null);
+    },
+  });
+
+  // =====================================================
+  // Mutation: Atualizar display_name
+  // =====================================================
+  const updateDisplayNameMutation = useMutation({
+    mutationFn: async ({ instanceId, displayName }: { instanceId: string; displayName: string }) => {
+      const { data, error } = await (supabase.rpc as any)('update_instance_display_name', {
+        p_instance_id: instanceId,
+        p_display_name: displayName,
+      });
+
+      if (error) throw error;
+      return { instanceId, displayName };
+    },
+    onMutate: async ({ instanceId }: { instanceId: string; displayName: string }) => {
+      setUpdatingNameInstanceId(instanceId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['evolution-instances', phone] });
+      toast.success('Nome atualizado!');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro ao atualizar nome: ${error.message}`);
+    },
+    onSettled: () => {
+      setUpdatingNameInstanceId(null);
     },
   });
 
@@ -248,30 +430,34 @@ export function useSDRAgent() {
   // =====================================================
   const saveConfigMutation = useMutation({
     mutationFn: async (configJson: AgenteConfigJSON) => {
+      if (!selectedInstance?.id) {
+        throw new Error('Nenhuma instância selecionada');
+      }
+
       const { data: existingConfig } = await supabase
         .from('sdr_agent_config' as any)
         .select('id')
         .eq('phone', phone)
+        .eq('instance_id', selectedInstance.id)
         .maybeSingle();
 
       if (existingConfig) {
-        // Update
         const { error } = await supabase
           .from('sdr_agent_config' as any)
           .update({
             config_json: configJson as any,
             updated_at: new Date().toISOString(),
           })
-          .eq('phone', phone);
+          .eq('phone', phone)
+          .eq('instance_id', selectedInstance.id);
 
         if (error) throw error;
       } else {
-        // Insert
         const { error } = await supabase
           .from('sdr_agent_config' as any)
           .insert({
             phone,
-            instance_id: instance?.id,
+            instance_id: selectedInstance.id,
             config_json: configJson as any,
             is_active: true,
           });
@@ -282,7 +468,7 @@ export function useSDRAgent() {
       return { success: true };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sdr-config', phone] });
+      queryClient.invalidateQueries({ queryKey: ['sdr-config', phone, selectedInstance?.id] });
       toast.success('Configurações salvas com sucesso!');
     },
     onError: (error: Error) => {
@@ -305,7 +491,7 @@ export function useSDRAgent() {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sdr-config', phone] });
+      queryClient.invalidateQueries({ queryKey: ['sdr-config', phone, selectedInstance?.id] });
       toast.success('Seção atualizada!');
     },
     onError: (error: Error) => {
@@ -339,7 +525,7 @@ export function useSDRAgent() {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sdr-config', phone] });
+      queryClient.invalidateQueries({ queryKey: ['sdr-config', phone, selectedInstance?.id] });
       toast.success('Configurações de IA atualizadas!');
     },
     onError: (error: Error) => {
@@ -353,7 +539,10 @@ export function useSDRAgent() {
   const toggleActiveMutation = useMutation({
     mutationFn: async (isActive: boolean) => {
       const { data, error } = await supabase.functions.invoke('configure-evolution-webhook', {
-        body: { enabled: isActive },
+        body: { 
+          instance_id: selectedInstance?.id,
+          enabled: isActive,
+        },
       });
 
       if (error) {
@@ -364,16 +553,15 @@ export function useSDRAgent() {
         throw new Error(data?.error || 'Falha ao atualizar notificações');
       }
 
-      // Garante que usamos o estado retornado pelo backend (caso o payload seja ignorado)
       const effectiveStatus = typeof data.enabled === 'boolean' ? data.enabled : isActive;
       return { success: true, isActive: effectiveStatus };
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(['sdr-config', phone], (prev: SDRAgentConfig | null) => {
+      queryClient.setQueryData(['sdr-config', phone, selectedInstance?.id], (prev: SDRAgentConfig | null) => {
         if (!prev) return prev;
         return { ...prev, is_active: data.isActive } as SDRAgentConfig;
       });
-      queryClient.invalidateQueries({ queryKey: ['sdr-config', phone] });
+      queryClient.invalidateQueries({ queryKey: ['sdr-config', phone, selectedInstance?.id] });
       toast.success(
         data.isActive
           ? 'Agente ativado e notificações habilitadas!'
@@ -385,35 +573,25 @@ export function useSDRAgent() {
     },
   });
 
-  // Derivados para uso em efeitos abaixo
-  const hasInstanceValue = !!instance;
-  const isConnectedValue = instance?.connection_status === 'connected';
-
   // =====================================================
-  // Realtime: Escutar atualizações da instância
+  // Realtime: Escutar atualizações de TODAS as instâncias
   // =====================================================
   useEffect(() => {
-    if (!phone || !instance?.id) return;
+    if (!phone) return;
 
     const channel = supabase
-      .channel(`evolution-instance-${instance.id}`)
+      .channel(`evolution-instances-${phone}`)
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: 'evolution_instances',
-          filter: `id=eq.${instance.id}`,
+          filter: `phone=eq.${phone}`,
         },
         (payload) => {
-          console.log('Instance updated:', payload.new);
-          queryClient.setQueryData(['evolution-instance', phone], payload.new);
-          
-          // Parar polling se conectado
-          if ((payload.new as any).connection_status === 'connected') {
-            setPollingEnabled(false);
-            toast.success('WhatsApp conectado!');
-          }
+          console.log('Instance change:', payload);
+          queryClient.invalidateQueries({ queryKey: ['evolution-instances', phone] });
         }
       )
       .subscribe();
@@ -421,47 +599,42 @@ export function useSDRAgent() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [phone, instance?.id, queryClient]);
+  }, [phone, queryClient]);
 
   // =====================================================
-  // Efeito: Iniciar polling quando em estado de connecting
+  // Efeito: Iniciar polling quando houver QUALQUER instância connecting
   // =====================================================
   useEffect(() => {
-    if (instance?.connection_status === 'connecting') {
+    if (hasAnyConnectingInstance) {
       setPollingEnabled(true);
-    } else if (instance?.connection_status === 'connected') {
+    } else {
       setPollingEnabled(false);
-      // Libera futura auto-verificação caso desconecte novamente
       setAutoRefreshedInstanceId(null);
     }
-  }, [instance?.connection_status]);
+  }, [hasAnyConnectingInstance]);
 
   // =====================================================
-  // Efeito: Ao montar/atualizar, se houver instância e não estiver conectada,
-  // dispara uma verificação imediata para sincronizar o status com a Evolution API.
-  // Evita rodar em paralelo se a mutation já estiver em progresso.
+  // Efeito: Auto-refresh quando instância não está conectada
   // =====================================================
   useEffect(() => {
-    if (!phone || !hasInstanceValue) return;
-    if (isConnectedValue) return;
+    if (!phone || !selectedInstance) return;
+    if (selectedInstance.connection_status === 'connected') return;
     if (refreshConnectionMutation.isPending) return;
+    if (autoRefreshedInstanceId === selectedInstance.id) return;
 
-    // Evita loop: só auto-dispara uma vez por instância enquanto desconectada
-    if (autoRefreshedInstanceId === instance?.id) return;
-
-    setAutoRefreshedInstanceId(instance?.id || null);
-    refreshConnectionMutation.mutate();
-  }, [phone, hasInstanceValue, isConnectedValue, refreshConnectionMutation.isPending, autoRefreshedInstanceId, instance?.id]);
+    setAutoRefreshedInstanceId(selectedInstance.id);
+    refreshConnectionMutation.mutate(selectedInstance.id);
+  }, [phone, selectedInstance, refreshConnectionMutation.isPending, autoRefreshedInstanceId]);
 
   // =====================================================
   // Helpers
   // =====================================================
-  const createInstance = useCallback((name?: string) => {
-    createInstanceMutation.mutate(name);
+  const createInstance = useCallback((displayName?: string) => {
+    createInstanceMutation.mutate(displayName);
   }, [createInstanceMutation]);
 
-  const refreshConnection = useCallback(() => {
-    refreshConnectionMutation.mutate();
+  const refreshConnection = useCallback((instanceId?: string) => {
+    refreshConnectionMutation.mutate(instanceId);
   }, [refreshConnectionMutation]);
 
   const saveConfig = useCallback((configJson: AgenteConfigJSON) => {
@@ -480,47 +653,81 @@ export function useSDRAgent() {
     toggleActiveMutation.mutate(isActive);
   }, [toggleActiveMutation]);
 
-  const configureWebhook = useCallback(() => {
-    configureWebhookMutation.mutate();
+  const configureWebhook = useCallback((instanceId?: string) => {
+    configureWebhookMutation.mutate(instanceId);
   }, [configureWebhookMutation]);
 
-  const disconnectInstance = useCallback(() => {
-    disconnectInstanceMutation.mutate();
+  const disconnectInstance = useCallback((instanceId?: string) => {
+    disconnectInstanceMutation.mutate(instanceId);
   }, [disconnectInstanceMutation]);
+
+  const deleteInstance = useCallback((instanceId: string) => {
+    deleteInstanceMutation.mutate(instanceId);
+  }, [deleteInstanceMutation]);
+
+  const updateDisplayName = useCallback((instanceId: string, displayName: string) => {
+    updateDisplayNameMutation.mutate({ instanceId, displayName });
+  }, [updateDisplayNameMutation]);
+
+  const selectInstance = useCallback((instanceId: string) => {
+    setSelectedInstanceId(instanceId);
+  }, [setSelectedInstanceId]);
+
+  // Verificar se pode criar mais instâncias
+  const canCreateInstance = instances.length < maxInstances;
 
   // =====================================================
   // Return
   // =====================================================
   return {
-    // Estado
-    instance,
+    // === Multi-instance ===
+    instances,
+    selectedInstance,
+    selectedInstanceId,
+    selectInstance,
+    maxInstances,
+    canCreateInstance,
+    instanceCount: instances.length,
+    
+    // === Backward compatibility (usa instância selecionada) ===
+    instance: selectedInstance,
     config,
     configJson: config?.config_json || null,
     
-    // Loading states
-    isLoading: isLoadingInstance || isLoadingConfig,
-    isLoadingInstance,
+    // === Loading states ===
+    isLoading: isLoadingInstances || isLoadingConfig,
+    isLoadingInstance: isLoadingInstances,
+    isLoadingInstances,
     isLoadingConfig,
     isCreating: createInstanceMutation.isPending,
     isRefreshing: refreshConnectionMutation.isPending,
     isDisconnecting: disconnectInstanceMutation.isPending,
+    isDeleting: deleteInstanceMutation.isPending,
     isSaving: saveConfigMutation.isPending,
+    isUpdatingName: updateDisplayNameMutation.isPending,
+
+    // === Loading per-instance ===
+    refreshingInstanceId,
+    disconnectingInstanceId,
+    deletingInstanceId,
+    updatingNameInstanceId,
     
-    // Status
-    connectionStatus: (instance?.connection_status || 'disconnected') as ConnectionStatus,
-    isConnected: instance?.connection_status === 'connected',
-    isConnecting: instance?.connection_status === 'connecting',
-    hasInstance: !!instance,
+    // === Status (da instância selecionada) ===
+    connectionStatus: (selectedInstance?.connection_status || 'disconnected') as ConnectionStatus,
+    isConnected: selectedInstance?.connection_status === 'connected',
+    isConnecting: selectedInstance?.connection_status === 'connecting',
+    hasInstance: instances.length > 0,
     isAgentActive: config?.is_active ?? false,
     
-    // QR Code
-    qrCode: instance?.qr_code || null,
-    pairingCode: instance?.pairing_code || null,
+    // === QR Code (da instância selecionada) ===
+    qrCode: selectedInstance?.qr_code || null,
+    pairingCode: selectedInstance?.pairing_code || null,
     
-    // Actions
+    // === Actions ===
     createInstance,
     refreshConnection,
-    refetchInstance,
+    refetchInstance: refetchInstances,
+    refetchInstances,
     refetchConfig,
     saveConfig,
     updateSection,
@@ -528,8 +735,10 @@ export function useSDRAgent() {
     toggleActive,
     configureWebhook,
     disconnectInstance,
+    deleteInstance,
+    updateDisplayName,
     
-    // Polling control
+    // === Polling control ===
     pollingEnabled,
     setPollingEnabled,
   };

@@ -17,6 +17,7 @@ export interface EvolutionInstance {
   created_at: string;
   updated_at: string;
   connected_at: string | null;
+  display_name: string | null; // Nome amigável da instância (ex: "WhatsApp 1")
 }
 
 // =============================================================================

@@ -12,11 +12,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-// Verifica se o valor é um base64 de imagem (começa com data: ou é muito longo)
 function isBase64Image(value: string | null): boolean {
   if (!value) return false;
-  // Se começa com data:image ou tem mais de 500 caracteres, é provavelmente base64 de imagem
-  return value.startsWith('data:image') || value.length > 500;
+  const trimmed = value.trim();
+  if (trimmed.startsWith('data:image')) return true;
+
+  // Heurística mais segura: base64 "puro" e com assinaturas comuns
+  // (evita tratar strings longas de QR como imagem base64)
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(trimmed)) return false;
+  if (trimmed.length % 4 !== 0) return false;
+
+  // Assinaturas típicas
+  return (
+    trimmed.startsWith('iVBOR') || // PNG
+    trimmed.startsWith('/9j/') ||  // JPEG
+    trimmed.startsWith('R0lGOD') || // GIF
+    trimmed.startsWith('UklGR') // WEBP
+  );
 }
 
 interface SDRQRCodeDisplayProps {

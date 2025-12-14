@@ -30,6 +30,7 @@ interface WebhookSettings {
 }
 
 interface UpdateSettingsRequest {
+  instance_id?: string;
   settings?: EvolutionSettings;
   webhook?: WebhookSettings;
 }
@@ -81,20 +82,28 @@ serve(async (req: Request) => {
       throw new Error('Cliente not found')
     }
 
-    // Buscar instância do usuário
-    const { data: instance, error: instanceError } = await supabase
+    // Parse do body (para obter instance_id)
+    const body: UpdateSettingsRequest = await req.json().catch(() => ({}))
+
+    // Buscar instância do usuário (multi-instance)
+    let instanceQuery = supabase
       .from('evolution_instances')
       .select('*')
       .eq('phone', cliente.phone)
-      .single()
+
+    if (body.instance_id) {
+      instanceQuery = instanceQuery.eq('id', body.instance_id)
+    } else {
+      instanceQuery = instanceQuery.order('created_at', { ascending: true }).limit(1)
+    }
+
+    const { data: instances, error: instanceError } = await instanceQuery
+    const instance = instances?.[0]
 
     if (instanceError || !instance) {
       throw new Error('No instance found for this user')
     }
 
-    // Parse do body
-    const body: UpdateSettingsRequest = await req.json().catch(() => ({}))
-    
     const results: Record<string, unknown> = {}
 
     // Atualizar Settings da instância

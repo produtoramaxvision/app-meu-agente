@@ -173,8 +173,13 @@ serve(async (req: Request) => {
 
   try {
     // Body opcional para habilitar/desabilitar
-    const requestBody = await req.json().catch(() => ({})) as { enabled?: boolean; events?: string[] }
+    const requestBody = await req.json().catch(() => ({})) as { 
+      enabled?: boolean; 
+      events?: string[]; 
+      instance_id?: string;
+    }
     const enabled = typeof requestBody.enabled === 'boolean' ? requestBody.enabled : true
+    const requestedInstanceId = requestBody.instance_id
     const events = Array.isArray(requestBody.events) && requestBody.events.length > 0
       ? requestBody.events
       : DEFAULT_EVENTS
@@ -236,11 +241,21 @@ serve(async (req: Request) => {
     }
 
     // Buscar instância do usuário
-    const { data: instance, error: instanceError } = await supabase
+    let instanceQuery = supabase
       .from('evolution_instances')
       .select('*')
       .eq('phone', cliente.phone)
-      .single()
+
+    // Se instance_id foi fornecido, buscar especificamente
+    if (requestedInstanceId) {
+      instanceQuery = instanceQuery.eq('id', requestedInstanceId)
+    } else {
+      // Caso contrário, pegar a primeira (ordem de criação)
+      instanceQuery = instanceQuery.order('created_at', { ascending: true }).limit(1)
+    }
+
+    const { data: instances, error: instanceError } = await instanceQuery
+    const instance = instances?.[0]
 
     if (instanceError || !instance) {
       throw new Error('No instance found for this user')
@@ -288,6 +303,7 @@ serve(async (req: Request) => {
       .from('sdr_agent_config')
       .update({ is_active: enabled, updated_at: new Date().toISOString() })
       .eq('phone', cliente.phone)
+      .eq('instance_id', instance.id)
 
     if (updateConfigError) {
       console.error('Failed to update sdr_agent_config.is_active:', updateConfigError)

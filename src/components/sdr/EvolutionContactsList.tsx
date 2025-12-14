@@ -1,9 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { 
   RefreshCw, 
   Search, 
@@ -13,10 +20,11 @@ import {
   Clock,
   AlertCircle,
   Users,
-  User
+  User,
+  Phone,
 } from 'lucide-react';
 import { useEvolutionContacts } from '@/hooks/useEvolutionContacts';
-import type { EvolutionContact } from '@/types/sdr';
+import type { EvolutionContact, EvolutionInstance } from '@/types/sdr';
 import { cn } from '@/lib/utils';
 
 interface EvolutionContactsListProps {
@@ -26,6 +34,9 @@ interface EvolutionContactsListProps {
   evolutionApiKey: string;
   cacheTtlMinutes?: number; // Default: 60 minutos (1 hora)
   onContactClick?: (contact: EvolutionContact) => void;
+  // Props para múltiplas instâncias (opcional)
+  allInstances?: EvolutionInstance[];  // Todas as instâncias para mostrar badge
+  instanceDisplayName?: string;         // Nome de exibição (ex: "WhatsApp 1")
 }
 
 export function EvolutionContactsList({
@@ -35,10 +46,13 @@ export function EvolutionContactsList({
   evolutionApiKey,
   cacheTtlMinutes = 2,
   onContactClick,
+  allInstances,
+  instanceDisplayName,
 }: EvolutionContactsListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterFavorites, setFilterFavorites] = useState(false);
   const [showGroupsOnly, setShowGroupsOnly] = useState(false);
+  const [instanceFilter, setInstanceFilter] = useState<string>('all'); // 'all' ou instance_id
 
   const {
     contacts,
@@ -146,8 +160,8 @@ export function EvolutionContactsList({
         </div>
 
         {/* Filtros */}
-        <div className="flex items-center gap-2 pt-4">
-          <div className="relative flex-1">
+        <div className="flex flex-wrap items-center gap-2 pt-4">
+          <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar contato..."
@@ -156,6 +170,29 @@ export function EvolutionContactsList({
               className="pl-9"
             />
           </div>
+
+          {/* Filtro por Instância (quando há múltiplas) */}
+          {allInstances && allInstances.length > 1 && (
+            <Select
+              value={instanceFilter}
+              onValueChange={setInstanceFilter}
+            >
+              <SelectTrigger className="w-[160px]">
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  <SelectValue placeholder="Todas conexões" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas conexões</SelectItem>
+                {allInstances.map((inst) => (
+                  <SelectItem key={inst.id} value={inst.id}>
+                    {inst.display_name || 'WhatsApp'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           <Button
             variant={filterFavorites ? 'default' : 'outline'}
@@ -230,7 +267,7 @@ export function EvolutionContactsList({
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-medium truncate">
                       {contact.push_name || 'Sem nome'}
                     </p>
@@ -242,6 +279,18 @@ export function EvolutionContactsList({
                     {contact.crm_lead_status && (
                       <Badge variant="outline" className="text-xs">
                         {contact.crm_lead_status}
+                      </Badge>
+                    )}
+                    {/* Badge de instância (quando há múltiplas) */}
+                    {allInstances && allInstances.length > 1 && (
+                      <Badge 
+                        variant="outline" 
+                        className="text-xs bg-primary/5 border-primary/30 text-primary"
+                      >
+                        <Phone className="h-3 w-3 mr-1" />
+                        {allInstances.find(i => i.id === contact.instance_id)?.display_name 
+                          || instanceDisplayName 
+                          || 'WhatsApp'}
                       </Badge>
                     )}
                   </div>

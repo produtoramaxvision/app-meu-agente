@@ -57,22 +57,98 @@ serve(async (req: Request) => {
       throw new Error('Cliente not found')
     }
 
+    // Parse do body para obter instance_id e flag delete
+    const body = await req.json().catch(() => ({})) as {
+      instance_id?: string;
+      delete?: boolean; // Se true, deleta completamente; se false/undefined, apenas desconecta
+    }
+    const requestedInstanceId = body.instance_id
+    const shouldDelete = body.delete === true // default: apenas desconectar
+
     // Buscar instância do usuário
-    const { data: instance, error: instanceError } = await supabase
+    let instanceQuery = supabase
       .from('evolution_instances')
       .select('*')
       .eq('phone', cliente.phone)
-      .single()
+
+    // Se instance_id foi fornecido, buscar especificamente
+    if (requestedInstanceId) {
+      instanceQuery = instanceQuery.eq('id', requestedInstanceId)
+    } else {
+      // Caso contrário, pegar a primeira (ordem de criação)
+      instanceQuery = instanceQuery.order('created_at', { ascending: true }).limit(1)
+    }
+
+    const { data: instances, error: instanceError } = await instanceQuery
+    const instance = instances?.[0]
 
     if (instanceError || !instance) {
       throw new Error('No instance found for this user')
     }
 
-    console.log('Disconnecting and deleting instance:', instance.instance_name)
+    if (shouldDelete) {
+      console.log('Deleting instance:', instance.instance_name)
 
-    // Deletar instância na Evolution API
-    const deleteResponse = await fetch(
-      `${evolutionApiUrl}/instance/delete/${instance.instance_name}`,
+      // Deletar instância na Evolution API
+      const deleteResponse = await fetch(
+        `${evolutionApiUrl}/instance/delete/${instance.instance_name}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'apikey': evolutionApiKey,
+          },
+        }
+      )
+
+      // Se não for 200 ou 404 (já deletada), logar erro mas continuar
+      if (!deleteResponse.ok && deleteResponse.status !== 404) {
+        const errorText = await deleteResponse.text()
+        console.error('Failed to delete instance from Evolution API:', errorText)
+        // Continua para limpar registro local mesmo se falhar na API
+      } else {
+        console.log('✅ Instance deleted from Evolution API')
+      }
+
+      // Deletar registro do banco local
+      const { error: deleteDbError } = await supabase
+        .from('evolution_instances')
+        .delete()
+        .eq('id', instance.id)
+
+      if (deleteDbError) {
+        console.error('Failed to delete instance from database:', deleteDbError)
+        throw new Error('Failed to delete instance from database')
+      }
+
+      // Deletar configuração SDR associada
+      const { error: deleteConfigError } = await supabase
+        .from('sdr_agent_config')
+        .delete()
+        .eq('instance_id', instance.id)
+
+      if (deleteConfigError && deleteConfigError.code !== '23503') { // Ignore foreign key errors
+        console.error('Failed to delete SDR config:', deleteConfigError)
+      }
+
+      console.log('✅ Instance deleted and cleaned up successfully')
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Instance deleted successfully',
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      )
+    }
+
+    // Apenas desconectar (logout), mantendo a instância no banco
+    console.log('Disconnecting (logout) instance:', instance.instance_name)
+
+    const logoutResponse = await fetch(
+      `${evolutionApiUrl}/instance/logout/${instance.instance_name}`,
       {
         method: 'DELETE',
         headers: {
@@ -81,46 +157,39 @@ serve(async (req: Request) => {
       }
     )
 
-    // Se não for 200 ou 404 (já deletada), logar erro mas continuar
-    if (!deleteResponse.ok && deleteResponse.status !== 404) {
-      const errorText = await deleteResponse.text()
-      console.error('Failed to delete instance from Evolution API:', errorText)
-      // Continua para limpar registro local mesmo se falhar na API
+    if (!logoutResponse.ok && logoutResponse.status !== 404) {
+      const errorText = await logoutResponse.text()
+      console.error('Failed to logout instance in Evolution API:', errorText)
+      // Continua para atualizar estado local mesmo se falhar na API
     } else {
-      console.log('✅ Instance deleted from Evolution API')
+      console.log('✅ Instance logged out in Evolution API')
     }
 
-    // Deletar registro do banco local
-    const { error: deleteDbError } = await supabase
+    const { error: updateDbError } = await supabase
       .from('evolution_instances')
-      .delete()
+      .update({
+        connection_status: 'disconnected',
+        qr_code: null,
+        pairing_code: null,
+        whatsapp_number: null,
+        connected_at: null,
+        updated_at: new Date().toISOString(),
+      })
       .eq('id', instance.id)
 
-    if (deleteDbError) {
-      console.error('Failed to delete instance from database:', deleteDbError)
-      throw new Error('Failed to delete instance from database')
+    if (updateDbError) {
+      console.error('Failed to update instance status in database:', updateDbError)
+      throw new Error('Failed to update instance status')
     }
-
-    // Deletar configuração SDR associada
-    const { error: deleteConfigError } = await supabase
-      .from('sdr_agent_config')
-      .delete()
-      .eq('instance_id', instance.id)
-
-    if (deleteConfigError && deleteConfigError.code !== '23503') { // Ignore foreign key errors
-      console.error('Failed to delete SDR config:', deleteConfigError)
-    }
-
-    console.log('✅ Instance disconnected and cleaned up successfully')
 
     return new Response(
       JSON.stringify({
         success: true,
         message: 'Instance disconnected successfully',
       }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+        status: 200,
       }
     )
 

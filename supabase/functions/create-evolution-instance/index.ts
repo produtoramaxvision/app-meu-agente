@@ -14,6 +14,7 @@ const corsHeaders = {
 
 interface CreateInstanceRequest {
   instance_name?: string;
+  display_name?: string;
 }
 
 interface EvolutionCreateResponse {
@@ -83,60 +84,30 @@ serve(async (req: Request) => {
       throw new Error('WhatsApp integration requires Business or Premium plan')
     }
 
-    // Verificar se já existe instância
-    const { data: existingInstance } = await supabase
+    // Definir limite de instâncias por plano
+    const maxInstances = cliente.plan_id === 'premium' ? 5 : 2 // Business = 2, Premium = 5
+
+    // Contar instâncias existentes
+    const { count: instanceCount, error: countError } = await supabase
       .from('evolution_instances')
-      .select('id, instance_name, connection_status')
+      .select('*', { count: 'exact', head: true })
       .eq('phone', cliente.phone)
-      .single()
 
-    if (existingInstance) {
-      // Verificar se a instância ainda existe na Evolution API
-      console.log('Found existing instance in DB, checking if it exists in Evolution API...')
-      
-      const stateResponse = await fetch(
-        `${evolutionApiUrl}/instance/connectionState/${existingInstance.instance_name}`,
-        {
-          method: 'GET',
-          headers: {
-            'apikey': evolutionApiKey,
-          },
-        }
-      )
+    if (countError) {
+      console.error('Error counting instances:', countError)
+      throw new Error('Failed to check instance limit')
+    }
 
-      if (stateResponse.status === 404) {
-        // Instância foi deletada externamente, limpar registro local
-        console.log('Instance not found in Evolution API (404), cleaning local record and creating new one...')
-        
-        await supabase
-          .from('evolution_instances')
-          .delete()
-          .eq('id', existingInstance.id)
-        
-        await supabase
-          .from('sdr_agent_config')
-          .delete()
-          .eq('instance_id', existingInstance.id)
-        
-        // Continuar para criar uma nova instância (não retornar aqui)
-      } else {
-        // Instância ainda existe, retornar a existente
-        return new Response(
-          JSON.stringify({
-            success: true,
-            message: 'Instance already exists',
-            instance: existingInstance,
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200 
-          }
-        )
-      }
+    // Verificar limite
+    if ((instanceCount || 0) >= maxInstances) {
+      throw new Error(`Instance limit reached. Your plan allows ${maxInstances} WhatsApp connection${maxInstances > 1 ? 's' : ''}.`)
     }
 
     // Parse do body
     const body: CreateInstanceRequest = await req.json().catch(() => ({}))
+
+    // Gerar display_name sequencial
+    const displayName = body.display_name || `WhatsApp ${(instanceCount || 0) + 1}`
     
     // Gerar nome da instância
     const instanceName = body.instance_name || 
@@ -166,6 +137,9 @@ serve(async (req: Request) => {
     }
 
     const evolutionData: EvolutionCreateResponse = await evolutionResponse.json()
+
+    // Evolution pode retornar QR como base64 de imagem ou como "code" (string para gerar QR)
+    const initialQrCode = evolutionData.qrcode?.base64 || evolutionData.qrcode?.code || null
 
     // Configurar webhook explicitamente após criação da instância
     console.log('Configuring webhook for instance:', instanceName)
@@ -244,9 +218,10 @@ serve(async (req: Request) => {
         instance_name: instanceName,
         instance_token: evolutionData.hash,
         connection_status: 'connecting',
-        qr_code: evolutionData.qrcode?.base64 || null,
+        qr_code: initialQrCode,
         pairing_code: evolutionData.qrcode?.pairingCode || null,
         last_qr_update: new Date().toISOString(),
+        display_name: displayName,
       })
       .select()
       .single()
@@ -276,8 +251,9 @@ serve(async (req: Request) => {
         instance: {
           id: newInstance.id,
           instance_name: instanceName,
+          display_name: displayName,
           connection_status: 'connecting',
-          qr_code: evolutionData.qrcode?.base64,
+          qr_code: initialQrCode,
           pairing_code: evolutionData.qrcode?.pairingCode,
         },
       }),

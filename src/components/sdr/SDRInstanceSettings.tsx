@@ -27,6 +27,7 @@ import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
 
 interface SDRInstanceSettingsProps {
+  instanceId: string
   instanceName: string
   isConnected: boolean
   className?: string
@@ -105,6 +106,7 @@ function SettingItem({
 }
 
 export function SDRInstanceSettings({ 
+  instanceId,
   instanceName, 
   isConnected,
   className 
@@ -135,12 +137,55 @@ export function SDRInstanceSettings({
     }
   }, [settings, initialSettings])
 
-  // Seta o baseline inicial assim que o componente monta
+  // Carregar settings atuais da Evolution por instância
   useEffect(() => {
-    if (!initialSettings) {
-      setInitialSettings(settings)
+    if (!isConnected) return
+    if (!instanceId || !instanceName) return
+
+    let cancelled = false
+    setIsLoading(true)
+    setHasChanges(false)
+
+    ;(async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession()
+        const token = sessionData?.session?.access_token
+        if (!token) throw new Error('Não autenticado')
+
+        const { data, error } = await supabase.functions.invoke('get-evolution-settings', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: {
+            instance_id: instanceId,
+          },
+        })
+
+        if (error) throw new Error(error.message)
+        if (!data?.success) throw new Error(data?.error || 'Falha ao carregar configurações')
+
+        const next = data.settings as EvolutionSettings
+        if (!cancelled && next) {
+          setSettings(next)
+          setInitialSettings(next)
+          setHasChanges(false)
+        }
+      } catch (err) {
+        console.error('Error loading settings:', err)
+        if (!cancelled) {
+          toast.error('Erro ao carregar configurações', {
+            description: err instanceof Error ? err.message : 'Não foi possível carregar as configurações da instância.',
+          })
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
     }
-  }, [initialSettings, settings])
+  }, [instanceId, instanceName, isConnected])
 
   // Handler genérico para updates
   const handleSettingChange = (key: keyof EvolutionSettings, value: boolean | string) => {
@@ -150,7 +195,7 @@ export function SDRInstanceSettings({
 
   // Salvar configurações
   const handleSave = async () => {
-    if (!instanceName) return
+    if (!instanceId || !instanceName) return
     
     setIsSaving(true)
     try {
@@ -164,6 +209,7 @@ export function SDRInstanceSettings({
           Authorization: `Bearer ${sessionData.session.access_token}`,
         },
         body: {
+          instance_id: instanceId,
           settings: {
             rejectCall: settings.rejectCall,
             msgCall: settings.msgCall,

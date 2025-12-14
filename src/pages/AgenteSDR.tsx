@@ -13,6 +13,13 @@ import { ProtectedFeature } from '@/components/ProtectedFeature';
 import { SDRConnectionCard, SDRConfigForm, SDRPlayground, SDRStatusBadge } from '@/components/sdr';
 import { EvolutionContactsList } from '@/components/sdr/EvolutionContactsList';
 import { useSDRAgent } from '@/hooks/useSDRAgent';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { 
   Bot, 
   Zap, 
@@ -24,16 +31,23 @@ import {
   CheckCircle2,
   Play,
   Pause,
-  Users
+  Users,
+  Phone,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 
 export default function AgenteSDR() {
   const {
     instance,
+    instances,
+    selectedInstance,
+    selectedInstanceId,
+    selectInstance,
     config,
     isAgentActive,
     isConnected,
-    isLoadingInstance,
+    isLoadingInstances,
     isLoadingConfig,
     toggleActive,
     isSaving,
@@ -41,7 +55,7 @@ export default function AgenteSDR() {
 
   const [activeTab, setActiveTab] = useState('conexao');
 
-  const isLoading = isLoadingInstance || isLoadingConfig;
+  const isLoading = isLoadingInstances || isLoadingConfig;
 
   return (
     <ProtectedFeature permission="canAccessSDRAgent" featureName="Agente SDR">
@@ -59,12 +73,61 @@ export default function AgenteSDR() {
           </div>
 
           {/* Status e Controle */}
-          <div className="flex flex-row items-center justify-between w-full sm:w-auto gap-4">
-            {/* Status da Conexão */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground whitespace-nowrap">WhatsApp:</span>
-              <SDRStatusBadge status={instance?.connection_status || 'disconnected'} />
-            </div>
+          <div className="flex flex-row items-center justify-between w-full xl:w-auto gap-4">
+            {/* Seletor de Instância (quando há mais de uma) */}
+            {instances.length > 1 && (
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <Select
+                  value={selectedInstanceId || undefined}
+                  onValueChange={(value) => selectInstance(value)}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Selecionar WhatsApp">
+                      {selectedInstance && (
+                        <div className="flex items-center gap-2">
+                          {selectedInstance.connection_status === 'connected' ? (
+                            <Wifi className="h-3 w-3 text-green-500" />
+                          ) : (
+                            <WifiOff className="h-3 w-3 text-muted-foreground" />
+                          )}
+                          <span className="truncate">
+                            {selectedInstance.display_name || 'WhatsApp'}
+                          </span>
+                        </div>
+                      )}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {instances.map((inst) => (
+                      <SelectItem key={inst.id} value={inst.id}>
+                        <div className="flex items-center gap-2">
+                          {inst.connection_status === 'connected' ? (
+                            <Wifi className="h-3 w-3 text-green-500" />
+                          ) : (
+                            <WifiOff className="h-3 w-3 text-muted-foreground" />
+                          )}
+                          <span>{inst.display_name || 'WhatsApp'}</span>
+                          {inst.whatsapp_number && (
+                            <span className="text-xs text-muted-foreground">
+                              ({inst.whatsapp_number})
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Status da Conexão (instância única ou selecionada) */}
+            {instances.length <= 1 && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">WhatsApp:</span>
+                <SDRStatusBadge status={selectedInstance?.connection_status || 'disconnected'} />
+              </div>
+            )}
 
             {/* Toggle Ativo/Pausado */}
             <div className="flex items-center gap-3 bg-muted/50 rounded-lg px-4 py-2 sm:w-auto">
@@ -197,13 +260,15 @@ export default function AgenteSDR() {
                   </p>
                 </CardContent>
               </Card>
-            ) : instance ? (
+            ) : selectedInstance ? (
               <EvolutionContactsList
-                instanceId={instance.id}
-                instanceName={instance.instance_name}
+                instanceId={selectedInstance.id}
+                instanceName={selectedInstance.instance_name}
                 evolutionApiUrl={import.meta.env.VITE_EVOLUTION_API_URL || 'https://evolution-api.com'}
                 evolutionApiKey={import.meta.env.VITE_EVOLUTION_API_KEY || ''}
                 cacheTtlMinutes={60}
+                allInstances={instances}
+                instanceDisplayName={selectedInstance.display_name || undefined}
                 onContactClick={(contact) => {
                   console.log('Contato selecionado:', contact);
                   // TODO: Abrir modal com detalhes do contato ou iniciar conversa
