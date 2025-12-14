@@ -125,14 +125,15 @@ export function ProtectedExportButton({
       <div className="relative group inline-block">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button 
-              className="group relative overflow-hidden rounded-lg px-4 py-2 transition-all duration-200 bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] hover:shadow-lg hover:scale-105 flex items-center justify-center gap-2 text-white"
-              variant="default"
-              size={size}
+            <button 
+              className="group relative inline-flex items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg"
+              type="button"
             >
-              {children}
+              <span className="relative z-10 flex items-center gap-2">
+                {children}
+              </span>
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-            </Button>
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={onExportPDF} className="cursor-pointer">

@@ -29,7 +29,6 @@ import { SDRQRCodeDisplay } from './SDRQRCodeDisplay';
 import { SDRInstanceSettings } from './SDRInstanceSettings';
 import { useSDRAgent } from '@/hooks/useSDRAgent';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -40,6 +39,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -250,7 +250,7 @@ function InstanceCard({
                 variant="outline"
                 onClick={onDisconnect}
                 disabled={isRefreshing || isDisconnecting}
-                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                className="flex-1 min-w-[100px] text-orange-600 hover:text-orange-700 hover:bg-orange-50"
               >
                 {isDisconnecting ? (
                   <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
@@ -276,19 +276,12 @@ function InstanceCard({
             </Button>
           </div>
 
-          {/* Configurações Avançadas - Collapsible */}
-          <Collapsible 
-            open={settingsOpen} 
-            onOpenChange={setSettingsOpen}
-            className="border rounded-lg overflow-hidden mt-auto"
-          >
-            <CollapsibleTrigger asChild>
+          {/* Configurações Avançadas - Dropdown */}
+          <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
+            <PopoverTrigger asChild>
               <Button 
                 variant="ghost" 
-                className={cn(
-                  "w-full justify-between p-3 h-auto hover:bg-muted/50 text-sm",
-                  settingsOpen && "border-b"
-                )}
+                className="w-full justify-between p-3 h-auto hover:bg-muted/50 text-sm border rounded-lg mt-auto"
               >
                 <div className="flex items-center gap-2">
                   <Settings2 className="h-4 w-4" />
@@ -299,15 +292,24 @@ function InstanceCard({
                   settingsOpen && "rotate-180"
                 )} />
               </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="p-3 pt-2">
-              <SDRInstanceSettings 
-                instanceId={instance.id}
-                instanceName={instance.instance_name}
-                isConnected={isConnected}
-              />
-            </CollapsibleContent>
-          </Collapsible>
+            </PopoverTrigger>
+            <PopoverContent
+              side="bottom"
+              align="end"
+              sideOffset={8}
+              avoidCollisions={false}
+              className="w-[420px] max-w-[calc(100vw-2rem)] p-0"
+            >
+              <div className="max-h-[500px] overflow-y-auto p-3">
+                <SDRInstanceSettings 
+                  instanceId={instance.id}
+                  instanceName={instance.instance_name}
+                  isConnected={isConnected}
+                  className="space-y-4"
+                />
+              </div>
+            </PopoverContent>
+          </Popover>
         </CardContent>
       </Card>
 
@@ -391,7 +393,7 @@ export function SDRConnectionCard() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-[600px]">
       {/* Header com contador e botão de adicionar */}
       <div className="flex items-center justify-between">
         <div>
@@ -404,23 +406,26 @@ export function SDRConnectionCard() {
           </p>
         </div>
 
-        <Button
+        <button
           onClick={() => createInstance()}
           disabled={!canCreateInstance || isCreating}
-          size="sm"
+          className="group relative inline-flex items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:pointer-events-none"
         >
-          {isCreating ? (
-            <>
-              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-              Criando...
-            </>
-          ) : (
-            <>
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar WhatsApp
-            </>
-          )}
-        </Button>
+          <span className="relative z-10 flex items-center">
+            {isCreating ? (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                Criando...
+              </>
+            ) : (
+              <>
+                <Plus className="mr-2 h-4 w-4 transition-transform group-hover:scale-110 group-hover:rotate-90" />
+                Adicionar WhatsApp
+              </>
+            )}
+          </span>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+        </button>
       </div>
 
       {/* Barra de progresso do limite */}

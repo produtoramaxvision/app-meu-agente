@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Search, Plus, Filter, MoreHorizontal, LayoutGrid, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { motion } from 'framer-motion';
 
 interface CRMLayoutProps {
   children: ReactNode;
@@ -79,10 +80,13 @@ export function CRMLayout({ children, headerStats, viewMode, onViewChange, searc
               'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md'
             )}
           >
-            <Plus className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
-            <span className="hidden sm:inline transition-transform duration-200 group-hover:translate-x-0.5">
+            <Plus className="h-4 w-4 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-90" />
+            <motion.span
+              initial={false}
+              className="hidden sm:inline transition-transform duration-200 group-hover:translate-x-0.5"
+            >
               Novo Lead
-            </span>
+            </motion.span>
           </Button>
         </div>
       </div>

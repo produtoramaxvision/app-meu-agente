@@ -696,10 +696,13 @@ export default function Reports() {
           </div>
           <button
             onClick={clearFilters}
-            className="group relative overflow-hidden rounded-lg px-3 py-1.5 transition-all duration-200 bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] hover:shadow-lg hover:scale-105 flex items-center gap-2"
+            className="group relative inline-flex items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:pointer-events-none"
           >
-            <X className="h-4 w-4 text-white transition-transform group-hover:scale-110" />
-            <span className="text-sm font-semibold text-white hidden sm:inline">Limpar Filtros</span>
+            <span className="relative z-10 flex items-center">
+              <X className="mr-2 h-4 w-4 transition-transform group-hover:scale-110 group-hover:rotate-90" />
+              <span className="hidden sm:inline">Limpar Filtros</span>
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
           </button>
         </CardHeader>
         <CardContent className="relative z-10">
