@@ -110,35 +110,11 @@ export interface ModeloApresentacao {
   ativo: boolean;
 }
 
-/** Regra de condução de conversa */
-export interface RegraConducao {
-  id: string;
-  regra: string;
-  ativa: boolean;
-}
-
-/** Pergunta de mapeamento de leads */
-export interface PerguntaMapeamento {
-  id: string;
-  ordem: number;
-  pergunta: string;
-  tipo: 'texto' | 'sim_nao' | 'multipla_escolha';
-  opcoes?: string[];
-  obrigatoria: boolean;
-}
-
 /** Técnica de contorno de objeções */
 export interface TecnicaObjecao {
   id: string;
   tecnica: string;
   exemplo?: string;
-}
-
-/** Configuração de horário de atendimento */
-export interface HorarioAtendimento {
-  inicio: string; // "09:00"
-  fim: string;    // "18:00"
-  dias: number[]; // [1,2,3,4,5] = seg-sex
 }
 
 /** Configuração de IA */
@@ -162,26 +138,13 @@ export interface AgenteConfigJSON {
   apresentacao: {
     modelos: ModeloApresentacao[];
   };
-  conducao: {
-    regras: RegraConducao[];
-    usar_reacoes: boolean;
-    frequencia_reacoes: number; // A cada X mensagens
-  };
   qualificacao: {
     requisitos: string[];
   };
   mensagens: {
-    saudacao: string | null;
     fallback: string;
-    encerramento: string | null;
-    fora_horario: string | null;
   };
   ia_config: IAConfig;
-  comportamento: {
-    horario_atendimento: HorarioAtendimento;
-    agendamento_automatico: boolean;
-    link_calendario: string | null;
-  };
   objecoes: {
     tecnicas: TecnicaObjecao[];
   };
@@ -230,25 +193,14 @@ export interface FormApresentacao {
   modelos: ModeloApresentacao[];
 }
 
-/** Tab: Condução da Conversa */
-export interface FormConducao {
-  regras: RegraConducao[];
-  usar_reacoes: boolean;
-  frequencia_reacoes: number;
-}
-
 /** Tab: Qualificação de Leads */
 export interface FormQualificacao {
-  requisitos_minimos: string[];
-  perguntas_mapeamento: PerguntaMapeamento[];
+  requisitos: string[];
 }
 
 /** Tab: Mensagens */
 export interface FormMensagens {
-  saudacao: string;
   fallback: string;
-  encerramento: string;
-  fora_horario: string;
 }
 
 /** Tab: Configurações de IA (SLIDERS) */
@@ -259,13 +211,6 @@ export interface FormIAConfig {
   frequency_penalty: number;
   presence_penalty: number;
   max_tokens: number;
-}
-
-/** Tab: Comportamento */
-export interface FormComportamento {
-  horario_atendimento: HorarioAtendimento;
-  agendamento_automatico: boolean;
-  link_calendario: string;
 }
 
 /** Tab: Objeções */
@@ -358,12 +303,6 @@ export const DEFAULT_IA_CONFIG: IAConfig = {
   max_tokens: 500,
 };
 
-export const DEFAULT_HORARIO: HorarioAtendimento = {
-  inicio: '09:00',
-  fim: '18:00',
-  dias: [1, 2, 3, 4, 5],
-};
-
 export const DEFAULT_CONFIG_JSON: AgenteConfigJSON = {
   identidade: {
     nome_agente: 'Assistente SDR',
@@ -380,14 +319,6 @@ export const DEFAULT_CONFIG_JSON: AgenteConfigJSON = {
       },
     ],
   },
-  conducao: {
-    regras: [
-      { id: '1', regra: 'Faça uma pergunta por vez e aguarde a resposta', ativa: true },
-      { id: '2', regra: 'Intercale perguntas com comentários de validação', ativa: true },
-    ],
-    usar_reacoes: true,
-    frequencia_reacoes: 3,
-  },
   qualificacao: {
     requisitos: [
       'Endereço, data e horário da gravação',
@@ -398,17 +329,9 @@ export const DEFAULT_CONFIG_JSON: AgenteConfigJSON = {
     ],
   },
   mensagens: {
-    saudacao: null,
     fallback: 'Desculpe, não entendi sua mensagem. Pode reformular?',
-    encerramento: null,
-    fora_horario: null,
   },
   ia_config: DEFAULT_IA_CONFIG,
-  comportamento: {
-    horario_atendimento: DEFAULT_HORARIO,
-    agendamento_automatico: false,
-    link_calendario: null,
-  },
   objecoes: {
     tecnicas: [],
   },
@@ -418,20 +341,6 @@ export const DEFAULT_CONFIG_JSON: AgenteConfigJSON = {
     'Nunca recomende concorrentes',
   ],
 };
-
-// =============================================================================
-// DIAS DA SEMANA
-// =============================================================================
-
-export const DIAS_SEMANA = [
-  { value: 0, label: 'Domingo', abbrev: 'Dom' },
-  { value: 1, label: 'Segunda-feira', abbrev: 'Seg' },
-  { value: 2, label: 'Terça-feira', abbrev: 'Ter' },
-  { value: 3, label: 'Quarta-feira', abbrev: 'Qua' },
-  { value: 4, label: 'Quinta-feira', abbrev: 'Qui' },
-  { value: 5, label: 'Sexta-feira', abbrev: 'Sex' },
-  { value: 6, label: 'Sábado', abbrev: 'Sáb' },
-] as const;
 
 // =============================================================================
 // STATUS BADGES

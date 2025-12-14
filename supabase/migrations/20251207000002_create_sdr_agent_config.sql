@@ -24,11 +24,6 @@ CREATE TABLE IF NOT EXISTS public.sdr_agent_config (
         "apresentacao": {
             "modelos": []
         },
-        "conducao": {
-            "regras": [],
-            "usar_reacoes": true,
-            "frequencia_reacoes": 3
-        },
         "qualificacao": {
             "requisitos_minimos": [],
             "perguntas_mapeamento": []
@@ -36,7 +31,6 @@ CREATE TABLE IF NOT EXISTS public.sdr_agent_config (
         "mensagens": {
             "saudacao": null,
             "fallback": "Desculpe, não entendi sua mensagem. Pode reformular?",
-            "encerramento": null,
             "fora_horario": null
         },
         "ia_config": {

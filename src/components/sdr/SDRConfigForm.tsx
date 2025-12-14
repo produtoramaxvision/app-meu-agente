@@ -4,8 +4,9 @@
 // =============================================================================
 
 import { useState, useEffect } from 'react';
-import { Save, RotateCcw, GripVertical, Trash2 } from 'lucide-react';
+import { Save, RotateCcw, GripVertical, Trash2, Plus, User, MessageSquare, Brain, CheckSquare, Shield, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -36,16 +37,42 @@ export function SDRConfigForm() {
   const [formData, setFormData] = useState<AgenteConfigJSON>(DEFAULT_CONFIG_JSON);
   const [hasChanges, setHasChanges] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [draggedSaudacaoIndex, setDraggedSaudacaoIndex] = useState<number | null>(null);
+  const [draggedObjecaoIndex, setDraggedObjecaoIndex] = useState<number | null>(null);
 
   // Inicializar com dados do banco
   useEffect(() => {
     if (configJson) {
-      // Garantir que a estrutura de qualificação existe (migração de dados antigos)
+      // Migração: Se tem saudacao mas não tem modelos, converter
+      let apresentacaoModelos = configJson.apresentacao?.modelos || [];
+      if (apresentacaoModelos.length === 0 && configJson.mensagens?.saudacao) {
+        // Dividir saudação por linhas vazias ou números no início
+        const saudacaoTexto = configJson.mensagens.saudacao;
+        const exemplos = saudacaoTexto
+          .split(/\n\n+|\n(?=\d+\s*-\s*)/)
+          .map(s => s.trim().replace(/^\d+\s*-\s*/, '').replace(/^["']|["']$/g, ''))
+          .filter(s => s.length > 0);
+        
+        apresentacaoModelos = exemplos.map((texto, idx) => ({
+          id: `saudacao_${Date.now()}_${idx}`,
+          texto,
+          ativo: true,
+        }));
+      }
+      
+      // Garantir estrutura mínima
+      if (apresentacaoModelos.length === 0) {
+        apresentacaoModelos = [{ id: `saudacao_${Date.now()}`, texto: '', ativo: true }];
+      }
+
       const mergedConfig = {
         ...DEFAULT_CONFIG_JSON,
         ...configJson,
         qualificacao: {
           requisitos: configJson.qualificacao?.requisitos || DEFAULT_CONFIG_JSON.qualificacao.requisitos,
+        },
+        apresentacao: {
+          modelos: apresentacaoModelos,
         },
       };
       setFormData(mergedConfig);
@@ -96,6 +123,98 @@ export function SDRConfigForm() {
     const newRequisitos = [...formData.qualificacao.requisitos];
     newRequisitos[index] = value;
     updateField('qualificacao', 'requisitos', newRequisitos);
+  };
+
+  // Handlers para drag & drop de saudações
+  const handleDragStartSaudacao = (index: number) => {
+    setDraggedSaudacaoIndex(index);
+  };
+
+  const handleDragOverSaudacao = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedSaudacaoIndex === null || draggedSaudacaoIndex === index) return;
+
+    const newModelos = [...formData.apresentacao.modelos];
+    const draggedItem = newModelos[draggedSaudacaoIndex];
+    
+    newModelos.splice(draggedSaudacaoIndex, 1);
+    newModelos.splice(index, 0, draggedItem);
+
+    setFormData((prev) => ({
+      ...prev,
+      apresentacao: {
+        modelos: newModelos,
+      },
+    }));
+    setDraggedSaudacaoIndex(index);
+    setHasChanges(true);
+  };
+
+  const handleDragEndSaudacao = () => {
+    setDraggedSaudacaoIndex(null);
+  };
+
+  const handleAddSaudacao = () => {
+    const newId = `saudacao_${Date.now()}`;
+    const newModelos = [...formData.apresentacao.modelos, { id: newId, texto: '', ativo: true }];
+    updateField('apresentacao', 'modelos', newModelos);
+  };
+
+  const handleRemoveSaudacao = (index: number) => {
+    const newModelos = formData.apresentacao.modelos.filter((_, i) => i !== index);
+    updateField('apresentacao', 'modelos', newModelos);
+  };
+
+  const handleUpdateSaudacao = (index: number, value: string) => {
+    const newModelos = [...formData.apresentacao.modelos];
+    newModelos[index] = { ...newModelos[index], texto: value };
+    updateField('apresentacao', 'modelos', newModelos);
+  };
+
+  // Handlers para drag & drop de objeções
+  const handleDragStartObjecao = (index: number) => {
+    setDraggedObjecaoIndex(index);
+  };
+
+  const handleDragOverObjecao = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedObjecaoIndex === null || draggedObjecaoIndex === index) return;
+
+    const newTecnicas = [...formData.objecoes.tecnicas];
+    const draggedItem = newTecnicas[draggedObjecaoIndex];
+    
+    newTecnicas.splice(draggedObjecaoIndex, 1);
+    newTecnicas.splice(index, 0, draggedItem);
+
+    setFormData((prev) => ({
+      ...prev,
+      objecoes: {
+        tecnicas: newTecnicas,
+      },
+    }));
+    setDraggedObjecaoIndex(index);
+    setHasChanges(true);
+  };
+
+  const handleDragEndObjecao = () => {
+    setDraggedObjecaoIndex(null);
+  };
+
+  const handleAddObjecao = () => {
+    const newId = `objecao_${Date.now()}`;
+    const newTecnicas = [...formData.objecoes.tecnicas, { id: newId, tecnica: '', exemplo: '' }];
+    updateField('objecoes', 'tecnicas', newTecnicas);
+  };
+
+  const handleRemoveObjecao = (index: number) => {
+    const newTecnicas = formData.objecoes.tecnicas.filter((_, i) => i !== index);
+    updateField('objecoes', 'tecnicas', newTecnicas);
+  };
+
+  const handleUpdateObjecao = (index: number, field: 'tecnica' | 'exemplo', value: string) => {
+    const newTecnicas = [...formData.objecoes.tecnicas];
+    newTecnicas[index] = { ...newTecnicas[index], [field]: value };
+    updateField('objecoes', 'tecnicas', newTecnicas);
   };
 
   // Atualizar campo genérico
@@ -165,12 +284,30 @@ export function SDRConfigForm() {
       <CardContent>
         <Tabs defaultValue="identidade" className="w-full">
           <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-6 h-auto">
-            <TabsTrigger value="identidade">Identidade</TabsTrigger>
-            <TabsTrigger value="mensagens">Mensagens</TabsTrigger>
-            <TabsTrigger value="ia">IA Config</TabsTrigger>
-            <TabsTrigger value="comportamento">Comportamento</TabsTrigger>
-            <TabsTrigger value="qualificacao">Qualificação</TabsTrigger>
-            <TabsTrigger value="limitacoes">Limitações</TabsTrigger>
+            <TabsTrigger value="identidade" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              <span className="hidden sm:inline">Identidade</span>
+            </TabsTrigger>
+            <TabsTrigger value="mensagens" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              <span className="hidden sm:inline">Mensagens</span>
+            </TabsTrigger>
+            <TabsTrigger value="ia" className="flex items-center gap-2">
+              <Brain className="h-4 w-4" />
+              <span className="hidden sm:inline">IA Config</span>
+            </TabsTrigger>
+            <TabsTrigger value="objecoes" className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">Objeções</span>
+            </TabsTrigger>
+            <TabsTrigger value="qualificacao" className="flex items-center gap-2">
+              <CheckSquare className="h-4 w-4" />
+              <span className="hidden sm:inline">Qualificação</span>
+            </TabsTrigger>
+            <TabsTrigger value="limitacoes" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              <span className="hidden sm:inline">Limitações</span>
+            </TabsTrigger>
           </TabsList>
 
           {/* TAB: Identidade */}
@@ -224,16 +361,63 @@ export function SDRConfigForm() {
 
           {/* TAB: Mensagens */}
           <TabsContent value="mensagens" className="space-y-6">
-            <TextareaWithCharacterLimit
-              value={formData.mensagens.saudacao || ''}
-              onChange={(value) =>
-                updateField('mensagens', 'saudacao', value || null)
-              }
-              maxLength={500}
-              label="Mensagem de Saudação"
-              placeholder="Olá! Como posso ajudar você hoje?"
-              rows={2}
-            />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-base font-semibold">
+                  💬 Exemplos de Mensagens de Saudação
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Adicione diferentes formas de se apresentar ao lead. Arraste para reordenar.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                {formData.apresentacao.modelos.map((modelo, index) => (
+                  <div
+                    key={modelo.id}
+                    draggable
+                    onDragStart={() => handleDragStartSaudacao(index)}
+                    onDragOver={(e) => handleDragOverSaudacao(e, index)}
+                    onDragEnd={handleDragEndSaudacao}
+                    className={cn(
+                      'flex items-center gap-3 p-3 border rounded-lg bg-card transition-all',
+                      'hover:border-primary/50 hover:shadow-sm cursor-move',
+                      draggedSaudacaoIndex === index && 'opacity-50 scale-95'
+                    )}
+                  >
+                    <GripVertical className="h-5 w-5 text-muted-foreground hover:text-primary cursor-grab active:cursor-grabbing flex-shrink-0" />
+                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex-shrink-0">
+                      {index + 1}
+                    </div>
+                    <Input
+                      value={modelo.texto}
+                      onChange={(e) => handleUpdateSaudacao(index, e.target.value)}
+                      placeholder={`Exemplo ${index + 1}`}
+                      className="text-sm flex-1"
+                      onMouseDown={(e) => e.stopPropagation()}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveSaudacao(index)}
+                      className="flex-shrink-0 h-9 w-9 text-muted-foreground hover:text-destructive"
+                      disabled={formData.apresentacao.modelos.length === 1}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAddSaudacao}
+                className="w-full"
+              >
+                + Adicionar Exemplo de Saudação
+              </Button>
+            </div>
 
             <TextareaWithCharacterLimit
               value={formData.mensagens.fallback}
@@ -243,28 +427,6 @@ export function SDRConfigForm() {
               placeholder="Quando o agente não entender..."
               rows={2}
               required
-            />
-
-            <TextareaWithCharacterLimit
-              value={formData.mensagens.encerramento || ''}
-              onChange={(value) =>
-                updateField('mensagens', 'encerramento', value || null)
-              }
-              maxLength={300}
-              label="Mensagem de Encerramento"
-              placeholder="Obrigado pelo contato! Até logo!"
-              rows={2}
-            />
-
-            <TextareaWithCharacterLimit
-              value={formData.mensagens.fora_horario || ''}
-              onChange={(value) =>
-                updateField('mensagens', 'fora_horario', value || null)
-              }
-              maxLength={300}
-              label="Mensagem Fora do Horário"
-              placeholder="Nosso horário de atendimento é das 09h às 18h..."
-              rows={2}
             />
           </TabsContent>
 
@@ -337,101 +499,77 @@ export function SDRConfigForm() {
             </div>
           </TabsContent>
 
-          {/* TAB: Comportamento */}
-          <TabsContent value="comportamento" className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
+          {/* TAB: Objeções */}
+          <TabsContent value="objecoes" className="space-y-6">
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="horario_inicio">Horário de Início</Label>
-                <Input
-                  id="horario_inicio"
-                  type="time"
-                  value={formData.comportamento.horario_atendimento.inicio}
-                  onChange={(e) =>
-                    updateField('comportamento', 'horario_atendimento', {
-                      ...formData.comportamento.horario_atendimento,
-                      inicio: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="horario_fim">Horário de Fim</Label>
-                <Input
-                  id="horario_fim"
-                  type="time"
-                  value={formData.comportamento.horario_atendimento.fim}
-                  onChange={(e) =>
-                    updateField('comportamento', 'horario_atendimento', {
-                      ...formData.comportamento.horario_atendimento,
-                      fim: e.target.value,
-                    })
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="space-y-0.5">
-                <Label>Agendamento Automático</Label>
+                <Label className="text-base font-semibold">
+                  🛡️ Técnicas de Contorno de Objeções
+                </Label>
                 <p className="text-sm text-muted-foreground">
-                  Permitir que o agente agende reuniões automaticamente
+                  Defina como o agente deve responder a objeções comuns dos clientes.
+                  Arraste para reordenar.
                 </p>
               </div>
-              <Switch
-                checked={formData.comportamento.agendamento_automatico}
-                onCheckedChange={(checked) =>
-                  updateField('comportamento', 'agendamento_automatico', checked)
-                }
-              />
-            </div>
 
-            {formData.comportamento.agendamento_automatico && (
               <div className="space-y-2">
-                <Label htmlFor="calendario_link">Link do Calendário</Label>
-                <Input
-                  id="calendario_link"
-                  type="url"
-                  value={formData.comportamento.link_calendario || ''}
-                  onChange={(e) =>
-                    updateField('comportamento', 'link_calendario', e.target.value || null)
-                  }
-                  placeholder="https://calendly.com/seu-link"
-                />
+                {formData.objecoes.tecnicas.map((tecnica, index) => (
+                  <div
+                    key={tecnica.id}
+                    draggable
+                    onDragStart={() => handleDragStartObjecao(index)}
+                    onDragOver={handleDragOverObjecao}
+                    onDrop={() => handleDragEndObjecao(index)}
+                    className="flex items-center gap-2 p-3 border rounded-lg bg-card hover:bg-accent/50 transition-colors cursor-move"
+                  >
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                    <Badge variant="outline" className="shrink-0">
+                      {index + 1}
+                    </Badge>
+                    <div className="flex-1 space-y-2">
+                      <Input
+                        placeholder="Objeção (ex: Está muito caro)"
+                        value={tecnica.tecnica}
+                        onChange={(e) =>
+                          handleUpdateObjecao(index, 'tecnica', e.target.value)
+                        }
+                        className="w-full"
+                        disabled={isSaving}
+                      />
+                      <Input
+                        placeholder="Exemplo de resposta (opcional)"
+                        value={tecnica.exemplo || ''}
+                        onChange={(e) =>
+                          handleUpdateObjecao(index, 'exemplo', e.target.value)
+                        }
+                        className="w-full"
+                        disabled={isSaving}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveObjecao(index)}
+                      disabled={isSaving}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
-            )}
 
-            {/* Reações */}
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div className="space-y-0.5">
-                <Label>Usar Reações no WhatsApp</Label>
-                <p className="text-sm text-muted-foreground">
-                  Reagir mensagens com emojis para criar proximidade
-                </p>
-              </div>
-              <Switch
-                checked={formData.conducao.usar_reacoes}
-                onCheckedChange={(checked) =>
-                  updateField('conducao', 'usar_reacoes', checked)
-                }
-              />
-            </div>
-
-            {formData.conducao.usar_reacoes && (
-              <AnimatedSlider
-                value={formData.conducao.frequencia_reacoes}
-                onChange={(value) =>
-                  updateField('conducao', 'frequencia_reacoes', value)
-                }
-                min={1}
-                max={10}
-                step={1}
-                label="Frequência de Reações"
-                description="A cada quantas mensagens reagir"
-                formatValue={(v) => `A cada ${v} mensagens`}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAddObjecao}
+                className="w-full"
                 disabled={isSaving}
-              />
-            )}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Técnica
+              </Button>
+            </div>
           </TabsContent>
 
           {/* TAB: Qualificação */}
@@ -456,26 +594,22 @@ export function SDRConfigForm() {
                     onDragOver={(e) => handleDragOver(e, index)}
                     onDragEnd={handleDragEnd}
                     className={cn(
-                      'flex items-start gap-3 p-3 border rounded-lg bg-card transition-all',
+                      'flex items-center gap-3 p-3 border rounded-lg bg-card transition-all',
                       'hover:border-primary/50 hover:shadow-sm cursor-move',
                       draggedIndex === index && 'opacity-50 scale-95'
                     )}
                   >
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <GripVertical className="h-5 w-5 text-muted-foreground hover:text-primary cursor-grab active:cursor-grabbing" />
-                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold">
-                        {index + 1}
-                      </div>
+                    <GripVertical className="h-5 w-5 text-muted-foreground hover:text-primary cursor-grab active:cursor-grabbing flex-shrink-0" />
+                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex-shrink-0">
+                      {index + 1}
                     </div>
-                    <div className="flex-1">
-                      <Input
-                        value={requisito}
-                        onChange={(e) => handleUpdateRequisito(index, e.target.value)}
-                        placeholder={`Requisito ${index + 1}`}
-                        className="text-sm"
-                        onMouseDown={(e) => e.stopPropagation()}
-                      />
-                    </div>
+                    <Input
+                      value={requisito}
+                      onChange={(e) => handleUpdateRequisito(index, e.target.value)}
+                      placeholder={`Requisito ${index + 1}`}
+                      className="text-sm flex-1"
+                      onMouseDown={(e) => e.stopPropagation()}
+                    />
                     <Button
                       variant="ghost"
                       size="icon"
