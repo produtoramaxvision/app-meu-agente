@@ -253,7 +253,7 @@ export function EvolutionContactsList({
             {/* Botões: mobile ocupa 100% com colunas 50/50; desktop volta ao automático */}
             <div className="grid grid-cols-2 w-full sm:w-auto sm:flex sm:grid-cols-1 gap-2">
               <Button
-                variant={filterFavorites ? 'default' : 'outline'}
+                variant="outline"
                 size="sm"
                 onClick={() => setFilterFavorites(!filterFavorites)}
                 className="w-full sm:w-auto sm:flex-none gap-2"
@@ -263,10 +263,10 @@ export function EvolutionContactsList({
               </Button>
 
               <Button
-                variant={showGroupsOnly ? 'default' : 'outline'}
+                variant="outline"
                 size="sm"
                 onClick={() => setShowGroupsOnly(!showGroupsOnly)}
-                className="w-full sm:w-auto sm:flex-none gap-2"
+                className="w-full sm:w-[120px] sm:flex-none gap-2"
               >
                 {showGroupsOnly ? (
                   <User className="h-4 w-4" />
