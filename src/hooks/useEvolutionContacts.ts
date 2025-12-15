@@ -12,6 +12,7 @@ interface UseEvolutionContactsOptions {
   autoRefresh?: boolean; // Auto-refresh quando cache expirar
   onlyContacts?: boolean; // Filtrar apenas contatos (sem grupos)
   refreshOnMount?: boolean; // Força refresh ao montar componente (útil para login)
+  loadAllInstances?: boolean; // Carregar contatos de TODAS as instâncias do usuário (para filtro 'all')
 }
 
 interface UseEvolutionContactsReturn {
@@ -39,7 +40,8 @@ export function useEvolutionContacts(
     cacheTtlMinutes = 60, 
     autoRefresh = true, 
     onlyContacts = false, 
-    refreshOnMount = true 
+    refreshOnMount = true,
+    loadAllInstances = false, // Por padrão, carrega apenas da instância especificada
   } = options;
   
   const [contacts, setContacts] = useState<EvolutionContact[]>([]);
@@ -92,32 +94,68 @@ export function useEvolutionContacts(
   // Buscar contatos do cache local (Supabase)
   const loadFromCache = useCallback(async () => {
     try {
-      let query = supabase
-        .from('evolution_contacts_cache')
-        .select('*')
-        .eq('instance_id', instanceId)
-        .order('push_name', { ascending: true, nullsFirst: false });
+      let allData: any[] = [];
+      const PAGE_SIZE = 1000;
+      let from = 0;
+      let to = PAGE_SIZE - 1;
+      let fetchMore = true;
 
-      if (userPhone) {
-        query = query.eq('phone', userPhone);
+      while (fetchMore) {
+        let query = supabase
+          .from('evolution_contacts_cache')
+          .select('*')
+          .order('push_name', { ascending: true, nullsFirst: false })
+          .range(from, to);
+
+        // Filtro por instância: se loadAllInstances=true, NÃO filtra por instance_id
+        if (!loadAllInstances) {
+          query = query.eq('instance_id', instanceId);
+        }
+
+        // SEMPRE filtrar pelo telefone do usuário (segurança RLS)
+        if (userPhone) {
+          query = query.eq('phone', userPhone);
+        }
+
+        // Filtrar apenas contatos (sem grupos)
+        if (onlyContacts) {
+          query = query.eq('is_group', false);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          allData = [...allData, ...data];
+          
+          if (data.length < PAGE_SIZE) {
+            fetchMore = false;
+          } else {
+            from += PAGE_SIZE;
+            to += PAGE_SIZE;
+          }
+        } else {
+          fetchMore = false;
+        }
+
+        // Safety break (max 20k contatos)
+        if (from > 20000) fetchMore = false;
       }
 
-      // Filtrar apenas contatos (sem grupos)
-      if (onlyContacts) {
-        query = query.eq('is_group', false);
-      }
+      if (allData.length > 0) {
+        // Normalizar sinalização de grupo para não depender apenas da coluna is_group
+        const normalized = (allData as EvolutionContact[]).map((contact) => ({
+          ...contact,
+          is_group: contact.is_group || contact.remote_jid?.includes('@g.us') || false,
+        }));
 
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        setContacts(data as EvolutionContact[]);
+        setContacts(normalized);
         
-        console.log(`✅ Estado setContacts() atualizado: ${data.length} contatos (com grupos: ${data.filter(c => c.is_group).length})`);
+        console.log(`✅ Cache carregado: ${normalized.length} contatos`);
         
-        // Verificar validade do cache
-        const oldestSync = data[0];
+        // Verificar validade do cache (usa o registro mais antigo como referência)
+        const oldestSync = normalized[0];
         const syncDate = new Date(oldestSync.last_synced_at);
         const now = new Date();
         const diffMinutes = (now.getTime() - syncDate.getTime()) / (1000 * 60);
@@ -130,12 +168,14 @@ export function useEvolutionContacts(
         return { hasCache: true, isValid: valid };
       }
 
+      // Limpar contatos quando não há cache
+      setContacts([]);
       return { hasCache: false, isValid: false };
     } catch (error) {
       console.error('Error loading from cache:', error);
       return { hasCache: false, isValid: false };
     }
-  }, [instanceId, cacheTtlMinutes, onlyContacts, userPhone]);
+  }, [instanceId, cacheTtlMinutes, onlyContacts, userPhone, loadAllInstances]);
 
   // Buscar contatos da Evolution API
   const fetchFromEvolutionAPI = useCallback(async (syncSource: 'manual' | 'auto' = 'auto') => {
@@ -352,7 +392,7 @@ export function useEvolutionContacts(
     if (instanceId && userPhone) {
       initialize();
     }
-  }, [instanceId, autoRefresh, refreshOnMount, loadFromCache, fetchFromEvolutionAPI, userPhone]);
+  }, [instanceId, autoRefresh, refreshOnMount, loadFromCache, fetchFromEvolutionAPI, userPhone, loadAllInstances]);
 
   // Auto-refresh timer (atualiza contador de segundos)
   useEffect(() => {
