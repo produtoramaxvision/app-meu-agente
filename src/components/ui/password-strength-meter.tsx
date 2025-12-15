@@ -15,7 +15,7 @@ const PASSWORD_REQUIREMENTS = [
   { regex: /[a-z]/, text: "Letra minúscula (a-z)", key: "lowercase" },
   { regex: /[A-Z]/, text: "Letra maiúscula (A-Z)", key: "uppercase" },
   { regex: /[0-9]/, text: "Número (0-9)", key: "number" },
-  { regex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, text: "Símbolo (!@#$%...)", key: "symbol" },
+  { regex: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>\/?]/, text: "Símbolo (!@#$%...)", key: "symbol" },
 ] as const;
 
 type StrengthScore = 0 | 1 | 2 | 3 | 4 | 5;

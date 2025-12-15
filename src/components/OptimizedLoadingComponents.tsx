@@ -206,7 +206,7 @@ export const useLoadingState = () => {
   const [error, setError] = React.useState<Error | null>(null);
   const [progress, setProgress] = React.useState(0);
 
-  const executeWithLoading = React.useCallback(async <T>(
+  const executeWithLoading = React.useCallback(async <T,>(
     operation: () => Promise<T>,
     options: {
       showProgress?: boolean;

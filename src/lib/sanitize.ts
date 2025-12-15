@@ -79,7 +79,7 @@ function escapeHtml(text: string): string {
     '=': '&#x3D;'
   };
   
-  return text.replace(/[&<>"'`=\/]/g, (char) => map[char] || char);
+  return text.replace(/[&<>"'`=/]/g, (char) => map[char] || char);
 }
 
 /**

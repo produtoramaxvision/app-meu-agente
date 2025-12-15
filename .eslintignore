@@ -1,0 +1,17 @@
+# Arquivos de documentação/exemplos
+docs/**/*.tsx
+docs/**/*.ts
+docs/**/*.jsx
+docs/**/*.js
+
+# Build outputs
+dist/
+build/
+.vite/
+
+# Dependencies
+node_modules/
+
+# Generated files
+*.config.js
+vite.config.ts.timestamp-*

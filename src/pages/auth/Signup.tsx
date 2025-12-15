@@ -35,7 +35,7 @@ export default function Signup() {
     const hasLowercase = /[a-z]/.test(password);
     const hasUppercase = /[A-Z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
-    const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+    const hasSymbol = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>\/?]/.test(password);
     
     const missing = [];
     if (!hasLowercase) missing.push('letra minúscula');

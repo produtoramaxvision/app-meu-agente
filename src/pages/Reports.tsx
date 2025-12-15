@@ -289,7 +289,7 @@ export default function Reports() {
 
   // Filter and sort records
   const filteredAndSortedRecords = useMemo(() => {
-    let filtered = records.filter((record) =>
+    const filtered = records.filter((record) =>
       searchQuery === '' || 
       record.descricao?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       record.categoria.toLowerCase().includes(searchQuery.toLowerCase())

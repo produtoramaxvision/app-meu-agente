@@ -184,12 +184,12 @@ function HelpAndSupportContent({ mode, collapsed }: HelpAndSupportProps & { coll
 }
 
 export function HelpAndSupport({ mode }: HelpAndSupportProps) {
-  // For sidebar mode, get collapsed state from context
-  if (mode === 'sidebar') {
-    const { effectiveCollapsed } = useSidebar();
-    return <HelpAndSupportContent mode={mode} collapsed={effectiveCollapsed} />;
-  }
+  // Always call hooks at the top level (Rules of Hooks)
+  const { effectiveCollapsed } = useSidebar();
   
-  // For floatingAuth mode, no context needed
-  return <HelpAndSupportContent mode={mode} collapsed={false} />;
+  // For sidebar mode, use collapsed state from context
+  // For floatingAuth mode, use false
+  const collapsed = mode === 'sidebar' ? effectiveCollapsed : false;
+  
+  return <HelpAndSupportContent mode={mode} collapsed={collapsed} />;
 }

@@ -63,6 +63,7 @@
     --sidebar-accent-foreground: 0 0% 10%;
     --sidebar-border: 0 0% 88%;
     --sidebar-ring: 210 80% 50%;
+
     /* Sidebar legacy aliases */
     --sidebar-bg: 0 0% 100%;
     --sidebar-text: 0 0% 0%;
@@ -156,6 +157,7 @@
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 0 0% 16%;
     --sidebar-ring: 269 91% 65%;
+
     /* Sidebar legacy aliases */
     --sidebar-bg: 0 0% 6%;
     --sidebar-text: 0 0% 98%;
@@ -307,6 +309,7 @@
       opacity: 0;
       transform: translateY(4px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -643,6 +646,7 @@
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }

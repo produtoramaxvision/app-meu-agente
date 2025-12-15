@@ -76,9 +76,9 @@ const formatTimeToHHMM = (time: string | undefined | null): string => {
     return time;
   }
 
-  let [, hours, minutes, period] = match;
-  let h = parseInt(hours, 10);
-  let m = minutes ? parseInt(minutes, 10) : 0;
+  const [, hours, minutes, period] = match;
+  const h = parseInt(hours, 10);
+  const m = minutes ? parseInt(minutes, 10) : 0;
 
   if (isNaN(h) || isNaN(m) || h > 23 || m > 59) return time;
 

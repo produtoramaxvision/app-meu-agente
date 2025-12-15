@@ -259,6 +259,17 @@ export function SupportFormTab({ onSuccess }: { onSuccess: (ticketNumber: string
   // Obter SLA do plano atual
   const currentSLA = cliente?.plan_id ? getSupportSLA(cliente.plan_id) : getSupportSLA('free');
 
+  // Initialize form before any early returns (Rules of Hooks)
+  const form = useForm<SupportTicketData>({
+    resolver: zodResolver(supportTicketSchema),
+    defaultValues: {
+      type: 'support',
+      subject: '',
+      description: '',
+      priority: 'medium',
+    },
+  });
+
   // Verificar se o usuário tem acesso ao suporte
   if (!permissions.canAccessSupport) {
     return (
@@ -285,16 +296,6 @@ export function SupportFormTab({ onSuccess }: { onSuccess: (ticketNumber: string
       </Card>
     );
   }
-
-  const form = useForm<SupportTicketData>({
-    resolver: zodResolver(supportTicketSchema),
-    defaultValues: {
-      type: 'support',
-      subject: '',
-      description: '',
-      priority: 'medium',
-    },
-  });
 
   const onSubmit = async (data: SupportTicketData) => {
     setSubmitStatus('idle');

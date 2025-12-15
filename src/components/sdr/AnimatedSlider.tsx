@@ -44,8 +44,8 @@ function decay(value: number, max: number) {
     return 0;
   }
 
-  let entry = value / max;
-  let sigmoid = 2 * (1 / (1 + Math.exp(-entry)) - 0.5);
+  const entry = value / max;
+  const sigmoid = 2 * (1 / (1 + Math.exp(-entry)) - 0.5);
 
   return sigmoid * max;
 }
@@ -76,7 +76,7 @@ export function AnimatedSlider({
   // Monitorar movimento do mouse para calcular overflow
   useMotionValueEvent(clientX, 'change', (latest) => {
     if (ref.current && !disabled) {
-      let { left, right } = ref.current.getBoundingClientRect();
+      const { left, right } = ref.current.getBoundingClientRect();
       let newValue;
 
       if (latest < left) {
@@ -186,7 +186,7 @@ export function AnimatedSlider({
                   style={{
                     scaleX: useTransform(() => {
                       if (ref.current && !disabled) {
-                        let { width } = ref.current.getBoundingClientRect();
+                        const { width } = ref.current.getBoundingClientRect();
                         return 1 + overflow.get() / width;
                       }
                       return 1;
@@ -194,7 +194,7 @@ export function AnimatedSlider({
                     scaleY: useTransform(overflow, [0, MAX_OVERFLOW], [1, 0.8]),
                     transformOrigin: useTransform(() => {
                       if (ref.current) {
-                        let { left, width } = ref.current.getBoundingClientRect();
+                        const { left, width } = ref.current.getBoundingClientRect();
                         return clientX.get() < left + width / 2 ? 'right' : 'left';
                       }
                       return 'center';

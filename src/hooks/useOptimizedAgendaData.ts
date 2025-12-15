@@ -258,7 +258,7 @@ export function useOptimizedAgendaData(options: UseOptimizedAgendaDataOptions) {
           const { data, error } = await query;
           if (error) throw error;
 
-          let events = (data as Event[]) || [];
+          const events = (data as Event[]) || [];
 
           // ✅ OTIMIZAÇÃO 4: Expandir eventos recorrentes de forma eficiente
           const expandedEvents: Event[] = [];
