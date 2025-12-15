@@ -81,7 +81,6 @@ export interface EvolutionSettings {
   alwaysOnline: boolean;      // Manter status sempre online
   readMessages: boolean;      // Marcar mensagens como lidas automaticamente
   readStatus: boolean;        // Ler status de contatos
-  syncFullHistory: boolean;   // Sincronizar histórico completo de mensagens
 }
 
 /** Configurações de webhook da Evolution */

@@ -19,7 +19,6 @@ interface EvolutionSettings {
   alwaysOnline: boolean
   readMessages: boolean
   readStatus: boolean
-  syncFullHistory: boolean
 }
 
 interface GetSettingsRequest {
@@ -48,7 +47,6 @@ function normalizeSettings(raw: any): EvolutionSettings {
     alwaysOnline: coerceBoolean(s.alwaysOnline, false),
     readMessages: coerceBoolean(s.readMessages, true),
     readStatus: coerceBoolean(s.readStatus, false),
-    syncFullHistory: coerceBoolean(s.syncFullHistory, false),
   }
 }
 

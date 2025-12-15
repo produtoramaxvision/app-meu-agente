@@ -11,7 +11,6 @@ import {
   Wifi, 
   Eye, 
   MessageSquare,
-  History,
   Loader2,
   Check,
   AlertCircle
@@ -123,7 +122,6 @@ export function SDRInstanceSettings({
     alwaysOnline: false,
     readMessages: true,
     readStatus: false,
-    syncFullHistory: false,
   })
   
   // Estado inicial para comparação
@@ -217,7 +215,6 @@ export function SDRInstanceSettings({
             alwaysOnline: settings.alwaysOnline,
             readMessages: settings.readMessages,
             readStatus: settings.readStatus,
-            syncFullHistory: settings.syncFullHistory,
           }
         }
       })
@@ -336,16 +333,6 @@ export function SDRInstanceSettings({
           checked={settings.readStatus}
           onCheckedChange={(checked) => handleSettingChange('readStatus', checked)}
           disabled={isLoading}
-        />
-
-        <SettingItem
-          icon={<History className="h-4 w-4" />}
-          label="Sincronizar Histórico"
-          description="Sincroniza o histórico completo de mensagens (pode ser lento)"
-          checked={settings.syncFullHistory}
-          onCheckedChange={(checked) => handleSettingChange('syncFullHistory', checked)}
-          disabled={isLoading}
-          badge="optional"
         />
       </div>
 

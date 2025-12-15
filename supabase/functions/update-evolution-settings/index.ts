@@ -19,7 +19,6 @@ interface EvolutionSettings {
   alwaysOnline?: boolean;
   readMessages?: boolean;
   readStatus?: boolean;
-  syncFullHistory?: boolean;
 }
 
 interface WebhookSettings {
@@ -125,7 +124,6 @@ serve(async (req: Request) => {
             alwaysOnline: body.settings.alwaysOnline ?? false,
             readMessages: body.settings.readMessages ?? false,
             readStatus: body.settings.readStatus ?? false,
-            syncFullHistory: body.settings.syncFullHistory ?? false,
           }),
         }
       )
