@@ -4,28 +4,24 @@ import { toast } from 'sonner';
 import type { EvolutionContact } from '@/types/sdr';
 
 interface UseEvolutionContactsOptions {
-  instanceId: string;      // UUID da instância no Supabase (para cache)
+  instanceId: string;      // UUID da instância no Supabase
   instanceName: string;    // Nome da instância na Evolution API (para API requests)
   evolutionApiUrl: string;
   evolutionApiKey: string;
-  cacheTtlMinutes?: number; // TTL customizável (padrão: 60 minutos / 1 hora)
-  autoRefresh?: boolean; // Auto-refresh quando cache expirar
   onlyContacts?: boolean; // Filtrar apenas contatos (sem grupos)
-  refreshOnMount?: boolean; // Força refresh ao montar componente (útil para login)
+  syncOnMount?: boolean; // Sincroniza com API ao montar componente (útil para login)
   loadAllInstances?: boolean; // Carregar contatos de TODAS as instâncias do usuário (para filtro 'all')
 }
 
 interface UseEvolutionContactsReturn {
   contacts: EvolutionContact[];
   loading: boolean;
-  refreshing: boolean;
-  cacheValid: boolean;
+  syncing: boolean;
   lastSyncedAt: Date | null;
   secondsSinceSync: number | null;
   
   // Actions
-  refresh: (force?: boolean) => Promise<void>;
-  invalidateCache: () => Promise<void>;
+  syncContacts: () => Promise<void>;
   updateContact: (contactId: string, updates: Partial<EvolutionContact>) => Promise<void>;
 }
 
@@ -33,21 +29,18 @@ export function useEvolutionContacts(
   options: UseEvolutionContactsOptions
 ): UseEvolutionContactsReturn {
   const { 
-    instanceId,      // UUID para cache Supabase
-    instanceName,    // Nome para Evolution API
+    instanceId,
+    instanceName,
     evolutionApiUrl, 
     evolutionApiKey, 
-    cacheTtlMinutes = 60, 
-    autoRefresh = true, 
     onlyContacts = false, 
-    refreshOnMount = true,
-    loadAllInstances = false, // Por padrão, carrega apenas da instância especificada
+    syncOnMount = false,
+    loadAllInstances = false,
   } = options;
   
   const [contacts, setContacts] = useState<EvolutionContact[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [cacheValid, setCacheValid] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [secondsSinceSync, setSecondsSinceSync] = useState<number | null>(null);
   const [userPhone, setUserPhone] = useState<string | null>(null);
@@ -91,8 +84,8 @@ export function useEvolutionContacts(
     resolveUserPhone();
   }, []);
 
-  // Buscar contatos do cache local (Supabase)
-  const loadFromCache = useCallback(async () => {
+  // Carregar contatos salvos do banco de dados
+  const loadContacts = useCallback(async () => {
     try {
       let allData: any[] = [];
       const PAGE_SIZE = 1000;
@@ -102,7 +95,7 @@ export function useEvolutionContacts(
 
       while (fetchMore) {
         let query = supabase
-          .from('evolution_contacts_cache')
+          .from('evolution_contacts')
           .select('*')
           .order('push_name', { ascending: true, nullsFirst: false })
           .range(from, to);
@@ -144,7 +137,7 @@ export function useEvolutionContacts(
       }
 
       if (allData.length > 0) {
-        // Normalizar sinalização de grupo para não depender apenas da coluna is_group
+        // Normalizar sinalização de grupo
         const normalized = (allData as EvolutionContact[]).map((contact) => ({
           ...contact,
           is_group: contact.is_group || contact.remote_jid?.includes('@g.us') || false,
@@ -152,40 +145,39 @@ export function useEvolutionContacts(
 
         setContacts(normalized);
         
-        console.log(`✅ Cache carregado: ${normalized.length} contatos`);
+        console.log(`✅ Contatos carregados: ${normalized.length}`);
         
-        // Verificar validade do cache (usa o registro mais antigo como referência)
-        const oldestSync = normalized[0];
-        const syncDate = new Date(oldestSync.last_synced_at);
-        const now = new Date();
-        const diffMinutes = (now.getTime() - syncDate.getTime()) / (1000 * 60);
-        const valid = diffMinutes < (oldestSync.cache_ttl_minutes || cacheTtlMinutes);
+        // Atualizar metadata de sincronização (do contato mais recente)
+        if (normalized[0]?.synced_at) {
+          const syncDate = new Date(normalized[0].synced_at);
+          setLastSyncedAt(syncDate);
+          setSecondsSinceSync(Math.floor((new Date().getTime() - syncDate.getTime()) / 1000));
+        }
         
-        setCacheValid(valid);
-        setLastSyncedAt(syncDate);
-        setSecondsSinceSync(Math.floor((now.getTime() - syncDate.getTime()) / 1000));
-        
-        return { hasCache: true, isValid: valid };
+        return true;
       }
 
-      // Limpar contatos quando não há cache
+      // Limpar se não houver contatos
       setContacts([]);
-      return { hasCache: false, isValid: false };
+      setLastSyncedAt(null);
+      setSecondsSinceSync(null);
+      return false;
     } catch (error) {
-      console.error('Error loading from cache:', error);
-      return { hasCache: false, isValid: false };
+      console.error('Error loading contacts:', error);
+      return false;
     }
-  }, [instanceId, cacheTtlMinutes, onlyContacts, userPhone, loadAllInstances]);
+  }, [instanceId, onlyContacts, userPhone, loadAllInstances]);
 
-  // Buscar contatos da Evolution API
-  const fetchFromEvolutionAPI = useCallback(async (syncSource: 'manual' | 'auto' = 'auto') => {
+  // Sincronizar contatos da Evolution API
+  const syncContacts = useCallback(async () => {
     try {
       if (!userPhone) {
         throw new Error('Telefone do usuário não encontrado na sessão');
       }
 
-      // Evolution API busca contatos do banco de dados Prisma
-      // IMPORTANTE: Usar instanceName (nome), não instanceId (UUID)
+      setSyncing(true);
+
+      // Buscar contatos da Evolution API
       const response = await fetch(
         `${evolutionApiUrl}/chat/findContacts/${instanceName}`,
         {
@@ -195,7 +187,7 @@ export function useEvolutionContacts(
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            where: {}, // Busca todos os contatos (Evolution filtra por instanceName automaticamente)
+            where: {},
           }),
         }
       );
@@ -207,29 +199,26 @@ export function useEvolutionContacts(
 
       const evolutionContacts = await response.json();
 
-      // Evolution API retorna array de contatos do banco Prisma
-      // 1º FILTRO: Remover broadcast lists (@lid) - não salvamos no cache
-      // Mantemos apenas contatos individuais (@s.whatsapp.net) e grupos (@g.us)
+      // Filtrar: remover broadcast lists (@lid)
       const withoutBroadcastLists = evolutionContacts.filter((c: any) => {
         const remoteJid = c.remoteJid || '';
         return remoteJid.includes('@s.whatsapp.net') || remoteJid.includes('@g.us');
       });
 
-      // 2º FILTRO: Se onlyContacts=true, remove grupos também
+      // Filtrar grupos se necessário
       const filteredContacts = onlyContacts
         ? withoutBroadcastLists.filter((c: any) => c.remoteJid?.includes('@s.whatsapp.net'))
         : withoutBroadcastLists;
 
-      // Limpamos o cache anterior desta instância/usuário antes de salvar
-      // para evitar que contatos @lid antigos permaneçam e alterem a contagem.
+      // Limpar contatos antigos desta instância
       await supabase
-        .from('evolution_contacts_cache')
+        .from('evolution_contacts')
         .delete()
         .eq('instance_id', instanceId)
         .eq('phone', userPhone);
 
-      // Salvar no cache
-      const contactsToCache = filteredContacts.map((contact: any) => ({
+      // Preparar dados para salvar
+      const contactsToSave = filteredContacts.map((contact: any) => ({
         instance_id: instanceId,
         phone: userPhone,
         remote_jid: contact.remoteJid,
@@ -237,25 +226,23 @@ export function useEvolutionContacts(
         profile_pic_url: contact.profilePicUrl || null,
         is_group: contact.isGroup || contact.remoteJid?.endsWith('@g.us') || false,
         is_saved: contact.isSaved || !!(contact.pushName || contact.profilePicUrl),
-        last_synced_at: new Date().toISOString(),
-        cache_ttl_minutes: cacheTtlMinutes,
-        sync_source: syncSource,
+        synced_at: new Date().toISOString(),
+        sync_source: 'manual',
       }));
 
-      // Supabase tem limite de 1000 rows por upsert
-      // Se temos mais de 1000 contatos, precisamos fazer em batches
+      // Salvar em batches (limite de 1000 por request)
       const BATCH_SIZE = 1000;
       const batches = [];
       
-      for (let i = 0; i < contactsToCache.length; i += BATCH_SIZE) {
-        batches.push(contactsToCache.slice(i, i + BATCH_SIZE));
+      for (let i = 0; i < contactsToSave.length; i += BATCH_SIZE) {
+        batches.push(contactsToSave.slice(i, i + BATCH_SIZE));
       }
       
-      console.log(`📦 Upsert em ${batches.length} batch(es) (total: ${contactsToCache.length} contatos)`);
+      console.log(`📦 Salvando ${batches.length} batch(es) (total: ${contactsToSave.length} contatos)`);
       
       for (const [index, batch] of batches.entries()) {
         const { error: upsertError } = await supabase
-          .from('evolution_contacts_cache')
+          .from('evolution_contacts')
           .upsert(batch, {
             onConflict: 'instance_id,remote_jid',
           });
@@ -268,84 +255,32 @@ export function useEvolutionContacts(
         console.log(`✅ Batch ${index + 1}/${batches.length} salvo (${batch.length} contatos)`);
       }
 
-      // Recarregar do cache para atualizar o estado React e o título
-      // Isso garante que contacts.length reflita o total salvo
-      const cacheResult = await loadFromCache();
+      // Recarregar contatos
+      await loadContacts();
       
-      console.log(`🔄 Cache recarregado:`, {
-        filteredFromAPI: filteredContacts.length,
-        savedToDatabase: contactsToCache.length,
-        cacheHasData: cacheResult.hasCache,
-        cacheValid: cacheResult.isValid
+      toast.success('Contatos sincronizados', {
+        description: `${contactsToSave.length} contatos atualizados`,
       });
 
-      return filteredContacts.length;
+      return contactsToSave.length;
     } catch (error) {
-      console.error('Error fetching from Evolution API:', error);
-      throw error;
-    }
-  }, [instanceId, instanceName, evolutionApiUrl, evolutionApiKey, cacheTtlMinutes, loadFromCache, onlyContacts, userPhone]);
-
-  // Refresh (manual ou auto)
-  const refresh = useCallback(async (force: boolean = false) => {
-    try {
-      if (!userPhone) {
-        toast.error('Erro ao atualizar', {
-          description: 'Telefone do usuário não encontrado na sessão',
-        });
-        return;
-      }
-
-      setRefreshing(true);
-
-      if (force) {
-        // Force refresh: busca direto da API
-        const count = await fetchFromEvolutionAPI('manual');
-        toast.success('Contatos atualizados', {
-          description: `${count} contatos sincronizados`,
-        });
-      } else {
-        // Smart refresh: verifica cache primeiro
-        const { hasCache, isValid } = await loadFromCache();
-        
-        if (!hasCache || !isValid) {
-          await fetchFromEvolutionAPI('auto');
-        }
-      }
-    } catch (error) {
-      toast.error('Erro ao atualizar', {
+      console.error('Error syncing contacts:', error);
+      toast.error('Erro ao sincronizar', {
         description: error instanceof Error ? error.message : 'Erro desconhecido',
       });
+      throw error;
     } finally {
-      setRefreshing(false);
+      setSyncing(false);
     }
-  }, [loadFromCache, fetchFromEvolutionAPI, userPhone]);
+  }, [instanceId, instanceName, evolutionApiUrl, evolutionApiKey, loadContacts, onlyContacts, userPhone]);
 
-  // Invalidar cache (força próxima busca da API)
-  const invalidateCache = useCallback(async () => {
-    try {
-      const { error } = await supabase.rpc('invalidate_contacts_cache', {
-        p_instance_id: instanceId,
-      });
 
-      if (error) throw error;
-
-      setCacheValid(false);
-      
-      // Auto-refresh se habilitado
-      if (autoRefresh) {
-        await refresh();
-      }
-    } catch (error) {
-      console.error('Error invalidating cache:', error);
-    }
-  }, [instanceId, autoRefresh, refresh]);
 
   // Atualizar contato (apenas campos CRM)
   const updateContact = useCallback(async (contactId: string, updates: Partial<EvolutionContact>) => {
     try {
       const { error } = await supabase
-        .from('evolution_contacts_cache')
+        .from('evolution_contacts')
         .update(updates)
         .eq('id', contactId);
 
@@ -373,14 +308,14 @@ export function useEvolutionContacts(
     async function initialize() {
       setLoading(true);
       try {
-        const { hasCache, isValid } = await loadFromCache();
+        const hasContacts = await loadContacts();
 
-        // Se refreshOnMount=true (login), sempre atualiza da API
-        // Caso contrário, só atualiza se não tiver cache ou estiver inválido
-        if (refreshOnMount) {
-          await fetchFromEvolutionAPI('auto');
-        } else if (!hasCache || (!isValid && autoRefresh)) {
-          await fetchFromEvolutionAPI('auto');
+        // Se syncOnMount=true, sincroniza imediatamente
+        if (syncOnMount) {
+          await syncContacts();
+        } else if (!hasContacts) {
+          // Se não há contatos salvos, sincroniza automaticamente
+          await syncContacts();
         }
       } catch (error) {
         console.error('Error initializing contacts:', error);
@@ -392,40 +327,28 @@ export function useEvolutionContacts(
     if (instanceId && userPhone) {
       initialize();
     }
-  }, [instanceId, autoRefresh, refreshOnMount, loadFromCache, fetchFromEvolutionAPI, userPhone, loadAllInstances]);
+  }, [instanceId, syncOnMount, loadContacts, syncContacts, userPhone, loadAllInstances]);
 
-  // Auto-refresh timer (atualiza contador de segundos)
+  // Timer para atualizar contador de tempo desde última sincronização
   useEffect(() => {
     const interval = setInterval(() => {
       if (lastSyncedAt) {
         const now = new Date();
         const seconds = Math.floor((now.getTime() - lastSyncedAt.getTime()) / 1000);
         setSecondsSinceSync(seconds);
-
-        // Verifica se cache expirou
-        if (seconds >= cacheTtlMinutes * 60) {
-          setCacheValid(false);
-          
-          // Auto-refresh se habilitado
-          if (autoRefresh && !refreshing) {
-            refresh();
-          }
-        }
       }
-    }, 1000); // Atualiza a cada 1 segundo
+    }, 1000);
 
     return () => clearInterval(interval);
-  }, [lastSyncedAt, cacheTtlMinutes, autoRefresh, refreshing, refresh]);
+  }, [lastSyncedAt]);
 
   return {
     contacts,
     loading,
-    refreshing,
-    cacheValid,
+    syncing,
     lastSyncedAt,
     secondsSinceSync,
-    refresh,
-    invalidateCache,
+    syncContacts,
     updateContact,
   };
 }

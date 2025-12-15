@@ -28,15 +28,13 @@ import type { EvolutionContact, EvolutionInstance } from '@/types/sdr';
 import { cn } from '@/lib/utils';
 
 interface EvolutionContactsListProps {
-  instanceId: string;      // UUID da instância no Supabase (para cache)
-  instanceName: string;    // Nome da instância na Evolution API (ex: "meu-whatsapp")
+  instanceId: string;
+  instanceName: string;
   evolutionApiUrl: string;
   evolutionApiKey: string;
-  cacheTtlMinutes?: number; // Default: 60 minutos (1 hora)
   onContactClick?: (contact: EvolutionContact) => void;
-  // Props para múltiplas instâncias (opcional)
-  allInstances?: EvolutionInstance[];  // Todas as instâncias para mostrar badge
-  instanceDisplayName?: string;         // Nome de exibição (ex: "WhatsApp 1")
+  allInstances?: EvolutionInstance[];
+  instanceDisplayName?: string;
 }
 
 export function EvolutionContactsList({
@@ -44,7 +42,6 @@ export function EvolutionContactsList({
   instanceName,
   evolutionApiUrl,
   evolutionApiKey,
-  cacheTtlMinutes = 2,
   onContactClick,
   allInstances,
   instanceDisplayName,
@@ -72,22 +69,18 @@ export function EvolutionContactsList({
   const {
     contacts,
     loading,
-    refreshing,
-    cacheValid,
+    syncing,
     lastSyncedAt,
     secondsSinceSync,
-    refresh,
+    syncContacts,
     updateContact,
   } = useEvolutionContacts({
-    instanceId: activeInstanceId,      // UUID para cache no Supabase
-    instanceName: activeInstance?.instance_name || instanceName,    // Nome para Evolution API
+    instanceId: activeInstanceId,
+    instanceName: activeInstance?.instance_name || instanceName,
     evolutionApiUrl,
     evolutionApiKey,
-    cacheTtlMinutes: cacheTtlMinutes || 60, // Default: 1 hora
-    autoRefresh: false, // não atualizar sozinho a cada carga de página
     onlyContacts: false,
-    refreshOnMount: false, // só sincroniza em login (nova sessão) ou no botão Atualizar
-    // Novo parâmetro: quando 'all', carrega contatos de todas as instâncias do usuário
+    syncOnMount: false,
     loadAllInstances: instanceFilter === 'all',
   });
 
@@ -172,20 +165,20 @@ export function EvolutionContactsList({
     });
   };
 
-  // Status do cache
-  const getCacheStatusBadge = () => {
-    if (!cacheValid) {
+  // Status da sincronização
+  const getSyncStatusBadge = () => {
+    if (!lastSyncedAt) {
       return (
-        <Badge variant="destructive" className="gap-1">
+        <Badge variant="secondary" className="gap-1">
           <AlertCircle className="h-3 w-3" />
-          Cache expirado
+          Nunca sincronizado
         </Badge>
       );
     }
     return (
       <Badge variant="secondary" className="gap-1">
         <Clock className="h-3 w-3" />
-        Atualizado há {formatTimeSinceSync(secondsSinceSync)}
+        Sincronizado há {formatTimeSinceSync(secondsSinceSync)}
       </Badge>
     );
   };
@@ -201,86 +194,96 @@ export function EvolutionContactsList({
               {showGroupsOnly ? statistics.groupsOnly : statistics.contactsOnly})
             </CardTitle>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              {getCacheStatusBadge()}
-              <span className="text-xs">
-                TTL: {cacheTtlMinutes} min
-              </span>
+              {getSyncStatusBadge()}
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Botão de atualização manual */}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => refresh(true)}
-              disabled={refreshing}
+              onClick={syncContacts}
+              disabled={syncing}
               className="gap-2"
             >
-              <RefreshCw className={cn('h-4 w-4', refreshing && 'animate-spin')} />
-              {refreshing ? 'Atualizando...' : 'Atualizar'}
+              <RefreshCw className={cn('h-4 w-4', syncing && 'animate-spin')} />
+              {syncing ? 'Sincronizando...' : 'Sincronizar'}
             </Button>
           </div>
         </div>
 
-        {/* Filtros */}
-        <div className="flex flex-wrap items-center gap-2 pt-4">
-          <div className="relative flex-1 min-w-[200px]">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 pt-4">
+          {/* Campo de busca: ocupa 100% no mobile */}
+          <div className="relative w-full sm:flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Buscar contato..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
+              className="pl-9 w-full"
             />
           </div>
 
-          {/* Filtro por Instância (quando há múltiplas) */}
-          {allInstances && allInstances.length > 1 && (
-            <Select
-              value={instanceFilter}
-              onValueChange={setInstanceFilter}
-            >
-              <SelectTrigger className="w-[200px] justify-between">
-                <div className="flex items-center gap-2 truncate">
-                  <Phone className="h-4 w-4" />
-                  <SelectValue placeholder="Todas conexões" />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas conexões</SelectItem>
-                {allInstances.map((inst) => (
-                  <SelectItem key={inst.id} value={inst.id}>
-                    {inst.display_name || 'WhatsApp'}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          <Button
-            variant={filterFavorites ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setFilterFavorites(!filterFavorites)}
-            className="gap-2"
-          >
-            <Star className={cn('h-4 w-4', filterFavorites && 'fill-current')} />
-            Favoritos
-          </Button>
-
-          <Button
-            variant={showGroupsOnly ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setShowGroupsOnly(!showGroupsOnly)}
-            className="gap-2 min-w-[110px]"
-          >
-            {showGroupsOnly ? (
-              <User className="h-4 w-4" />
-            ) : (
-              <Users className="h-4 w-4" />
+          {/* Linha de filtros e botões: no mobile fica em colunas de largura total */}
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+            {/* Filtro por Instância (quando há múltiplas) */}
+            {allInstances && allInstances.length > 1 && (
+              <Select
+                value={instanceFilter}
+                onValueChange={setInstanceFilter}
+              >
+                {/* Dropdown com mesma largura do campo de busca no mobile; largura fixa no desktop */}
+                <SelectTrigger className="w-full sm:w-[200px] justify-between">
+                  <div className="flex items-center gap-2 truncate">
+                    <Phone className="h-4 w-4" />
+                    <SelectValue placeholder="Todas conexões" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas conexões</SelectItem>
+                  {allInstances.map((inst) => (
+                    <SelectItem key={inst.id} value={inst.id}>
+                      {inst.display_name || 'WhatsApp'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
-            {showGroupsOnly ? 'Contatos' : 'Grupos'}
-          </Button>
+
+            {/* Botões: mobile ocupa 100% com colunas 50/50; desktop volta ao automático */}
+            <div className="grid grid-cols-2 w-full sm:w-auto sm:flex sm:grid-cols-1 gap-2">
+              <Button
+                variant={filterFavorites ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilterFavorites(!filterFavorites)}
+                className="w-full sm:w-auto sm:flex-none gap-2"
+              >
+                <Star className={cn('h-4 w-4', filterFavorites && 'fill-current')} />
+                Favoritos
+              </Button>
+
+              <Button
+                variant={showGroupsOnly ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setShowGroupsOnly(!showGroupsOnly)}
+                className="w-full sm:w-auto sm:flex-none gap-2"
+              >
+                {showGroupsOnly ? (
+                  <User className="h-4 w-4" />
+                ) : (
+                  <Users className="h-4 w-4" />
+                )}
+                {showGroupsOnly ? (
+                  <>
+                    <span className="hidden sm:inline">Contatos</span>
+                    <span className="sm:hidden">Ctos</span>
+                  </>
+                ) : (
+                  "Grupos"
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       </CardHeader>
 

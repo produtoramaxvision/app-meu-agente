@@ -266,7 +266,6 @@ export default function AgenteSDR() {
                 instanceName={selectedInstance.instance_name}
                 evolutionApiUrl={import.meta.env.VITE_EVOLUTION_API_URL || 'https://evolution-api.com'}
                 evolutionApiKey={import.meta.env.VITE_EVOLUTION_API_KEY || ''}
-                cacheTtlMinutes={60}
                 allInstances={instances}
                 instanceDisplayName={selectedInstance.display_name || undefined}
                 onContactClick={(contact) => {

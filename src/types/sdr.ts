@@ -21,7 +21,7 @@ export interface EvolutionInstance {
 }
 
 // =============================================================================
-// TIPOS PARA CONTATOS (CACHE EVOLUTION API)
+// TIPOS PARA CONTATOS (EVOLUTION API - PERSISTENTE)
 // =============================================================================
 
 export type LeadStatus = 'novo' | 'contatado' | 'qualificado' | 'proposta' | 'negociando' | 'ganho' | 'perdido';
@@ -39,9 +39,8 @@ export interface EvolutionContact {
   is_group: boolean;
   is_saved: boolean;
   
-  // Metadata de cache
-  last_synced_at: string;
-  cache_ttl_minutes: number;
+  // Metadata de sincronização
+  synced_at: string; // Renomeado de last_synced_at
   sync_source: SyncSource;
   
   // Dados extras do CRM
