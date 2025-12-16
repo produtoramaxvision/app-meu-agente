@@ -59,21 +59,24 @@ function normalizePhoneString(raw: unknown): string | null {
 // Extrai o número do WhatsApp a partir de diferentes formatos de payload
 function extractPhoneFromPayload(payload: unknown): string | null {
   if (!payload || typeof payload !== 'object') return null
+  const payloadObj = payload as Record<string, unknown>
+  const instanceObj = payloadObj?.instance as Record<string, unknown> | undefined
+  
   const candidateList = [
-    (payload as any)?.owner,
-    (payload as any)?.ownerJid,
-    (payload as any)?.owner_id,
-    (payload as any)?.ownerId,
-    (payload as any)?.phone,
-    (payload as any)?.phoneConnected,
-    (payload as any)?.wid,
-    (payload as any)?.instance?.owner,
-    (payload as any)?.instance?.ownerJid,
-    (payload as any)?.instance?.owner_id,
-    (payload as any)?.instance?.ownerId,
-    (payload as any)?.instance?.phone,
-    (payload as any)?.instance?.phoneConnected,
-    (payload as any)?.instance?.wid,
+    payloadObj?.owner,
+    payloadObj?.ownerJid,
+    payloadObj?.owner_id,
+    payloadObj?.ownerId,
+    payloadObj?.phone,
+    payloadObj?.phoneConnected,
+    payloadObj?.wid,
+    instanceObj?.owner,
+    instanceObj?.ownerJid,
+    instanceObj?.owner_id,
+    instanceObj?.ownerId,
+    instanceObj?.phone,
+    instanceObj?.phoneConnected,
+    instanceObj?.wid,
   ]
 
   for (const value of candidateList) {
@@ -82,7 +85,7 @@ function extractPhoneFromPayload(payload: unknown): string | null {
   }
 
   // Alguns provedores devolvem { instances: [ { instance: {...} } ] }
-  const instances = (payload as any)?.instances
+  const instances = payloadObj?.instances
   if (Array.isArray(instances)) {
     for (const item of instances) {
       const nested = extractPhoneFromPayload(item)
@@ -119,21 +122,23 @@ async function fetchInstanceOwnerJid(
     const data = await response.json()
     console.log('fetchInstances response:', JSON.stringify(data, null, 2))
 
-    const matchesInstance = (payload: any) => {
+    const matchesInstance = (payload: unknown) => {
+      const payloadObj = payload as Record<string, unknown>
+      const instanceObj = payloadObj?.instance as Record<string, unknown> | undefined
       const nameCandidates = [
-        payload?.instanceName,
-        payload?.instance?.instanceName,
-        payload?.instance?.name,
-        payload?.name,
-        payload?.instance_id,
-        payload?.instanceId,
+        payloadObj?.instanceName,
+        instanceObj?.instanceName,
+        instanceObj?.name,
+        payloadObj?.name,
+        payloadObj?.instance_id,
+        payloadObj?.instanceId,
       ]
       const found = nameCandidates.find((value) => typeof value === 'string' && value.trim())
       if (!found) return true // se não há nome, não bloqueia
       return String(found).trim() === instanceName
     }
 
-    const tryExtract = (payload: any): string | null => {
+    const tryExtract = (payload: unknown): string | null => {
       if (!matchesInstance(payload)) return null
       return extractPhoneFromPayload(payload)
     }
@@ -157,7 +162,8 @@ async function fetchInstanceOwnerJid(
     }
 
     // Se vier como objeto contendo "instances" ou "data"
-    const instances = (data as any)?.instances || (data as any)?.data
+    const dataObj = data as Record<string, unknown>
+    const instances = dataObj?.instances || dataObj?.data
     if (Array.isArray(instances)) {
       for (const item of instances) {
         const phone = tryExtract(item)
@@ -274,7 +280,7 @@ serve(async (req: Request) => {
     )
 
     let connectionState: NormalizedConnectionState = 'disconnected'
-    let connectionStateData: any = null
+    let connectionStateData: unknown = null
     
     // Se a instância foi deletada externamente (404), limpar registro local
     if (stateResponse.status === 404) {

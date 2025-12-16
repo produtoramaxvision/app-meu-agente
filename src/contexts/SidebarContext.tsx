@@ -190,3 +190,29 @@ export function useSidebar() {
   }
   return context;
 }
+
+/**
+ * Safe version of useSidebar that returns default values if provider is not available
+ * Used in components that may be rendered outside of SidebarProvider (e.g., auth pages)
+ */
+export function useSidebarSafe() {
+  const context = useContext(SidebarContext);
+  
+  // Return default values if provider is not available
+  if (!context) {
+    return {
+      collapsedPreference: false,
+      isHovering: false,
+      effectiveCollapsed: false,
+      isMobile: false,
+      mobileOpen: false,
+      toggleCollapsed: () => {},
+      setCollapsedPreference: () => {},
+      setHovering: () => {},
+      toggleMobileOpen: () => {},
+      setMobileOpen: () => {},
+    };
+  }
+  
+  return context;
+}

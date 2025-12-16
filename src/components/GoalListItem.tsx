@@ -42,7 +42,7 @@ export function GoalListItem({ goal, onDelete, onUpdate }: GoalListItemProps) {
   const handleDuplicateGoal = async () => {
     try {
       const { error } = await supabase
-        .from('metas' as any)
+        .from('metas')
         .insert({
           phone: goal.phone,
           titulo: `Cópia de - ${goal.titulo}`,

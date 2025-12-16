@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -52,7 +52,7 @@ export function useChatAgent() {
         messages: [],
         createdAt: new Date(s.created_at || Date.now()),
         updatedAt: new Date(s.updated_at || Date.now()),
-        messageCount: (s.chat_ia_messages as any)?.[0]?.count || 0,
+        messageCount: (s.chat_ia_messages as { count?: number }[] | null)?.[0]?.count || 0,
       }));
     },
     enabled: !!phone,
@@ -126,14 +126,14 @@ export function useChatAgent() {
 
   // Combinar mensagens do banco com otimistas
   // Filtra mensagens otimistas que já existem no banco (comparando por conteúdo e role)
-  const messages = [...dbMessages, ...optimisticMessages.filter(
+  const messages = useMemo(() => [...dbMessages, ...optimisticMessages.filter(
     om => !dbMessages.some(dm => 
       dm.content === om.content && 
       dm.role === om.role &&
       // Considera duplicada se foi criada nos últimos 30 segundos
       Math.abs(new Date(dm.timestamp).getTime() - om.timestamp.getTime()) < 30000
     )
-  )];
+  )], [dbMessages, optimisticMessages]);
 
   // =====================================================
   // Mutation: Criar nova sessão

@@ -68,7 +68,7 @@ export const OPTIMIZED_CACHE_CONFIGS = {
 // Interface para definição de query batch
 export interface BatchQueryDefinition {
   queryKey: QueryKey;
-  queryFn: () => Promise<any>;
+  queryFn: () => Promise<unknown>;
   config?: Partial<CacheConfig>;
   enabled?: boolean;
   dependencies?: string[];
@@ -76,7 +76,7 @@ export interface BatchQueryDefinition {
 
 // Hook para deduplicação de requisições
 const useRequestDeduplication = () => {
-  const pendingRequests = useRef<Map<string, Promise<any>>>(new Map());
+  const pendingRequests = useRef<Map<string, Promise<unknown>>>(new Map());
   
   const deduplicate = useCallback(async <T>(
     key: string,
@@ -147,7 +147,7 @@ export function useOptimizedSupabaseQueries(queries: BatchQueryDefinition[]) {
   
   // ✅ OTIMIZAÇÃO 4: Prefetch de dados relacionados
   const prefetchRelatedData = useCallback(
-    async (queryKey: QueryKey, queryFn: () => Promise<any>, config?: CacheConfig) => {
+    async (queryKey: QueryKey, queryFn: () => Promise<unknown>, config?: CacheConfig) => {
       await queryClient.prefetchQuery({
         queryKey,
         queryFn,
@@ -160,7 +160,7 @@ export function useOptimizedSupabaseQueries(queries: BatchQueryDefinition[]) {
   
   // ✅ OTIMIZAÇÃO 5: Batch update do cache
   const batchUpdateCache = useCallback(
-    (updates: Array<{ queryKey: QueryKey; data: any }>) => {
+    (updates: Array<{ queryKey: QueryKey; data: unknown }>) => {
       // Usar Promise.all para atualizações em paralelo
       Promise.all(
         updates.map(({ queryKey, data }) => 
@@ -356,7 +356,7 @@ export function useOptimizedTaskQueries(filters: {
 }
 
 // ✅ OTIMIZAÇÃO 8: Utilitário para compressão de dados grandes
-export function compressLargePayload(data: any): string {
+export function compressLargePayload(data: unknown): string {
   try {
     const jsonString = JSON.stringify(data);
     
@@ -373,7 +373,7 @@ export function compressLargePayload(data: any): string {
   }
 }
 
-export function decompressLargePayload(compressedData: string): any {
+export function decompressLargePayload(compressedData: string): unknown {
   try {
     // Tentar descomprimir
     const decompressed = atob(compressedData);

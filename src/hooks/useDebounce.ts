@@ -32,11 +32,14 @@ export const useDebounce = <T>(value: T, delay: number = 500): T => {
  * @param delay - Delay em milissegundos (padrão: 300ms)
  * @returns Objeto debounced
  */
-export const useDebounceObject = <T extends Record<string, any>>(
+export const useDebounceObject = <T extends Record<string, unknown>>(
   value: T, 
   delay: number = 300
 ): T => {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  
+  // Extrair para variável para evitar expressão complexa no array de deps
+  const valueStringified = JSON.stringify(value);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -46,7 +49,8 @@ export const useDebounceObject = <T extends Record<string, any>>(
     return () => {
       clearTimeout(handler);
     };
-  }, [JSON.stringify(value), delay]); // Usar JSON.stringify para objetos
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [valueStringified, delay]); // Usar string para deep comparison de objetos
 
   return debouncedValue;
 };

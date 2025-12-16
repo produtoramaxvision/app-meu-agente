@@ -82,7 +82,7 @@ export function EventQuickCreatePopover({
     } else {
       _isPopoverOpen = false; // Marcar popover como fechado (para compatibilidade)
     }
-  }, [open, calendars]);
+  }, [open, calendars, eventData]);
 
   // Atualiza horários quando o usuário abre o popover ou muda de slot
   useEffect(() => {
@@ -97,7 +97,7 @@ export function EventQuickCreatePopover({
     } else {
       setEndTime('');
     }
-  }, [open, start_ts?.valueOf(), end_ts?.valueOf()]);
+  }, [open, start_ts, end_ts]);
 
   const formattedDateLabel = useMemo(() => {
     if (!start_ts || !(start_ts instanceof Date)) return '...';
@@ -131,7 +131,7 @@ export function EventQuickCreatePopover({
     const adjustedEnd = updateDateWithTime(end_ts instanceof Date ? end_ts : undefined, endTime);
 
     if (adjustedStart) {
-      (updatedEventData as any).start_ts = adjustedStart;
+      updatedEventData.start_ts = adjustedStart;
       if ('start_date' in updatedEventData && updatedEventData.start_date instanceof Date) {
         updatedEventData.start_date = adjustedStart;
       }
@@ -141,7 +141,7 @@ export function EventQuickCreatePopover({
     }
 
     if (adjustedEnd) {
-      (updatedEventData as any).end_ts = adjustedEnd;
+      updatedEventData.end_ts = adjustedEnd;
       if ('end_date' in updatedEventData && updatedEventData.end_date instanceof Date) {
         updatedEventData.end_date = adjustedEnd;
       }
@@ -153,7 +153,7 @@ export function EventQuickCreatePopover({
     if ('priority' in updatedEventData) {
       updatedEventData.priority = priority;
     } else {
-      (updatedEventData as any).priority = priority;
+      updatedEventData.priority = priority;
     }
     
     onSubmit({

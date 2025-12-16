@@ -13,7 +13,7 @@ interface DuplicateCheckParams {
 interface DuplicateResult {
   isDuplicate: boolean;
   duplicateFields: string[];
-  duplicateRecord?: any;
+  duplicateRecord?: Record<string, unknown>;
   message: string;
 }
 

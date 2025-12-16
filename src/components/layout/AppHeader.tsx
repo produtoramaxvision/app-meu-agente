@@ -161,7 +161,7 @@ export function AppHeader() {
     if (searchQuery !== localSearch) {
       setLocalSearch(searchQuery);
     }
-  }, [searchQuery]);
+  }, [searchQuery, localSearch]);
 
   useEffect(() => {
     // Mostra erro visual quando não há resultados

@@ -45,9 +45,9 @@ export default function Dashboard() {
   const [categoryType, setCategoryType] = useState<'entrada' | 'saida'>('saida');
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [recordToDelete, setRecordToDelete] = useState<any>(null);
+  const [recordToDelete, setRecordToDelete] = useState<FinanceRecord | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [recordToEdit, setRecordToEdit] = useState<any>(null);
+  const [recordToEdit, setRecordToEdit] = useState<FinanceRecord | null>(null);
   const { metrics, loading, getDailyData, getCategoryData, getLatestTransactions, refetch } = useFinancialData(selectedPeriod);
   const { mainGoal, loading: goalsLoading, refetch: refetchGoals } = useGoalsData();
   
@@ -81,7 +81,7 @@ export default function Dashboard() {
     }
   };
 
-  const handleDuplicateRecord = async (record: any) => {
+  const handleDuplicateRecord = async (record: FinanceRecord) => {
     try {
       const { error } = await supabase
         .from('financeiro_registros')
@@ -112,13 +112,13 @@ export default function Dashboard() {
   
   const COLORS = categoryType === 'saida' ? EXPENSE_COLORS : INCOME_COLORS;
 
-  const renderDailyLegend = (props: any) => {
+  const renderDailyLegend = (props: { payload?: Array<{ value: string; color: string; dataKey?: string }> }) => {
     const { payload } = props;
     if (!payload || payload.length === 0) return null;
 
     return (
       <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 pt-4 text-[11px] sm:text-xs">
-        {payload.map((entry: any) => (
+        {payload.map((entry: { value: string; color: string; dataKey?: string }) => (
           <div
             key={entry.value}
             className="flex items-center gap-2 rounded-full bg-surface-elevated/70 px-3 py-1 border border-border/60 backdrop-blur-sm shadow-sm"
@@ -134,7 +134,7 @@ export default function Dashboard() {
     );
   };
 
-  const renderActiveShape = (props: any) => {
+  const renderActiveShape = (props: { cx: number; cy: number; midAngle: number; innerRadius: number; outerRadius: number; startAngle: number; endAngle: number; fill: string; payload: { name: string }; percent: number; value: number }) => {
     const RADIAN = Math.PI / 180;
     const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
     const sin = Math.sin(-RADIAN * midAngle);
@@ -441,7 +441,7 @@ export default function Dashboard() {
                     Veja em quais categorias você está concentrando mais {categoryType === 'saida' ? 'gastos' : 'receitas'}.
                   </p>
                 </div>
-                <Tabs value={categoryType} onValueChange={(v: any) => setCategoryType(v)} className="w-auto">
+                <Tabs value={categoryType} onValueChange={(v) => setCategoryType(v as 'entrada' | 'saida')} className="w-auto">
                   <TabsList className="grid w-full grid-cols-2 p-1 h-auto gap-1 bg-surface-elevated/80 border border-border/60 backdrop-blur-sm rounded-full">
                     <TabsTrigger value="saida" className="text-[11px] px-3 py-1 rounded-full data-[state=active]:bg-destructive/10 data-[state=active]:text-destructive">
                       Despesas

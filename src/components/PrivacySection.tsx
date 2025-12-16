@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -62,11 +62,7 @@ export function PrivacySection() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  useEffect(() => {
-    loadPrivacySettings();
-  }, [cliente]);
-
-  const loadPrivacySettings = async () => {
+  const loadPrivacySettings = useCallback(async () => {
     if (!cliente?.phone) return;
     
     setIsLoading(true);
@@ -95,7 +91,11 @@ export function PrivacySection() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [cliente?.phone, setIsLoading, setSettings]);
+
+  useEffect(() => {
+    loadPrivacySettings();
+  }, [loadPrivacySettings]);
 
   const savePrivacySettings = async () => {
     if (!cliente?.phone) return;
@@ -177,11 +177,12 @@ export function PrivacySection() {
         description: "Seus dados pessoais foram baixados com sucesso.",
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao exportar dados:', error);
       toast.dismiss(loadingToast);
+      const message = error instanceof Error ? error.message : "Tente novamente ou contate o suporte.";
       toast.error("Não foi possível exportar seus dados", {
-        description: error?.message || "Tente novamente ou contate o suporte.",
+        description: message,
       });
     } finally {
       setIsExporting(false);
@@ -207,7 +208,8 @@ export function PrivacySection() {
 
       if (!data || !data.success) {
         toast.dismiss(loadingToast);
-        throw new Error((data as any)?.error || 'Erro na exclusão');
+        const errorMsg = (data as { error?: string })?.error || 'Erro na exclusão';
+        throw new Error(errorMsg);
       }
 
       toast.dismiss(loadingToast);
@@ -223,11 +225,12 @@ export function PrivacySection() {
       setTimeout(() => {
         window.location.href = '/auth/login';
       }, 2000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao deletar dados:', error);
       toast.dismiss(loadingToast);
+      const message = error instanceof Error ? error.message : "Tente novamente ou entre em contato com o suporte.";
       toast.error("Não foi possível deletar seus dados", {
-        description: error?.message || "Tente novamente ou entre em contato com o suporte.",
+        description: message,
         duration: 5000,
       });
     } finally {

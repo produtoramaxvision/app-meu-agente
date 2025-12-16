@@ -509,6 +509,508 @@ Todas as tabelas possuem RLS habilitado.
 
 ---
 
-**Documentação técnica atualizada em**: 24/11/2025  
-**Versão**: 1.1.0  
+## 🔍 **SISTEMA DE BUSCA GLOBAL**
+
+### **Visão Geral**
+O sistema de busca global permite pesquisa rápida e comandos shortcuts (`/`) em todas as páginas do app. Implementado via `SearchContext` e integrado ao `AppHeader`.
+
+### **Arquitetura**
+
+```
+┌─────────────────┐        ┌─────────────────┐        ┌─────────────────┐
+│   AppHeader     │        │  SearchContext  │        │   Páginas       │
+│   (Input)       │───────►│   (Estado)      │───────►│   (Filtros)     │
+│   /comando      │        │   + Comandos    │        │                 │
+└─────────────────┘        └─────────────────┘        └─────────────────┘
+```
+
+### **SearchContext (src/contexts/SearchContext.tsx)**
+
+```typescript
+interface SearchContextValue {
+  // Estado da busca
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  hasResults: boolean;
+  setHasResults: (hasResults: boolean) => void;
+  
+  // Metadados de comandos globais
+  mode: 'global' | 'local';
+  setMode: (mode: 'global' | 'local') => void;
+  rawCommand?: string;
+  setRawCommand: (value: string | undefined) => void;
+  commandId?: string;
+  setCommandId: (id: string | undefined) => void;
+  targetRoute?: string;
+  setTargetRoute: (route: string | undefined) => void;
+  
+  // Resultados agregados
+  searchResults: SearchResults;
+  setSearchResults: (results: SearchResults) => void;
+  clearSearch: () => void;
+}
+
+// Provider com memoização
+export function SearchProvider({ children }: { children: ReactNode }) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [mode, setMode] = useState<'global' | 'local'>('local');
+  
+  // ✅ Memoizar value para evitar re-renders
+  const contextValue = useMemo(() => ({
+    searchQuery, 
+    setSearchQuery,
+    mode,
+    setMode,
+    // ... outros valores
+  }), [searchQuery, mode, /* dependências */]);
+  
+  return <SearchContext.Provider value={contextValue}>
+    {children}
+  </SearchContext.Provider>;
+}
+```
+
+### **Comandos Universais**
+
+| Comando | ID | Rota | Descrição |
+|---------|-----|------|-----------|
+| `/dashboard` | dashboard | /dashboard | Abre dashboard |
+| `/contas` | financial | /contas | Abre gestão de contas |
+| `/tarefas` | tasks | /tarefas | Abre lista de tarefas |
+| `/agenda` | agenda | /agenda | Abre agenda |
+| `/timeline` | timeline | /agenda | Abre timeline |
+| `/metas` | goals | /metas | Abre metas |
+| `/chat` | chat | /chat | Abre chat IA |
+| `/sdr` | sdr | /agente-sdr | Abre agente SDR |
+| `/perfil` | profile | /perfil | Abre perfil |
+
+### **Integração nas Páginas**
+
+#### **Exemplo: Contas (src/pages/Contas.tsx)**
+
+```typescript
+export default function Contas() {
+  const { searchQuery, mode, commandId } = useSearch();
+  
+  // Determina se busca global aplica nesta página
+  const effectiveSearch = useMemo(() => {
+    if (!searchQuery.trim()) return '';
+    // Só aplica se comando foi /contas
+    if (mode === 'global' && commandId === 'financial') {
+      return searchQuery.toLowerCase();
+    }
+    return '';
+  }, [searchQuery, mode, commandId]);
+  
+  // Usa effectiveSearch para filtrar registros
+  const filteredRecords = records.filter(record => 
+    effectiveSearch 
+      ? record.descricao?.toLowerCase().includes(effectiveSearch)
+      : true
+  );
+  
+  return <div>{/* UI com filteredRecords */}</div>;
+}
+```
+
+### **Command Palette (Ctrl/Cmd + K)**
+
+```typescript
+// src/components/layout/AppHeader.tsx
+useEffect(() => {
+  const down = (e: KeyboardEvent) => {
+    if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      setIsCommandPaletteOpen(true);
+    }
+  };
+  document.addEventListener('keydown', down);
+  return () => document.removeEventListener('keydown', down);
+}, []);
+```
+
+### **Benefícios**
+
+- ✅ **Navegação Rápida**: Comandos `/` para acesso instantâneo.
+- ✅ **Busca Contextual**: Cada página interpreta a busca global.
+- ✅ **Performance**: Memoização e debounce evitam re-renders.
+- ✅ **UX**: Feedback visual (shake animation) quando sem resultados.
+
+---
+
+## 📱 **PWA (PROGRESSIVE WEB APP)**
+
+### **Visão Geral**
+O app é uma PWA completa que funciona como app nativo, com suporte offline, notificações push e instalação na tela inicial.
+
+### **Configuração (vite.config.ts)**
+
+```typescript
+import { VitePWA } from 'vite-plugin-pwa';
+
+export default defineConfig({
+  plugins: [
+    VitePWA({
+      registerType: 'autoUpdate',
+      devOptions: { enabled: false }, // Desabilitado em dev
+      manifest: {
+        name: 'Meu Agente',
+        short_name: 'Meu Agente',
+        description: 'Sua agência de IA de Bolso',
+        theme_color: '#000000',
+        background_color: '#0d0d0d',
+        display: 'standalone',
+        orientation: 'portrait',
+        scope: '/',
+        start_url: '/',
+        icons: [
+          {
+            src: '/pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
+          }
+        ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
+        runtimeCaching: [
+          {
+            // Cache da API Supabase com NetworkFirst
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'supabase-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 // 24h
+              }
+            }
+          }
+        ]
+      }
+    })
+  ]
+});
+```
+
+### **Service Worker Registration (src/components/PWARegister.tsx)**
+
+```typescript
+import { useRegisterSW } from 'virtual:pwa-register/react';
+
+export function PWARegister() {
+  const {
+    needRefresh: [needRefresh],
+    offlineReady: [offlineReady],
+    updateServiceWorker,
+  } = useRegisterSW({
+    onRegistered(r) {
+      console.log('✅ Service Worker registrado:', r);
+    },
+    onRegisterError(error) {
+      console.error('❌ Erro ao registrar SW:', error);
+    },
+    onOfflineReady() {
+      console.log('✅ App pronto para trabalhar offline');
+    },
+  });
+
+  useEffect(() => {
+    if (needRefresh) {
+      updateServiceWorker(true); // Auto-update
+    }
+  }, [needRefresh, updateServiceWorker]);
+
+  return null; // Não renderiza UI
+}
+```
+
+### **Estratégias de Cache (Workbox)**
+
+| Recurso | Estratégia | TTL |
+|---------|------------|-----|
+| **Assets estáticos** | CacheFirst | - |
+| **API Supabase** | NetworkFirst | 24h |
+| **Imagens** | CacheFirst | 7 dias |
+| **Fonts** | CacheFirst | 1 ano |
+
+### **Funcionalidades PWA**
+
+- ✅ **Instalação**: Prompt automático em dispositivos mobile.
+- ✅ **Offline First**: Cache de assets críticos (JS, CSS, imagens).
+- ✅ **Notificações Push**: Planejado para lembretes.
+
+---
+
+## ⚡ **PERFORMANCE MONITORING**
+
+### **Visão Geral**
+Sistema de monitoramento de performance em tempo real que rastreia Core Web Vitals, uso de memória e métricas customizadas.
+
+### **Inicialização (src/App.tsx)**
+
+```typescript
+import { initPerformanceMonitoring } from './lib/performance-monitor';
+
+initPerformanceMonitoring();
+```
+
+### **Biblioteca (src/lib/performance-monitor.ts)**
+
+#### **Core Web Vitals**
+
+```typescript
+export const measureCoreWebVitals = () => {
+  if (typeof window === 'undefined') return;
+
+  // First Contentful Paint (FCP)
+  if ('PerformanceObserver' in window) {
+    const observer = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        if (entry.name === 'first-contentful-paint') {
+          console.log('🎯 FCP:', entry.startTime, 'ms');
+        }
+      }
+    });
+    observer.observe({ entryTypes: ['paint'] });
+  }
+};
+```
+
+#### **Hook: usePerformanceScan**
+
+```typescript
+// Monitorar componente específico
+export const usePerformanceScan = (componentName: string) => {
+  useEffect(() => {
+    console.log(`Performance monitoring enabled for ${componentName}`);
+  }, [componentName]);
+};
+
+// Uso
+function Dashboard() {
+  usePerformanceScan('Dashboard');
+  // ... componente
+}
+```
+
+#### **Hook: useMemoryMonitor**
+
+```typescript
+export const useMemoryMonitor = () => {
+  const [memoryUsage, setMemoryUsage] = useState<{
+    used: number;
+    total: number;
+    limit: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const checkMemory = () => {
+      if ('memory' in performance) {
+        const memory = (performance as any).memory;
+        const usagePercentage = (memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100;
+        if (usagePercentage > 80) {
+          console.warn(`⚠️ High memory usage: ${usagePercentage.toFixed(1)}%`);
+        }
+      }
+    };
+    const interval = setInterval(checkMemory, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return memoryUsage;
+};
+```
+
+### **Métricas Rastreadas**
+
+- **LCP** (Largest Contentful Paint): < 2.5s ✅
+- **FID** (First Input Delay): < 100ms ✅
+- **CLS** (Cumulative Layout Shift): < 0.1 ✅
+- **FCP** (First Contentful Paint): < 1.8s ✅
+- **TTI** (Time to Interactive): < 3.8s ✅
+
+---
+
+## 🔐 **SISTEMA DE PERMISSÕES (usePermissions)**
+
+### **Visão Geral**
+Hook centralizado que controla acesso a recursos baseado no plano do usuário, com integração total ao RLS do Supabase.
+
+### **Hook usePermissions (src/hooks/usePermissions.ts)**
+
+```typescript
+export interface Permission {
+  canExport: boolean;                  // Exportação PDF/JSON/CSV
+  canAccessWhatsApp: boolean;          // Integração WhatsApp
+  canAccessSupport: boolean;           // Suporte prioritário
+  canAccessAdvancedFeatures: boolean;  // Recursos avançados
+  canAccessAIFeatures: boolean;        // IA avançada
+  canAccessSDRAgent: boolean;          // Agente SDR
+}
+
+export function usePermissions() {
+  const { cliente } = useAuth();
+
+  const isBusinessOrPremium = cliente?.subscription_active && 
+    ['business', 'premium'].includes(cliente?.plan_id || '');
+
+  const permissions: Permission = {
+    canExport: isBusinessOrPremium,
+    canAccessWhatsApp: isBusinessOrPremium,
+    canAccessSupport: isBusinessOrPremium,
+    canAccessAdvancedFeatures: isBusinessOrPremium,
+    canAccessAIFeatures: isBusinessOrPremium,
+    canAccessSDRAgent: isBusinessOrPremium,
+  };
+
+  return { permissions, hasPermission, getUpgradeMessage };
+}
+```
+
+### **Matriz de Permissões**
+
+| Recurso | Free | Basic | Business | Premium |
+|---------|------|-------|----------|---------|
+| **Dashboard** | ✅ | ✅ | ✅ | ✅ |
+| **Exportação** | ❌ | ❌ | ✅ | ✅ |
+| **WhatsApp** | ❌ | ❌ | ✅ | ✅ |
+| **Suporte 24/7** | ❌ | ❌ | ✅ | ✅ |
+| **SDR Agent** | ❌ | ❌ | ✅ | ✅ |
+
+### **Componente ProtectedFeature**
+
+```typescript
+export function ProtectedFeature({ 
+  children, 
+  permission, 
+  featureName 
+}: ProtectedFeatureProps) {
+  const { hasPermission, getUpgradeMessage } = usePermissions();
+
+  if (hasPermission(permission)) {
+    return <>{children}</>;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <Crown className="h-5 w-5" />
+          Recurso Business/Premium
+        </CardTitle>
+        <CardDescription>
+          {getUpgradeMessage(featureName)}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button onClick={() => navigate('/perfil?tab=plans')}>
+          Ver Planos
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+---
+
+## 💾 **SISTEMA DE BACKUP (BackupSection)**
+
+### **Visão Geral**
+Sistema de backup completo que permite criar, baixar e restaurar snapshots dos dados do usuário.
+
+### **Componente BackupSection (src/components/BackupSection.tsx)**
+
+```typescript
+interface BackupInfo {
+  id: string;
+  created_at: string;
+  size: number;
+  status: 'completed' | 'failed' | 'in_progress';
+  type: 'automatic' | 'manual';
+  description: string;
+}
+
+export function BackupSection() {
+  const [backups, setBackups] = useState<BackupInfo[]>([]);
+  const [creatingBackup, setCreatingBackup] = useState(false);
+  
+  return (
+    <div className="space-y-6">
+      <Button onClick={handleCreateBackup}>
+        <Database className="mr-2 h-4 w-4" />
+        Criar Backup Manual
+      </Button>
+      
+      {backups.map(backup => (
+        <Card key={backup.id}>
+          <CardContent>
+            <h3>{backup.description}</h3>
+            <p>{format(new Date(backup.created_at), 'dd/MM/yyyy HH:mm')}</p>
+            <Button onClick={() => handleDownloadBackup(backup.id)}>
+              <Download className="h-4 w-4" /> Baixar
+            </Button>
+            <Button onClick={() => handleRestoreBackup(backup.id)}>
+              <Upload className="h-4 w-4" /> Restaurar
+            </Button>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+```
+
+### **Estrutura do Backup (JSON)**
+
+```typescript
+interface BackupData {
+  version: string;
+  created_at: string;
+  phone: string;
+  data: {
+    financeiro_registros: FinancialRecord[];
+    metas: Goal[];
+    tasks: Task[];
+    events: Event[];
+  };
+  metadata: {
+    total_records: number;
+    total_size_bytes: number;
+    backup_type: 'automatic' | 'manual';
+  };
+}
+```
+
+### **Funcionalidades**
+
+- ✅ **Criar Backup Manual**: Snapshot instantâneo de todos os dados.
+- ✅ **Baixar Backup**: Download em formato JSON.
+- ✅ **Restaurar Backup**: Substituir dados atuais pelos do backup.
+- ✅ **Backups Automáticos**: Diários às 02:00 (planejado).
+
+### **Política de Retenção**
+
+- **Manuais**: Mantidos indefinidamente.
+- **Automáticos**: Últimos 30 dias.
+- **Tamanho Máximo**: 50MB por backup.
+
+### **Segurança**
+
+- ✅ **Criptografia**: Em repouso (Supabase Storage).
+- ✅ **RLS**: Apenas dono acessa seus backups.
+- ✅ **Validação**: Schema Zod antes de restaurar.
+
+---
+
+**Documentação técnica atualizada em**: 15/12/2025  
+**Versão**: 2.0.0  
 **Status**: ✅ **PRODUÇÃO READY**

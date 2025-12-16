@@ -151,23 +151,275 @@ Tudo do Business, com **camada avançada adicional** nos agentes de **Web Search
 
 ### 4.4 Agente SDR (Business/Premium)
 
-- Qualificação de leads, **recepção humanizada**, perguntas de perfil e **marcação automática** de reuniões no Google Calendar.
-- Envio de e‑mails de confirmação e follow‑ups (quando habilitado).
+O **Agente SDR (Sales Development Representative)** é uma das funcionalidades mais poderosas do Meu Agente, permitindo automatizar completamente a qualificação de leads e agendamento de reuniões via WhatsApp.
 
-**Fluxo do SDR (visual):**
+#### **Configuração Completa do SDR**
+
+O agente SDR possui **6 abas de configuração** na interface do app:
+
+##### **1. Identidade da Empresa**
+Define o contexto e personalidade do agente:
+
+- **Nome da Empresa**: Como o agente se apresenta
+- **Nome do Representante**: Nome humano do agente (ex.: "Ana", "Carlos")
+- **Telefone de Contato**: Número exibido nas mensagens
+- **Email da Empresa**: Para envio de confirmações
+- **Descrição da Empresa**: Texto completo sobre produtos/serviços, diferenciais, público-alvo e proposta de valor (até 2000 caracteres)
+- **Segmento de Atuação**: Categoria da empresa (ex.: "Tecnologia", "Saúde", "Educação")
+- **Site**: URL do site oficial
+
+**Exemplo de Identidade:**
+```
+Nome: Consultoria MaxVision
+Representante: Ana Silva
+Descrição: "Somos a MaxVision, consultoria especializada em 
+transformação digital para PMEs. Oferecemos implementação de CRM, 
+automação de marketing e integração de sistemas. Atendemos 
+empresas de 10-500 funcionários em todo Brasil."
+```
+
+##### **2. Apresentação e Saudação**
+Customiza as primeiras mensagens do agente:
+
+- **Mensagem de Boas-vindas**: Primeira mensagem ao lead
+- **Tom de Voz**: Formal, Casual, Técnico, Amigável
+- **Variáveis Dinâmicas**:
+  - `{{nome_lead}}` - Primeiro nome do lead
+  - `{{nome_empresa}}` - Nome da empresa
+  - `{{representante}}` - Nome do agente
+  - `{{horario}}` - Horário atual
+  - `{{dia_semana}}` - Dia da semana
+
+**Exemplo de Apresentação:**
+```
+"Olá {{nome_lead}}! 👋
+
+Sou a {{representante}} da {{nome_empresa}}. Vi seu interesse 
+em conhecer nossas soluções de CRM.
+
+Posso te ajudar com algumas informações rápidas? Leva só 2 min! 😊"
+```
+
+##### **3. Qualificação de Leads**
+Define os critérios BANT (Budget, Authority, Need, Timeline):
+
+- **Perguntas de Qualificação** (arrastar para reordenar):
+  1. Qual o principal desafio que você quer resolver?
+  2. Qual o prazo ideal para implementação?
+  3. Quem toma a decisão de compra na sua empresa?
+  4. Qual o orçamento aproximado disponível?
+
+- **Requisitos Obrigatórios** (checklist):
+  - [ ] Nome completo
+  - [ ] Email válido
+  - [ ] Telefone com WhatsApp
+  - [ ] Nome da empresa
+  - [ ] Cargo/função
+  - [ ] Tamanho da empresa (nº funcionários)
+  - [ ] Urgência (alta/média/baixa)
+  - [ ] Budget estimado
+
+- **Critérios de Fit** (score automático):
+  - **Alto Fit (8-10)**: Todos requisitos + orçamento adequado + urgência alta
+  - **Médio Fit (5-7)**: Maioria requisitos + interesse claro
+  - **Baixo Fit (0-4)**: Poucos requisitos ou sem budget/urgência
+
+**Exemplo de Fluxo de Qualificação:**
+```
+SDR: "Qual o principal desafio que você quer resolver?"
+Lead: "Preciso organizar melhor os contatos dos clientes"
+
+SDR: "Entendi! E para quando você precisa dessa solução?"
+Lead: "Idealmente nas próximas 2 semanas"
+
+SDR: "Perfeito! Você é quem decide a contratação ou precisa 
+validar com alguém?"
+Lead: "Sou o dono, decido sozinho"
+
+SDR: "Ótimo! Tem um orçamento definido para isso?"
+Lead: "Até R$ 500/mês está ok"
+
+[Sistema calcula: Fit ALTO - 9/10]
+```
+
+##### **4. Configuração de IA**
+Controles finos do comportamento da IA:
+
+- **Temperatura** (0.0 - 1.0): Criatividade das respostas
+  - 0.3 = Formal e consistente
+  - 0.7 = Balanceado (recomendado)
+  - 1.0 = Criativo e variado
+  
+- **Top P** (0.0 - 1.0): Diversidade vocabular
+  - 0.8 = Foco em respostas mais prováveis
+  - 0.9 = Balanceado (recomendado)
+  - 1.0 = Máxima diversidade
+
+- **Max Tokens** (100 - 1000): Tamanho máximo da resposta
+  - 300 = Respostas curtas e diretas
+  - 500 = Balanceado (recomendado)
+  - 800 = Respostas detalhadas
+
+- **Presence Penalty** (-2.0 - 2.0): Penalidade por repetição
+  - 0.0 = Sem penalidade
+  - 0.6 = Evita repetições (recomendado)
+
+- **Frequency Penalty** (-2.0 - 2.0): Penalidade por frequência
+  - 0.0 = Sem penalidade
+  - 0.5 = Varia linguagem (recomendado)
+
+**Configuração Recomendada por Caso:**
+```typescript
+// Atendimento Formal (Jurídico, Saúde)
+{ temperature: 0.5, top_p: 0.85, max_tokens: 400 }
+
+// Atendimento Conversacional (Varejo, Serviços)
+{ temperature: 0.7, top_p: 0.9, max_tokens: 500 }
+
+// Atendimento Técnico (TI, Engenharia)
+{ temperature: 0.3, top_p: 0.8, max_tokens: 600 }
+```
+
+##### **5. Tratamento de Objeções**
+Biblioteca de respostas pré-configuradas:
+
+**Técnicas de Resposta:**
+- **Feel, Felt, Found**: "Entendo como você se sente. Outros clientes também sentiram isso. O que eles encontraram foi..."
+- **Reversão**: Transformar objeção em benefício
+- **Prova Social**: Casos de sucesso similares
+- **Quebra de Risco**: Garantias, trials, demonstrações
+
+**Objeções Comuns Pré-configuradas:**
+
+| Objeção | Resposta Automática |
+|---------|---------------------|
+| "Está muito caro" | "Entendo! Posso mostrar o ROI que nossos clientes têm? Em média, recuperam o investimento em 3 meses. Quer ver um case similar ao seu?" |
+| "Preciso pensar" | "Claro! Pra te ajudar a decidir melhor, qual ponto você quer avaliar? Preço, funcionalidades ou tempo de implementação?" |
+| "Já uso outra ferramenta" | "Legal! Qual você usa? Posso te mostrar o que temos de diferente? Muitos clientes vieram de [ferramenta X] e tiveram [benefício]." |
+| "Não tenho tempo agora" | "Sem problema! Quando seria melhor pra você? Posso te enviar um resumo por email e agendamos 15 min semana que vem?" |
+| "Vou falar com a equipe" | "Perfeito! Quer que eu prepare um resumo executivo pra você apresentar? Facilita a decisão do time." |
+
+**Como Adicionar Objeção Customizada:**
+```
+1. Clique em "+ Nova Objeção"
+2. Digite a objeção: "Não tenho orçamento este trimestre"
+3. Escolha técnica: "Feel, Felt, Found"
+4. Digite resposta: "Entendo perfeitamente! Muitos clientes 
+   começaram assim. O que fizemos foi dividir em parcelas menores 
+   no cartão ou iniciar com o plano básico. Quer explorar?"
+5. Salvar
+```
+
+##### **6. Limitações e Restrições**
+Define o que o agente NÃO deve fazer:
+
+- **Tópicos Proibidos** (lista):
+  - Não discutir política
+  - Não dar consultoria médica/jurídica
+  - Não prometer prazos não confirmados
+  - Não aplicar descontos sem autorização
+  - Não coletar dados sensíveis (CPF, senha, cartão)
+
+- **Horário de Atendimento**:
+  - Seg-Sex: 08:00 - 18:00
+  - Sáb: 09:00 - 13:00
+  - Dom/Feriados: Apenas mensagem de ausência
+
+- **Mensagem Fora do Horário**:
+```
+"Oi! Agora estamos fora do horário de atendimento. 
+Nosso time volta Segunda às 08:00. 
+Deixe sua mensagem que respondo assim que voltar! 😊"
+```
+
+- **Tempo Máximo de Conversa**: 15 mensagens
+- **Ação Após Limite**: Transferir para humano / Agendar callback
+
+#### **Múltiplas Instâncias SDR**
+
+O Meu Agente permite configurar **múltiplos agentes SDR** simultâneos:
+
+**Limites por Plano:**
+- Business: 2 instâncias SDR
+- Premium: 5 instâncias SDR
+
+**Casos de Uso:**
+1. **SDR por Produto**: Um agente para cada linha de produto
+2. **SDR por Região**: Agentes com horários e linguagem regional
+3. **SDR por Segmento**: B2B vs B2C com abordagens diferentes
+4. **SDR por Idioma**: Português, Inglês, Espanhol
+
+**Exemplo de Configuração Multi-instância:**
+```
+📱 Instância 1: "SDR Corporativo"
+   - Foco: Empresas 50+ funcionários
+   - Tom: Formal
+   - Qualificação: Budget mínimo R$ 2.000/mês
+
+📱 Instância 2: "SDR Varejo"
+   - Foco: Pequenos negócios
+   - Tom: Casual
+   - Qualificação: Budget mínimo R$ 497/mês
+```
+
+#### **Playground de Testes**
+
+Interface de testes antes de ativar:
 
 ```
-Lead chega no WhatsApp
-   ↓
-Coleta rápida: nome, telefone, empresa, interesse, urgência, orçamento
-   ↓
-Qualificação: fit (alto/médio/baixo) e próxima ação
-   ↓
-Oferta: reunião de 20 min OU orçamento resumido
-   ↓
-Agendamento automático (Meu Agente / Google Calendar)
-   ↓
-Confirmação e lembrete (WhatsApp + e‑mail)
+┌─────────────────────────────────────┐
+│  🧪 PLAYGROUND - Teste seu SDR      │
+├─────────────────────────────────────┤
+│  Você: Oi, quero saber mais         │
+│                                     │
+│  🤖 SDR: Olá! Sou a Ana da          │
+│  MaxVision. Vi seu interesse...     │
+│                                     │
+│  Você: Quanto custa?                │
+│                                     │
+│  🤖 SDR: Ótima pergunta! Nossos     │
+│  planos começam em R$ 497/mês...    │
+└─────────────────────────────────────┘
+
+[🔄 Resetar] [✅ Aprovar Config] [🚀 Ativar]
+```
+
+#### **Fluxo Completo do SDR**
+
+```mermaid
+graph TD
+    A[Lead envia mensagem] --> B{Horário de atendimento?}
+    B -->|Não| C[Mensagem de ausência]
+    B -->|Sim| D[Saudação personalizada]
+    D --> E[Coleta informações básicas]
+    E --> F{Info completa?}
+    F -->|Não| G[Pergunta de qualificação]
+    G --> E
+    F -->|Sim| H[Calcula Score de Fit]
+    H --> I{Fit alto?}
+    I -->|Sim| J[Oferece agendamento]
+    I -->|Não| K[Oferece material/follow-up]
+    J --> L{Lead aceita?}
+    L -->|Sim| M[Marca reunião]
+    L -->|Não| N[Trata objeção]
+    N --> J
+    M --> O[Confirmação WhatsApp + Email]
+    O --> P[Lembrete 1h antes]
+```
+
+#### **Integração com CRM**
+
+Todos os leads qualificados vão automaticamente para o **CRM Pipeline** na coluna "Novo":
+
+```sql
+-- Dados salvos automaticamente
+INSERT INTO evolution_contacts (
+  name, phone, email, company, 
+  crm_lead_status, -- 'novo'
+  crm_lead_score,  -- 1-10
+  crm_notes,       -- Transcrição da conversa
+  crm_next_action  -- 'reuniao_agendada' ou 'follow_up'
+)
 ```
 
 **Mensagens humanizadas (exemplos):**\
@@ -181,7 +433,505 @@ Confirmação e lembrete (WhatsApp + e‑mail)
 
 ---
 
-### 4.5 Agente de Marketing (Google Ads) (Business/Premium)
+### 4.5 CRM Pipeline - Gestão Visual de Leads
+
+O **CRM Pipeline** é um sistema Kanban completo integrado ao WhatsApp para gerenciar todo o funil de vendas, desde o primeiro contato até o fechamento.
+
+#### **7 Estágios do Pipeline**
+
+```mermaid
+graph LR
+    A[🆕 Novo] --> B[📞 Contatado]
+    B --> C[✅ Qualificado]
+    C --> D[📋 Proposta]
+    D --> E[🤝 Negociando]
+    E --> F[🎉 Ganho]
+    E --> G[❌ Perdido]
+```
+
+##### **Estágio 1: 🆕 Novo**
+- **Descrição**: Leads que entraram no sistema mas ainda não foram contatados
+- **Origem**: SDR automático, importação WhatsApp, formulário web
+- **Ações Automáticas**: 
+  - Alerta para vendedor em até 5 minutos
+  - Score inicial calculado automaticamente
+- **Campos Preenchidos**: Nome, telefone, origem
+- **Tempo Máximo Recomendado**: 24 horas
+
+##### **Estágio 2: 📞 Contatado**
+- **Descrição**: Primeiro contato realizado com sucesso
+- **Gatilho**: Mensagem WhatsApp enviada/respondida
+- **Campos Obrigatórios**: Data do contato, quem contactou
+- **Próximas Ações**: Agendar reunião ou enviar material
+- **Tempo Médio**: 2-3 dias
+- **Taxa de Conversão Esperada**: 40-60%
+
+##### **Estágio 3**: ✅ Qualificado**
+- **Descrição**: Lead atende critérios BANT (Budget, Authority, Need, Timeline)
+- **Critérios de Qualificação**:
+  - ✅ Tem orçamento definido
+  - ✅ É o tomador de decisão ou influenciador
+  - ✅ Tem necessidade clara do produto
+  - ✅ Timeline de compra definido (até 90 dias)
+- **Score Mínimo**: 6/10
+- **Campos Obrigatórios**: Budget, prazo, necessidade
+- **Taxa de Conversão Esperada**: 30-50%
+
+##### **Estágio 4: 📋 Proposta**
+- **Descrição**: Proposta comercial enviada e em análise
+- **Documentos Gerados**: PDF com proposta, planilha de preços
+- **Campos Obrigatórios**: 
+  - Valor da proposta
+  - Data de envio
+  - Data de validade
+  - Produtos/serviços incluídos
+- **Follow-up Automático**: 3, 7 e 14 dias após envio
+- **Taxa de Conversão Esperada**: 25-40%
+
+##### **Estágio 5: 🤝 Negociando**
+- **Descrição**: Cliente em negociação ativa (ajustes, descontos, prazos)
+- **Indicadores**:
+  - Objeções levantadas
+  - Contraproposta recebida
+  - Documentos jurídicos em análise
+- **Ações Comuns**:
+  - Apresentação de cases
+  - Reunião com decisores
+  - Trial/POC
+- **Tempo Crítico**: Máximo 30 dias
+- **Taxa de Conversão Esperada**: 40-60%
+
+##### **Estágio 6: 🎉 Ganho**
+- **Descrição**: Venda fechada e contrato assinado
+- **Campos Finais**:
+  - Valor fechado
+  - Data de fechamento
+  - Forma de pagamento
+  - Previsão de início
+- **Automações**:
+  - Email de boas-vindas
+  - Criar conta no sistema
+  - Acionar onboarding
+  - Registrar comissão
+
+##### **Estágio 7: ❌ Perdido**
+- **Descrição**: Lead não converteu
+- **Motivos** (obrigatório registrar):
+  - Preço alto
+  - Escolheu concorrente
+  - Sem budget
+  - Sem urgência
+  - Não respondeu (ghosting)
+  - Outros
+- **Ações Automáticas**:
+  - Agendar follow-up em 90 dias
+  - Adicionar a campanha de remarketing
+  - Enviar pesquisa de feedback
+
+#### **Interface Kanban**
+
+```
+┌─────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┐
+│ 🆕 Novo │ 📞 Cont │ ✅ Qual │ 📋 Prop │ 🤝 Nego │ 🎉 Ganh │ ❌ Perd │
+│  (12)   │  (8)    │  (5)    │  (3)    │  (2)    │  (1)    │  (4)    │
+├─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┤
+│┌───────┐│┌───────┐│┌───────┐│┌───────┐│┌───────┐│┌───────┐│┌───────┐│
+││Ana    ││││Carlos│││││Maria ││││Pedro │││││Bruno │││││Laura││││Joao  ││
+││Silva  ││││Lima  │││││Costa ││││Souza│││││Alves │││││Rocha││││Pinto ││
+││⭐⭐⭐⭐│││⭐⭐⭐  │││⭐⭐⭐⭐│││⭐⭐⭐⭐│││⭐⭐⭐⭐│││⭐⭐⭐⭐│││⭐⭐   ││
+││R$2.5k ││││R$1.2k│││││R$3k  ││││R$5k │││││R$8k  │││││R$12k││││R$2k  ││
+││📱Zap  ││││📱Zap │││││📱Zap ││││📱Zap│││││📱Zap │││││✅   ││││❌   ││
+│└───────┘││└───────┘││└───────┘││└───────┘││└───────┘││└───────┘││└───────┘│
+│         │         │         │         │         │         │         │
+│[+ Card] │[+ Card] │[+ Card] │[+ Card] │[+ Card] │         │         │
+└─────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┘
+```
+
+#### **Sidebar de Detalhes do Lead**
+
+Ao clicar em qualquer card, abre Sheet lateral com 3 abas:
+
+##### **Aba 1: 📋 Tarefas**
+```
+✅ Enviar proposta comercial
+   📅 Concluída em 10/12 às 14:30
+   
+⏳ Ligar para confirmar recebimento
+   📅 Hoje às 16:00
+   🔔 Lembrete em 30 min
+   
+⬜ Agendar reunião de fechamento
+   📅 Amanhã
+```
+
+**Funcionalidades:**
+- Criar tarefa vinculada ao lead
+- Marcar como concluída
+- Definir prazo e lembrete
+- Atribuir responsável
+
+##### **Aba 2: 📅 Agenda**
+```
+📆 Próximos Eventos:
+
+🗓️ Reunião de Apresentação
+   15/12 às 10:00 (Google Meet)
+   Duração: 30 min
+   Link: meet.google.com/abc-def-ghi
+
+🗓️ Demo do Produto
+   18/12 às 14:00 (Presencial)
+   Local: Escritório - Sala 3
+```
+
+**Funcionalidades:**
+- Ver todos eventos do lead
+- Criar novo evento
+- Integração Google Calendar
+- Enviar convite WhatsApp
+
+##### **Aba 3: 📝 Notas**
+```
+🗓️ 14/12/2025 - 15:30
+Por: João Vendedor
+
+Cliente demonstrou interesse forte em 
+automatizar WhatsApp. Mencionou que usa 
+Zoho CRM atualmente. Budget aprovado de 
+até R$ 2.000/mês. Decisor: CEO (ele mesmo).
+
+Próximo passo: Enviar case de cliente similar.
+
+---
+
+🗓️ 10/12/2025 - 10:15
+Por: Ana SDR
+
+Qualificação inicial. Empresa tem 15 
+funcionários. Urgência média (30-60 dias).
+```
+
+**Funcionalidades:**
+- Adicionar nota com timestamp automático
+- Editar notas anteriores
+- Anexar arquivos
+- Mencionar outros usuários (@joao)
+
+#### **Integração WhatsApp + CRM**
+
+Toda interação via WhatsApp é automaticamente registrada no CRM:
+
+```typescript
+// Fluxo de sincronização
+1. Lead envia mensagem WhatsApp
+   ↓
+2. Sistema identifica/cria contato
+   ↓
+3. Adiciona mensagem nas notas
+   ↓
+4. Atualiza "última interação"
+   ↓
+5. Se palavras-chave detectadas:
+   - "proposta" → Move para "Proposta"
+   - "reunião" → Cria evento na agenda
+   - "não tenho interesse" → Move para "Perdido"
+```
+
+**Exemplo de Nota Automática:**
+```
+🤖 Mensagem WhatsApp - 15/12 16:45
+
+Cliente: "Recebi a proposta. Está dentro 
+do que conversamos. Só preciso validar com 
+o sócio até sexta."
+
+Status atualizado: Proposta → Negociando
+```
+
+#### **Métricas do Pipeline**
+
+Painel de métricas em tempo real:
+
+| Métrica | Valor | Comparação |
+|---------|-------|------------|
+| 📊 **Taxa de Conversão Geral** | 18.5% | +2.3% vs mês anterior |
+| 💰 **Valor Total em Pipeline** | R$ 145.000 | +R$ 23k vs semana anterior |
+| ⏱️ **Tempo Médio de Fechamento** | 28 dias | -5 dias vs média |
+| 🎯 **Deals Fechados (mês)** | 12 | Meta: 15 (80%) |
+| 💸 **Ticket Médio** | R$ 4.150 | +12% vs trimestre anterior |
+| 📉 **Taxa de Perda** | 22% | -3% vs mês anterior |
+
+**Conversão por Estágio:**
+```
+Novo → Contatado: 65%
+Contatado → Qualificado: 52%
+Qualificado → Proposta: 38%
+Proposta → Negociando: 55%
+Negociando → Ganho: 48%
+```
+
+#### **Filtros e Segmentação**
+
+```
+🔍 Filtros Disponíveis:
+
+Por Vendedor: [Todos ▼]
+Por Origem: [WhatsApp, SDR, Formulário, Indicação]
+Por Score: [Alto (8-10), Médio (5-7), Baixo (0-4)]
+Por Budget: [< R$500, R$500-2k, R$2k-5k, > R$5k]
+Por Prazo: [Urgente (7d), Curto (30d), Médio (90d), Longo (>90d)]
+Por Produto: [Produto A, Produto B, Produto C]
+Última Interação: [Hoje, 3 dias, 7 dias, 30 dias]
+```
+
+**Visualizações:**
+- 📊 Kanban (padrão)
+- 📋 Lista
+- 📅 Timeline
+- 📈 Funil (métricas)
+
+---
+
+### 4.6 Importação de Contatos WhatsApp
+
+Sincronização manual de contatos do WhatsApp para o CRM do Meu Agente.
+
+#### **Processo de Sincronização**
+
+##### **Passo 1: Conectar Instância WhatsApp**
+
+Na página "Agente SDR", conecte sua instância:
+```
+1. Escaneie QR Code
+   ou
+2. Use Pairing Code (código de 8 dígitos)
+
+Status: 🟢 Online
+Contatos: 2.347 encontrados
+```
+
+##### **Passo 2: Filtrar Contatos**
+
+Antes de sincronizar, escolha quais contatos importar:
+
+```
+✅ Incluir contatos individuais (recomendado)
+❌ Excluir listas de transmissão
+❌ Excluir grupos
+✅ Apenas contatos com nome salvo
+✅ Apenas contatos com interação recente (90 dias)
+```
+
+**Filtros Avançados:**
+- Excluir contatos bloqueados
+- Apenas contatos com foto de perfil
+- Apenas contatos verificados (WhatsApp Business)
+- Filtrar por tags específicas
+
+##### **Passo 3: Sincronizar**
+
+```
+[🔄 Sincronizar Contatos]
+
+Progresso: ████████░░ 78% (1.831/2.347)
+
+⏱️ Tempo estimado: 2 minutos
+```
+
+**O que é sincronizado:**
+- Nome do contato
+- Número de telefone
+- Foto de perfil (URL)
+- Status WhatsApp
+- Última mensagem (data/hora)
+- Grupos em comum (se habilitado)
+
+#### **Cache Persistente**
+
+O Meu Agente usa **cache persistente** (não TTL):
+
+```typescript
+// Sistema ANTIGO (removido)
+❌ TTL auto-refresh a cada 15 minutos
+❌ Sincronização automática em segundo plano
+
+// Sistema ATUAL (recomendado)
+✅ Sincronização MANUAL pelo usuário
+✅ Cache persiste indefinidamente
+✅ Controle total sobre quando atualizar
+```
+
+**Vantagens do Cache Persistente:**
+- ⚡ Performance: Dados carregam instantaneamente
+- 💾 Economia: Menos chamadas à Evolution API
+- 🎯 Controle: Usuário decide quando atualizar
+- 🔒 Estabilidade: Menos risco de rate limit
+
+**Quando Sincronizar:**
+- Ao adicionar novos contatos no WhatsApp
+- Após campanhas de captação
+- Semanalmente (como boa prática)
+- Antes de filtrar/segmentar para campanhas
+
+#### **Preservação de Dados CRM**
+
+A sincronização **preserva todos os campos do CRM**:
+
+```sql
+-- Lógica de upsert
+INSERT INTO evolution_contacts (
+  remote_jid, name, phone, profile_picture_url
+) VALUES (...)
+ON CONFLICT (remote_jid, instance_id) 
+DO UPDATE SET
+  name = EXCLUDED.name,
+  profile_picture_url = EXCLUDED.profile_picture_url,
+  last_message_timestamp = EXCLUDED.last_message_timestamp
+  -- CRM fields NÃO são atualizados:
+  -- crm_lead_status, crm_lead_score, crm_notes, 
+  -- crm_next_action, crm_assigned_to
+```
+
+**Campos Preservados:**
+- Status do lead (novo/contatado/qualificado/etc)
+- Score de qualificação
+- Notas e histórico
+- Tarefas vinculadas
+- Eventos agendados
+- Tags personalizadas
+- Responsável pelo lead
+
+#### **Integração com CRM Pipeline**
+
+Após sincronização, contatos ficam disponíveis no CRM:
+
+```
+Contatos Importados: 1.831
+
+Distribuição:
+🆕 Novo: 1.650 (sem status CRM definido)
+📞 Em Pipeline: 181 (já estavam no CRM)
+
+Ação Recomendada:
+1. Revisar 1.650 novos contatos
+2. Aplicar tags/segmentação
+3. Definir status inicial ("Novo")
+4. Atribuir a vendedores
+```
+
+**Operações em Massa:**
+```
+☑️ Selecionar Todos (ou filtrados)
+
+Ações em massa:
+- Alterar status → [Novo ▼]
+- Adicionar tag → [Cliente Potencial]
+- Atribuir a → [João Vendedor ▼]
+- Exportar → [CSV, Excel]
+- Deletar
+```
+
+---
+
+### 4.7 Limites de Planos e Recursos
+
+Tabela completa de limites e cotas por plano:
+
+| Recurso | Free | Basic | Business | Premium |
+|---------|------|-------|----------|---------|
+| **WhatsApp** |
+| Instâncias SDR | 0 | 0 | 2 | 5 |
+| Mensagens/mês | - | - | 10.000 | 50.000 |
+| Webhooks | - | - | Incluído | Incluído |
+| **CRM** |
+| Leads no pipeline | 50 | 100 | 1.000 | Ilimitado |
+| Contatos WhatsApp | 100 | 500 | 5.000 | 25.000 |
+| Tarefas por lead | 5 | 10 | Ilimitado | Ilimitado |
+| Eventos/mês | 10 | 50 | 500 | Ilimitado |
+| **Armazenamento** |
+| Espaço total | 100 MB | 1 GB | 10 GB | 50 GB |
+| Anexos por lead | 3 | 5 | 20 | Ilimitado |
+| Backup | ❌ | ❌ | ❌ | ✅ Diário |
+| **Chat IA** |
+| Sessões/mês | 10 | 50 | 200 | 1.000 |
+| Mensagens/sessão | 10 | 20 | 50 | 100 |
+| Contexto | Básico | Básico | Avançado | Avançado |
+| **Financeiro** |
+| Transações/mês | 50 | 200 | 1.000 | Ilimitado |
+| Categorias custom | 5 | 10 | 30 | Ilimitado |
+| Exportações/mês | 0 | 10 | 50 | Ilimitado |
+| **Integrações** |
+| Google Calendar | ❌ | ✅ | ✅ | ✅ |
+| Google Drive | ❌ | ❌ | ✅ | ✅ |
+| N8N Webhooks | ❌ | ❌ | ✅ | ✅ |
+| APIs Customizadas | ❌ | ❌ | ❌ | ✅ |
+| **Suporte** |
+| Email | ❌ | 48h | 24h | 4h |
+| Chat | ❌ | ❌ | ✅ | ✅ |
+| WhatsApp | ❌ | ❌ | ✅ | ✅ |
+| Telefone | ❌ | ❌ | ❌ | ✅ |
+
+#### **Validação de Limites**
+
+O sistema valida limites em **3 camadas**:
+
+##### **1. Frontend (UI)**
+```typescript
+// Exemplo: Bloquear criação de nova instância SDR
+if (currentPlan === 'business' && instances.length >= 2) {
+  showUpgradeDialog('Você atingiu o limite de 2 instâncias SDR.');
+  return;
+}
+```
+
+##### **2. Backend (Edge Functions)**
+```typescript
+// Supabase Edge Function valida antes de criar
+const { count } = await supabase
+  .from('evolution_instances')
+  .select('*', { count: 'exact' })
+  .eq('phone', userPhone);
+
+if (planId === 'business' && count >= 2) {
+  return new Response('Limite atingido', { status: 403 });
+}
+```
+
+##### **3. Database (RLS Policies)**
+```sql
+-- Política RLS impede insert acima do limite
+CREATE POLICY "enforce_instance_limit_business"
+ON evolution_instances FOR INSERT
+WITH CHECK (
+  CASE 
+    WHEN get_user_plan_id(phone) = 'business' THEN
+      (SELECT COUNT(*) FROM evolution_instances 
+       WHERE phone = get_user_phone_optimized()) < 2
+    ELSE true
+  END
+);
+```
+
+#### **Notificações de Limite**
+
+```
+⚠️ Você está próximo do limite
+
+Instâncias SDR: 2/2 (100%)
+Mensagens: 9.450/10.000 (94.5%)
+Armazenamento: 8.2 GB/10 GB (82%)
+
+[Ver Detalhes] [Fazer Upgrade]
+```
+
+**Quando alertar:**
+- 80%: Notificação suave (badge laranja)
+- 90%: Alerta forte (toast amarelo)
+- 100%: Bloqueio (modal vermelho + upgrade)
+
+---
+
+### 4.8 Agente de Marketing (Google Ads) (Business/Premium)
 
 - Análises de campanhas, relatório de termos, **sugestões de otimização**.
 - Rotinas de alerta (ex.: gasto diário, queda brusca de CTR).

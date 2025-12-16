@@ -271,7 +271,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem(BLOCKED_UNTIL_KEY);
   };
 
-  const checkPhoneExists = async (phone: string): Promise<{ phoneExists: boolean; hasAuthId: boolean }> => {
+  const checkPhoneExists = useCallback(async (phone: string): Promise<{ phoneExists: boolean; hasAuthId: boolean }> => {
     try {
       // Validar formato do telefone
       const phoneRegex = /^\d{10,15}$/;
@@ -305,9 +305,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Error in checkPhoneExists:', err);
       return { phoneExists: false, hasAuthId: false };
     }
-  };
+  }, []);
 
-  const login = async (phone: string, password: string) => {
+  const login = useCallback(async (phone: string, password: string) => {
     /**
      * MIGRAÇÃO PARA SUPABASE AUTH - FASE 3
      * Substituindo Edge Functions por Supabase Auth nativo
@@ -399,18 +399,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       toast.success('Login realizado com sucesso!');
       navigate('/chat');
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Log do erro para debugging (apenas em desenvolvimento)
       if (process.env.NODE_ENV === 'development') {
         console.error('Login error:', err);
       }
       
       // Garantir que sempre lance um erro para credenciais inválidas
-      throw new Error(err.message || 'Credenciais inválidas');
+      const message = err instanceof Error ? err.message : 'Credenciais inválidas';
+      throw new Error(message);
     }
-  };
+  }, [navigate]);
 
-  const signup = async ({ phone, name, email, cpf, password }: { phone: string; name: string; email: string; cpf: string; password: string }) => {
+  const signup = useCallback(async ({ phone, name, email, cpf, password }: { phone: string; name: string; email: string; cpf: string; password: string }) => {
     /**
      * MIGRAÇÃO PARA SUPABASE AUTH - FASE 3
      * Substituindo Edge Functions por Supabase Auth nativo
@@ -606,13 +607,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // NÃO FAZER LOGIN AUTOMÁTICO - Requerer confirmação de email
       toast.success('Conta criada! Verifique seu email para confirmar.');
       navigate('/auth/login');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Signup error:', err);
-      throw new Error(err.message || 'Erro ao criar conta');
+      const message = err instanceof Error ? err.message : 'Erro ao criar conta';
+      throw new Error(message);
     }
-  };
+  }, [navigate]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     /**
      * LOGOUT SEGURO - FASE 4
      * - Verifica se há sessão antes de chamar signOut
@@ -671,9 +673,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoggingOut(false);
     }
-  };
+  }, [navigate]);
 
-  const updateAvatar = (avatarUrl: string | null) => {
+  const updateAvatar = useCallback((avatarUrl: string | null) => {
     if (cliente) {
       setCliente({ ...cliente, avatar_url: avatarUrl });
       if (avatarUrl) {
@@ -682,9 +684,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sessionStorage.removeItem('auth_avatar');
       }
     }
-  };
+  }, [cliente]);
 
-  const updateCliente = (updatedData: Partial<Cliente>) => {
+  const updateCliente = useCallback((updatedData: Partial<Cliente>) => {
     if (cliente) {
       const newClienteData = { ...cliente, ...updatedData };
       // Ensure avatar_url has a timestamp for cache busting
@@ -695,7 +697,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setCliente(newClienteData);
     }
-  };
+  }, [cliente]);
 
   // ✅ FIX: Realtime subscription para manter dados do usuário sempre atualizados
   // Isso resolve problemas de cache onde o webhook atualiza o backend mas o frontend não reflete
@@ -717,7 +719,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setCliente((currentCliente) => {
             if (!currentCliente) return null;
             
-            const updatedRecord = payload.new as any;
+            const updatedRecord = payload.new as { avatar_url?: string; [key: string]: unknown };
             
             // Preservar lógica de timestamp do avatar
             let avatarUrl = updatedRecord.avatar_url;

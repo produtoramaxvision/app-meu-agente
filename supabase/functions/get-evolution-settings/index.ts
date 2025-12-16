@@ -36,9 +36,10 @@ function coerceBoolean(value: unknown, fallback: boolean): boolean {
   return fallback
 }
 
-function normalizeSettings(raw: any): EvolutionSettings {
+function normalizeSettings(raw: unknown): EvolutionSettings {
   // Muitos endpoints devolvem o objeto direto; alguns devolvem dentro de "settings".
-  const s = raw?.settings ?? raw ?? {}
+  const rawObj = raw as Record<string, unknown>
+  const s = (rawObj?.settings as Record<string, unknown>) ?? rawObj ?? {}
 
   return {
     rejectCall: coerceBoolean(s.rejectCall, true),

@@ -595,7 +595,556 @@ Responda SIM para confirmar ou me avise se precisar reagendar."
 
 ---
 
-## 📋 Referência Rápida de Comandos
+## � **COMBINAÇÕES DE AGENTES (Workflows Integrados)**
+
+Maximize resultados combinando múltiplos agentes em fluxos automatizados.
+
+### Workflow 1: Pipeline de Vendas Completo
+
+**Objetivo**: Converter lead em cliente pagante
+
+**Agentes**: SDR + Agendamento + Financeiro + Follow-up
+
+**Fluxo**:
+```
+1️⃣ SDR qualifica lead (Budget, Authority, Need, Timing)
+   └─ Fit Alto? → Próximo passo
+   
+2️⃣ Agendamento marca demo para melhor horário
+   └─ Confirmação automática via WhatsApp
+   
+3️⃣ Follow-up lembra lead 24h antes da demo
+   └─ Taxa de comparecimento +35%
+   
+4️⃣ Pós-demo: SDR envia proposta comercial
+   └─ Negociação via WhatsApp
+   
+5️⃣ Fechamento: Financeiro registra venda
+   └─ Atualiza dashboard automaticamente
+```
+
+**Comandos para Implementar**:
+```
+"Configure SDR para qualificar leads do Instagram"
+"Após qualificação, agende demo automática"
+"Follow-up 24h antes da demo"
+"Registre vendas fechadas automaticamente"
+```
+
+**Resultado Esperado**:
+- ⬆️ **+45%** conversão lead → cliente
+- ⬇️ **-60%** tempo de vendedor em admin
+- 📊 **100%** dados sincronizados
+
+---
+
+### Workflow 2: Atendimento Pós-Venda
+
+**Objetivo**: Garantir satisfação e upsell
+
+**Agentes**: Confirmação + Resumo Grupos + Remarketing
+
+**Fluxo**:
+```
+1️⃣ Confirmação envia pesquisa NPS 7 dias após compra
+   └─ "De 0-10, recomendaria nosso serviço?"
+   
+2️⃣ NPS < 7? → Alerta para suporte prioritário
+   └─ Ticket aberto automaticamente
+   
+3️⃣ NPS ≥ 9? → Remarketing oferece upgrade
+   └─ "Obrigado! Conheça plano Premium:"
+   
+4️⃣ Resumo Grupos monitora grupo de clientes
+   └─ Identifica dúvidas comuns para FAQ
+```
+
+**Resultado Esperado**:
+- ⬆️ **+28%** taxa de resposta NPS
+- ⬆️ **+15%** conversão para planos maiores
+- ⬇️ **-40%** churn (cancelamentos)
+
+---
+
+### Workflow 3: Gestão de Eventos
+
+**Objetivo**: Organizar evento sem esquecer detalhes
+
+**Agentes**: Agendamento + Confirmação + Financeiro + Web Search
+
+**Fluxo**:
+```
+1️⃣ Agendamento cria evento no Google Calendar
+   └─ "Webinar: Automação com IA - 15/12 às 19h"
+   
+2️⃣ Web Search pesquisa benchmarks de eventos similares
+   └─ "Busque webinars de automação com mais de 500 participantes"
+   
+3️⃣ Confirmação envia lembretes escalonados
+   └─ 7 dias antes, 3 dias antes, 1 dia antes
+   
+4️⃣ Financeiro registra custos (plataforma, ads)
+   └─ Acompanha ROI do evento
+   
+5️⃣ Follow-up para não-comparecentes
+   └─ Envia gravação + oferta especial
+```
+
+**Resultado Esperado**:
+- ⬆️ **+52%** taxa de comparecimento
+- 📊 ROI rastreado em tempo real
+- ⬆️ **+38%** engajamento pós-evento
+
+---
+
+### Workflow 4: Otimização de Marketing
+
+**Objetivo**: Melhorar performance de anúncios
+
+**Agentes**: Marketing + Web Search + Dev
+
+**Fluxo**:
+```
+1️⃣ Marketing analisa campanhas Google Ads semanalmente
+   └─ Identifica termos com CTR < 1%
+   
+2️⃣ Web Search busca tendências do nicho
+   └─ "Pesquise palavras-chave emergentes em [nicho]"
+   
+3️⃣ Dev otimiza landing pages
+   └─ "Sugira melhorias na LP de conversão"
+   
+4️⃣ Marketing aplica termos negativos sugeridos
+   └─ Reduz desperdício de verba
+   
+5️⃣ Relatório consolidado via WhatsApp
+   └─ Toda segunda às 9h
+```
+
+**Resultado Esperado**:
+- ⬇️ **-32%** CPA (custo por aquisição)
+- ⬆️ **+47%** CTR médio
+- ⬆️ **+19%** taxa de conversão
+
+---
+
+### Workflow 5: Gestão Financeira Completa
+
+**Objetivo**: Controle total de fluxo de caixa
+
+**Agentes**: Financeiro + Agendamento + Web Search
+
+**Fluxo**:
+```
+1️⃣ Financeiro registra entradas/saídas via WhatsApp
+   └─ Categorização automática por ML
+   
+2️⃣ Agendamento lembra pagamentos recorrentes
+   └─ "Pagamento fornecedor X vence em 3 dias"
+   
+3️⃣ Financeiro alerta quando saldo < threshold
+   └─ "Atenção: saldo abaixo de R$ 5.000"
+   
+4️⃣ Web Search pesquisa melhores taxas de câmbio
+   └─ Para importações/exportações
+   
+5️⃣ Relatório mensal automático
+   └─ DRE simplificado + gráficos
+```
+
+**Resultado Esperado**:
+- ⬇️ **-90%** atrasos em pagamentos
+- 📊 **100%** registros categorizados
+- ⬆️ **+25%** economia em negociações
+
+---
+
+## 🛠️ **PADRÕES COMUNS E MELHORES PRÁTICAS**
+
+### Padrão 1: Comandos Claros e Objetivos
+
+❌ **Evite comandos ambíguos**:
+```
+"Quero registrar uma coisa financeira"
+"Me ajuda com agenda?"
+"Faz um negócio de vídeo"
+```
+
+✅ **Use comandos específicos**:
+```
+"Registre receita R$ 2.500 de Maria consultoria"
+"Marque reunião sexta 15h com João no Meet"
+"Crie vídeo 30s sobre lançamento produto"
+```
+
+**Por quê?** Agentes processam mais rápido (~3x) e com maior precisão (95% vs 60%).
+
+---
+
+### Padrão 2: Contexto Gradual para Tarefas Complexas
+
+❌ **Evite sobrecarga de informações**:
+```
+"Crie vídeo vertical 30s formato 1080x1920 sobre produto X 
+com roteiro Y focado em benefícios A B C para público Z 
+estilo moderno com música upbeat e CTA no final"
+```
+
+✅ **Divida em etapas**:
+```
+Passo 1: "Crie vídeo sobre produto X"
+Agente responde: "Ok! Qual o foco principal?"
+Passo 2: "Benefícios de economia de tempo"
+Agente responde: "Duração e formato?"
+Passo 3: "30 segundos, vertical para stories"
+```
+
+**Por quê?** Permite ajustes intermediários e evita retrabalho.
+
+---
+
+### Padrão 3: Aproveite Histórico de Conversas
+
+✅ **Use referências contextuais**:
+```
+"Registre despesa R$ 800 aluguel"
+[2 minutos depois]
+"Corrija o último registro para R$ 850"
+[1 hora depois]
+"Exporte registros do mês incluindo esse aluguel"
+```
+
+**Por quê?** Agente mantém contexto de curto prazo (últimos 10 comandos), facilitando correções.
+
+---
+
+### Padrão 4: Templates para Repetições
+
+✅ **Crie templates de comandos frequentes**:
+```
+Template: "Relatório Semanal"
+└─ "Exporte financeiro últimos 7 dias em Excel
+    + Agende envio para contador@empresa.com
+    + Crie tarefa: revisar relatório até sexta"
+
+Comando: "Execute template Relatório Semanal"
+```
+
+**Como criar**:
+```
+"Salve como template 'Relatório Semanal': [comandos]"
+"Execute template Relatório Semanal"
+"Liste meus templates"
+```
+
+---
+
+### Padrão 5: Validação de Dados Importantes
+
+✅ **Sempre confirme registros financeiros críticos**:
+```
+Você: "Registre despesa R$ 15.000 equipamento"
+Agente: "⚠️ Valor alto detectado: R$ 15.000,00
+         Confirma registro?
+         [SIM] [NÃO] [PARCELAR]"
+Você: "Sim, confirmo"
+```
+
+**Por quê?** Previne erros em transações de alto valor (configurável: > R$ 5.000).
+
+---
+
+## 🐛 **TROUBLESHOOTING POR AGENTE**
+
+### Financeiro
+
+**Problema**: "Categoria errada atribuída"
+
+**Solução**:
+```
+1. Corrija: "Mude categoria do último registro para Transporte"
+2. Treine o ML: O agente aprende com sua correção
+3. Próximas vezes: Categorização automática melhorada
+```
+
+**Problema**: "Duplicata não detectada"
+
+**Solução**:
+```
+1. Ajuste sensibilidade: Configurações → Financeiro → 
+   Detecção de Duplicatas → Sensibilidade: Alta
+2. Margem: ±5% → ±10% (mais tolerante)
+```
+
+---
+
+### Agendamento
+
+**Problema**: "Google Calendar não sincroniza"
+
+**Solução**:
+```
+1. Verifique permissões: Configurações → Integrações → 
+   Google Workspace → Renovar permissões
+2. Teste: "Qual minha próxima reunião?" (deve listar eventos)
+3. Se falhar: Desconecte e reconecte Google Workspace
+```
+
+**Problema**: "Conflito não detectado"
+
+**Solução**:
+```
+1. Ative buffers: Configurações → Agendamento → 
+   Buffer entre reuniões: 15 minutos
+2. Considere deslocamento: Configurações → Agendamento → 
+   Tempo de deslocamento padrão: 30 minutos
+```
+
+---
+
+### SDR
+
+**Problema**: "Leads não são qualificados corretamente"
+
+**Solução**:
+```
+1. Revise critérios BANT: Configurações → SDR → 
+   Critérios de Qualificação
+   ├─ Budget mínimo: R$ 5.000 → R$ 3.000 (ajuste)
+   ├─ Urgência: 30 dias → 60 dias (mais flexível)
+   └─ Authority: Decisor → Decisor ou Influenciador
+
+2. Treine com exemplos:
+   "Qualifica lead: João, orçamento R$ 3.500, decide em 45 dias"
+   → Marque como "fit médio" manualmente
+   → Sistema aprende com feedback
+```
+
+**Problema**: "WhatsApp não envia mensagens"
+
+**Solução**:
+```
+1. Verifique conexão: Configurações → Integrações → 
+   WhatsApp → Status: Conectado ✅
+   
+2. Se desconectado:
+   ├─ Desconecte completamente
+   ├─ Aguarde 2 minutos
+   ├─ Reconecte com QR Code
+   └─ Teste: Envie mensagem para seu próprio número
+
+3. Verifique saldo de mensagens:
+   ├─ Configurações → Uso → Mensagens WhatsApp
+   ├─ Business: Ilimitado
+   └─ Se limitado: Upgrade ou aguarde reset mensal
+
+4. Revise templates (mensagens fora janela 24h):
+   ├─ Apenas templates pré-aprovados pelo WhatsApp
+   ├─ Solicite aprovação: Configurações → WhatsApp → Templates
+   └─ Aprovação em ~24h úteis
+```
+
+---
+
+### Marketing (Google Ads)
+
+**Problema**: "Análise não encontra campanhas"
+
+**Solução**:
+```
+1. Verifique conexão: Configurações → Integrações → 
+   Google Ads → Status: Conectado ✅
+   
+2. Teste permissões:
+   "Liste minhas campanhas ativas"
+   → Deve listar todas campanhas
+   
+3. Se falhar:
+   ├─ Verifique conta correta: Configurações → Google Ads → 
+      Conta ID: [confirme]
+   └─ Renove permissões: Pode ter expirado
+```
+
+**Problema**: "Sugestões de termos negativos genéricas"
+
+**Solução**:
+```
+1. Forneça contexto:
+   ❌ "Sugira termos negativos"
+   ✅ "Sugira termos negativos para campanha de leads 
+       B2B de software SaaS faturamento > R$ 10k"
+
+2. Analise histórico:
+   "Quais termos geraram cliques sem conversão nos últimos 30 dias?"
+   → Use essa lista para adicionar negativos
+```
+
+---
+
+### Dev
+
+**Problema**: "Agente não entende código"
+
+**Solução**:
+```
+1. Forneça contexto adicional:
+   ❌ "Debug isso: [código]"
+   ✅ "Debug: endpoint /api/checkout retorna erro 500
+       quando customerId está vazio. 
+       Código: [código]
+       Erro no log: [erro]"
+
+2. Especifique linguagem/framework:
+   "Revise este código React com TypeScript: [código]"
+```
+
+**Problema**: "Sugestões de otimização não aplicáveis"
+
+**Solução**:
+```
+1. Defina constraints:
+   "Otimize esta query SQL sem mudar estrutura da tabela
+    e mantendo compatibilidade com PostgreSQL 14"
+    
+2. Especifique objetivo:
+   "Reduza tempo de execução desta função de 2s para < 500ms"
+```
+
+---
+
+### Vídeo (Google Veo 3)
+
+**Problema**: "Vídeo gerado não atende expectativa"
+
+**Solução**:
+```
+1. Seja mais específico no prompt:
+   ❌ "Crie vídeo sobre produto"
+   ✅ "Crie vídeo de 30s mostrando:
+       • Introdução (5s): Logo + slogan
+       • Problema (10s): Dor do cliente
+       • Solução (10s): Seu produto resolvendo
+       • CTA (5s): 'Experimente grátis'"
+
+2. Solicite variações:
+   "Crie 3 variações do vídeo com estilos diferentes:
+    1. Corporativo (sóbrio, azul)
+    2. Moderno (vibrante, dinâmico)
+    3. Minimalista (clean, branco)"
+
+3. Itere:
+   "Ajuste vídeo anterior: mais rápido e música energética"
+```
+
+**Problema**: "Cota de vídeos esgotada"
+
+**Solução**:
+```
+1. Verifique uso: Configurações → Uso → Vídeos Gerados
+   ├─ Business: 20 vídeos/mês
+   └─ Premium: 50 vídeos/mês
+
+2. Otimize uso:
+   ├─ Planeje storyboards antes de gerar
+   ├─ Use variações da mesma geração
+   └─ Aguarde reset mensal
+
+3. Upgrade: Premium tem 2,5x mais cota
+```
+
+---
+
+### Confirmação
+
+**Problema**: "Confirmações não são enviadas"
+
+**Solução**:
+```
+1. Verifique horário configurado:
+   Configurações → Confirmação → Horário de Envio: 8h
+   └─ Ajuste se necessário
+
+2. Verifique filtros:
+   Configurações → Confirmação → Confirmar apenas:
+   ├─ ✅ Reuniões externas
+   ├─ ❌ Eventos internos
+   └─ ✅ Eventos com "cliente" no título
+
+3. Teste manual:
+   "Envie confirmação para reunião de amanhã às 15h"
+```
+
+---
+
+### Resumo de Grupos
+
+**Problema**: "Resumo incompleto ou vazio"
+
+**Solução**:
+```
+1. Verifique consentimento do grupo:
+   ├─ Administrador deve autorizar bot no grupo
+   ├─ Comando no grupo: "@MeuAgente ativar resumos"
+   └─ Confirmação: "✅ Resumos ativados"
+
+2. Verifique período:
+   Configurações → Resumo Grupos → Período: Últimas 24h
+   └─ Aumente para 48h se grupo com pouca atividade
+
+3. Grupos muito ativos:
+   └─ Resumo pode ter limite de 500 mensagens
+   └─ Configure filtros: Ignorar mensagens < 10 caracteres
+```
+
+---
+
+### Remarketing
+
+**Problema**: "Taxa de resposta baixa"
+
+**Solução**:
+```
+1. Revise templates:
+   ❌ "Oi! Viu nossa promoção?"
+   ✅ "Oi [Nome]! Vi que você se interessou por [produto].
+       Temos uma condição especial válida só até [data]: [oferta]"
+
+2. Ajuste timing:
+   Configurações → Remarketing → Intervalo:
+   ├─ Primeiro contato: 7 dias → 5 dias (mais cedo)
+   ├─ Segundo contato: 14 dias → 10 dias
+   └─ Máximo de tentativas: 2 → 3
+
+3. Segmente melhor:
+   "Remarketing apenas para leads qualificados com fit alto"
+```
+
+---
+
+### Follow-up
+
+**Problema**: "Contatos reclamam de excesso de mensagens"
+
+**Solução**:
+```
+1. Reduza frequência:
+   Configurações → Follow-up → Intervalo mínimo:
+   └─ 5 dias → 10 dias
+
+2. Respeite opt-out rigorosamente:
+   ├─ Se contato responder "PARE" ou "SAIR"
+   ├─ Remova imediatamente de todas listas
+   └─ Blacklist permanente
+
+3. Personalize mensagens:
+   ❌ "Oi! Lembra de nós?"
+   ✅ "Oi [Nome]! Nosso último contato foi sobre [assunto].
+       Houve progresso? Posso ajudar?"
+```
+
+---
+
+## �📋 Referência Rápida de Comandos
 
 ### Comandos Universais
 

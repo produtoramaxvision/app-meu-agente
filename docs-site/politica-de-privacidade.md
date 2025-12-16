@@ -262,6 +262,260 @@ Recomendamos que você **revise periodicamente** esta Política de Privacidade. 
 
 ---
 
+## 13. Dados de Menores de Idade
+
+A Plataforma Meu Agente **não é destinada a menores de 18 anos**. Não coletamos intencionalmente dados pessoais de crianças e adolescentes sem o consentimento específico e expresso de seus pais ou responsáveis legais.
+
+Caso você seja menor de 18 anos, **não forneça** dados pessoais por meio de nossos formulários, chat ou outros canais sem a autorização de seu responsável legal.
+
+Se tomarmos conhecimento de que coletamos inadvertidamente dados de menores sem o consentimento adequado, tomaremos medidas para **eliminar** tais informações de nossos sistemas o mais rapidamente possível.
+
+---
+
+## 14. Bases Legais para Tratamento de Dados (LGPD)
+
+O Meu Agente fundamenta o tratamento de dados pessoais nas seguintes bases legais, conforme Art. 7º e Art. 11 da LGPD:
+
+### 14.1. Execução de Contrato ou Diligências Pré-contratuais
+Quando o tratamento é necessário para:
+- Criar e gerenciar sua conta na Plataforma
+- Prestar os serviços contratados (agentes de IA, automações, integrações)
+- Processar pagamentos e emitir notas fiscais
+- Fornecer suporte técnico e atendimento
+
+### 14.2. Cumprimento de Obrigação Legal ou Regulatória
+Quando o tratamento é exigido por lei ou regulamentação, como:
+- Guarda de registros fiscais e contábeis
+- Atendimento a solicitações de autoridades competentes
+- Cumprimento de decisões judiciais ou administrativas
+
+### 14.3. Legítimo Interesse
+Quando o tratamento é necessário para atender interesses legítimos do Meu Agente ou de terceiros, como:
+- Prevenção de fraudes e segurança da Plataforma
+- Análise de métricas de uso e performance
+- Melhorias de produto e experiência do usuário
+- Marketing direto (com opt-out sempre disponível)
+- Exercício de direitos em processos judiciais
+
+**Importante**: O legítimo interesse é sempre ponderado com seus direitos e liberdades fundamentais, e você pode se opor ao tratamento nessa base.
+
+### 14.4. Consentimento
+Quando solicitamos seu consentimento explícito para:
+- Envio de comunicações de marketing não relacionadas ao contrato
+- Coleta de dados não essenciais para a prestação de serviços
+- Uso de cookies não estritamente necessários
+
+**Importante**: Você pode revogar seu consentimento a qualquer momento, sem afetar a legalidade do tratamento anterior.
+
+### 14.5. Proteção do Crédito
+Quando aplicável, para proteção do crédito nas relações de consumo.
+
+---
+
+## 15. Privacidade e Inteligência Artificial
+
+O Meu Agente utiliza **agentes de inteligência artificial** para processar informações, responder consultas e executar automações. Em relação ao tratamento de dados pessoais pela IA:
+
+### 15.1. Treinamento de Modelos
+- **Modelos de IA de terceiros** (ex: OpenAI, Google, Anthropic): Dados enviados para APIs externas são processados conforme políticas desses fornecedores
+- **Modelos próprios**: Quando treinamos modelos locais, usamos dados anonimizados ou pseudonimizados sempre que possível
+- **Opt-out de treinamento**: Você pode solicitar que seus dados NÃO sejam usados para treinar modelos de IA
+
+### 15.2. Transparência de Decisões Automatizadas
+Quando decisões automatizadas por IA afetarem seus direitos, você tem direito a:
+- **Revisão humana** da decisão
+- **Explicação** dos critérios utilizados pela IA
+- **Contestação** da decisão automatizada
+
+Exemplos de decisões automatizadas:
+- Qualificação de leads (score automático)
+- Categorização de registros financeiros
+- Priorização de mensagens
+
+### 15.3. Dados Usados pela IA
+A IA processa:
+- **Textos** de mensagens WhatsApp, chat, emails
+- **Metadados** (data, hora, origem, tipo de interação)
+- **Histórico** de conversas e comandos anteriores (contexto)
+
+**Importante**: Evite compartilhar dados sensíveis (saúde, origem racial, convicção religiosa) com agentes de IA, pois eles podem ser processados por sistemas externos.
+
+---
+
+## 16. Incidentes de Segurança e Vazamento de Dados
+
+Em caso de **incidente de segurança** que possa acarretar risco ou dano relevante aos titulares de dados:
+
+### 16.1. Procedimento Interno
+1. **Detecção** e contenção imediata do incidente
+2. **Investigação** da causa raiz e extensão do vazamento
+3. **Avaliação** de riscos para os titulares afetados
+4. **Comunicação** aos afetados e à ANPD (quando exigido por lei)
+5. **Remediação** e implementação de controles adicionais
+
+### 16.2. Comunicação aos Titulares
+Se houver vazamento de seus dados, você será comunicado:
+- **Prazo**: Em tempo razoável (conforme exigido pela LGPD)
+- **Canal**: Email, WhatsApp ou notificação no app
+- **Conteúdo**: Natureza do incidente, dados afetados, medidas tomadas, recomendações
+
+### 16.3. Comunicação à ANPD
+Quando o incidente apresentar risco relevante, comunicaremos a Autoridade Nacional de Proteção de Dados (ANPD) conforme Art. 48 da LGPD.
+
+### 16.4. Medidas Preventivas
+Para prevenir incidentes, adotamos:
+- ✅ Criptografia TLS 1.3 (em trânsito) e AES-256 (em repouso)
+- ✅ Controle de acesso baseado em funções (RBAC)
+- ✅ Logs de auditoria de acessos e operações críticas
+- ✅ Backups criptografados com retenção de 30 dias
+- ✅ Testes de penetração (pentests) anuais
+- ✅ Treinamento de equipe em segurança da informação
+
+---
+
+## 17. Transferências Internacionais Específicas
+
+Detalhamento de fornecedores internacionais utilizados:
+
+### 17.1. Supabase (PostgreSQL + Auth + Storage)
+- **Localização**: AWS São Paulo (sa-east-1) - dados armazenados no Brasil
+- **Backup**: AWS Virginia (us-east-1) - replicação criptografada
+- **Conformidade**: GDPR, SOC 2 Type II, ISO 27001
+
+### 17.2. OpenAI (GPT Models)
+- **Localização**: EUA (servidores Azure)
+- **Política de dados**: Não usa dados de API para treinar modelos (Enterprise Tier)
+- **Conformidade**: GDPR, SOC 2, HIPAA (com BAA)
+- **Retenção**: 30 dias para logs, depois deletado
+
+### 17.3. Evolution API (WhatsApp)
+- **Localização**: Brasil (instância dedicada)
+- **Dados**: Armazenados localmente, não replicados
+
+### 17.4. Stripe (Pagamentos)
+- **Localização**: Processamento global (dados financeiros em EUA/Europa)
+- **Conformidade**: PCI DSS Level 1, GDPR, SOC 1/2
+- **Dados**: Apenas dados de pagamento, não acessa dados de negócio
+
+### 17.5. N8N (Automações)
+- **Localização**: Configurável (auto-hosted no Brasil ou cloud Europa)
+- **Dados**: Apenas dados necessários para fluxos de automação
+
+**Garantias Contratuais**:
+- ✅ Cláusulas de proteção de dados (DPA - Data Processing Addendum)
+- ✅ Responsabilidade solidária em caso de vazamento
+- ✅ Direito de auditoria e inspeção
+- ✅ Notificação obrigatória de incidentes
+
+---
+
+## 18. Direitos Específicos da LGPD Detalhados
+
+### 18.1. Confirmação e Acesso (Art. 9º, I e II)
+Você pode solicitar:
+- Confirmação de que tratamos seus dados
+- Cópia de todos os dados pessoais que possuímos sobre você
+
+**Como exercer**: Email para privacidade@meuagente.api.br  
+**Prazo de resposta**: Até 15 dias úteis  
+**Formato**: PDF, JSON ou CSV (a sua escolha)
+
+---
+
+### 18.2. Correção (Art. 9º, III)
+Você pode solicitar:
+- Correção de dados incompletos, inexatos ou desatualizados
+
+**Como exercer**: Na própria plataforma (Configurações → Perfil) ou via email  
+**Prazo de resposta**: Imediato (se feito no app) ou até 5 dias úteis (se por email)
+
+---
+
+### 18.3. Anonimização, Bloqueio ou Eliminação (Art. 9º, IV)
+Você pode solicitar:
+- **Anonimização**: Remover identificação de seus dados (irreversível)
+- **Bloqueio**: Suspender temporariamente o tratamento
+- **Eliminação**: Deletar permanentemente seus dados
+
+**Exceções** (dados NÃO serão deletados quando):
+- ✅ Cumprimento de obrigação legal (ex: dados fiscais por 5 anos)
+- ✅ Exercício de direitos em processos judiciais
+- ✅ Contrato ainda vigente (dados essenciais)
+
+**Como exercer**: Configurações → Conta → "Excluir minha conta" ou via email  
+**Prazo de resposta**: Até 15 dias úteis  
+**Período de graça**: 7 dias para cancelar deleção (após isso, irreversível)
+
+---
+
+### 18.4. Portabilidade (Art. 9º, V e VI)
+Você pode solicitar:
+- Transferência de seus dados para outro fornecedor
+- Formato: JSON estruturado (compatível com outras plataformas)
+
+**Dados portados**:
+- ✅ Registros financeiros (receitas/despesas)
+- ✅ Eventos de agenda
+- ✅ Tarefas e metas
+- ✅ Configurações de agentes
+- ❌ Logs de sistema (dados técnicos não portados)
+
+**Como exercer**: Email para privacidade@meuagente.api.br  
+**Prazo de resposta**: Até 15 dias úteis  
+**Formato**: JSON com schema documentado
+
+---
+
+### 18.5. Informação sobre Compartilhamento (Art. 9º, VII)
+Você pode solicitar:
+- Lista de todas as entidades com quem compartilhamos seus dados
+- Finalidades de cada compartilhamento
+
+**Como exercer**: Email para privacidade@meuagente.api.br  
+**Prazo de resposta**: Até 15 dias úteis
+
+---
+
+### 18.6. Revogação de Consentimento (Art. 9º, IX)
+Você pode:
+- Revogar consentimento para comunicações de marketing: Link "Descadastrar" nos emails
+- Revogar consentimento para cookies não essenciais: Configurações do navegador
+- Revogar consentimento para uso de dados em treinamento de IA: Email para privacidade@meuagente.api.br
+
+**Efeitos da revogação**:
+- ⚠️ Não afeta tratamentos anteriores (já realizados)
+- ⚠️ Pode limitar funcionalidades da Plataforma
+- ✅ Tratamentos com outras bases legais continuam válidos
+
+---
+
+### 18.7. Oposição a Tratamento (Art. 9º, X)
+Você pode se opor a:
+- Tratamento baseado em **legítimo interesse**
+- Processamento para **marketing direto**
+- Uso de dados para **perfilização** e decisões automatizadas
+
+**Como exercer**: Email para privacidade@meuagente.api.br  
+**Prazo de resposta**: Até 15 dias úteis  
+**Avaliação**: Analisaremos a oposição e responderemos com fundamentação
+
+---
+
+### 18.8. Revisão de Decisões Automatizadas (Art. 20)
+Você pode solicitar:
+- **Revisão humana** de qualquer decisão automatizada por IA
+- **Explicação** dos critérios e lógica utilizada
+
+**Exemplos de decisões revisáveis**:
+- Score de qualificação de lead (SDR)
+- Categorização automática de despesa
+- Rejeição de registro por duplicata
+
+**Como exercer**: Email para privacidade@meuagente.api.br  
+**Prazo de resposta**: Até 7 dias úteis
+
+---
+
 ## Cookies e Tecnologias Semelhantes
 
 ### O que são cookies?

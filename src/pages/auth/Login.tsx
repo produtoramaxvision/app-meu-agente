@@ -72,8 +72,9 @@ export default function Login() {
       } else {
         setStep('signup');
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao verificar telefone');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao verificar telefone';
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -92,7 +93,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login(cleanPhone, password);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // O AuthContext já exibe um toast unificado com tentativas restantes
       // Aqui apenas limpamos a senha para reforçar a segurança
       console.error('Login error:', err);
@@ -155,8 +156,9 @@ export default function Login() {
         cpf: '',
         confirmPassword: '',
       });
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao processar cadastro';
+      toast.error(message);
     } finally {
       setLoading(false);
     }

@@ -125,9 +125,9 @@ export default function Agenda() {
     }
   }, [
     view, 
-    selectedDate.getTime(), 
-    dateRange?.from?.getTime(), 
-    dateRange?.to?.getTime()
+    selectedDate, 
+    dateRange?.from, 
+    dateRange?.to
   ]);
 
   // Removido: useEffect problemático que causava invalidação desnecessária
@@ -135,24 +135,30 @@ export default function Agenda() {
   // e não a cada renderização do componente
 
   // ✅ CORREÇÃO: Estabilizar arrays de opções com debounce para evitar re-renderizações desnecessárias
+  // Extrair joins para variáveis para evitar expressões complexas em deps
+  const calendarsKey = selectedCalendars.join(',');
+  const categoriesKey = selectedCategories.join(',');
+  const prioritiesKey = selectedPriorities.join(',');
+  const statusesKey = selectedStatuses.join(',');
+  
   const stableCalendarIds = useMemo(() => 
     selectedCalendars.length ? selectedCalendars : undefined,
-    [selectedCalendars.join(',')] // Usar join para estabilizar referência
+    [selectedCalendars]
   );
 
   const stableCategories = useMemo(() => 
     selectedCategories.length ? selectedCategories : undefined,
-    [selectedCategories.join(',')] // Usar join para estabilizar referência
+    [selectedCategories]
   );
 
   const stablePriorities = useMemo(() => 
     selectedPriorities.length ? selectedPriorities : undefined,
-    [selectedPriorities.join(',')] // Usar join para estabilizar referência
+    [selectedPriorities]
   );
 
   const stableStatuses = useMemo(() => 
     selectedStatuses.length ? selectedStatuses : undefined,
-    [selectedStatuses.join(',')] // Usar join para estabilizar referência
+    [selectedStatuses]
   );
 
   const stableSearchQuery = useMemo(() => {
@@ -324,7 +330,7 @@ export default function Agenda() {
     setDateRange(undefined);
   }, [setSearchQuery]);
 
-  const handleCreateEvent = useCallback((data: any) => {
+  const handleCreateEvent = useCallback((data: EventFormData) => {
     const mutation = eventToEdit ? updateEvent : createEvent;
     const mutationData = eventToEdit ? { id: eventToEdit.id, updates: data } : data;
     
@@ -346,7 +352,7 @@ export default function Agenda() {
           { duration: 3000 }
         );
       },
-      onError: (error: any) => {
+      onError: (error: Error) => {
         // Feedback visual de erro
         toast.error(
           eventToEdit ? 'Erro ao atualizar evento' : 'Erro ao criar evento',
@@ -364,13 +370,13 @@ export default function Agenda() {
     });
   }, [createEvent, updateEvent, eventToEdit]);
 
-  const handleQuickCreate = useCallback((data: any) => {
+  const handleQuickCreate = useCallback((data: EventFormData) => {
     setIsCreatingEvent(true);
     createEvent.mutate(data, {
       onSuccess: () => {
         toast.success('Evento criado com sucesso!', { duration: 3000 });
       },
-      onError: (error: any) => {
+      onError: (error: Error) => {
         toast.error('Erro ao criar evento', { 
           description: error.message || 'Tente novamente',
           duration: 5000
@@ -382,13 +388,13 @@ export default function Agenda() {
     });
   }, [createEvent]);
 
-  const handleEventDoubleClick = useCallback((data: any) => {
+  const handleEventDoubleClick = useCallback((data: Partial<EventFormData>) => {
     setEventToEdit(null);
     setDefaultEventData(data);
     setEventFormOpen(true);
   }, []);
 
-  const onEventClick = useCallback((evt: any) => {
+  const onEventClick = useCallback((evt: Event) => {
     toast.info(evt.title, { description: `${format(new Date(evt.start_ts), "dd/MM/yyyy HH:mm")} • ${evt.location || 'Sem local'}` });
   }, []);
 

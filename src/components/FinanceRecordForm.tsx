@@ -67,10 +67,20 @@ const formSchema = z.object({
   path: ["recorrencia_fim"],
 });
 
+interface FinanceRecord {
+  id?: string;
+  tipo: 'receita' | 'despesa';
+  categoria: string;
+  valor: number;
+  descricao?: string;
+  data_hora: string;
+  [key: string]: unknown;
+}
+
 interface FinanceRecordFormProps {
   userPhone: string;
   onSuccess?: () => void;
-  recordToEdit?: any;
+  recordToEdit?: FinanceRecord;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
@@ -110,7 +120,7 @@ export function FinanceRecordForm({ userPhone, onSuccess, recordToEdit, open: co
   };
 
   // ✅ CORREÇÃO: Função para verificar duplicatas financeiras usando hook customizado
-  const checkForDuplicates = async (payload: any) => {
+  const checkForDuplicates = async (payload: FinanceRecord) => {
     const duplicateResult = await checkDuplicate({
       phone: userPhone,
       tipo: payload.tipo,

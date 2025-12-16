@@ -37,10 +37,10 @@ export default function ForgotPassword() {
 
       setSent(true);
       toast.success('Enviamos um link de recuperação para o seu e-mail.');
-    } catch (error: any) {
-      const message =
-        error?.message ||
-        'Não foi possível enviar o e-mail de recuperação. Tente novamente em instantes.';
+    } catch (error: unknown) {
+      const message = error instanceof Error && error.message
+        ? error.message
+        : 'Não foi possível enviar o e-mail de recuperação. Tente novamente em instantes.';
       toast.error(message);
     } finally {
       setLoading(false);

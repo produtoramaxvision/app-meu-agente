@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -76,50 +76,7 @@ export default function Profile() {
     },
   });
 
-  useEffect(() => {
-    const success = searchParams.get('success');
-    const canceled = searchParams.get('canceled');
-    const portalReturn = searchParams.get('portal_return');
-
-    if (success === 'true' || portalReturn === 'true') {
-      if (success === 'true') {
-        toast.success("Pagamento realizado com sucesso! Atualizando seu plano...");
-      } else {
-        toast.info("Verificando atualizações do plano...");
-      }
-      
-      // Adiciona um delay inicial para dar tempo do webhook processar
-      const timer1 = setTimeout(() => {
-        refreshUserData();
-      }, 1500);
-
-      // Adiciona uma segunda verificação de segurança
-      const timer2 = setTimeout(() => {
-        refreshUserData();
-      }, 4000);
-
-      return () => {
-        clearTimeout(timer1);
-        clearTimeout(timer2);
-      };
-    } else if (canceled === 'true') {
-      toast.info("O processo de pagamento foi cancelado.");
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (cliente) {
-      form.reset({
-        name: cliente.name,
-        email: cliente.email || '',
-        phone: cliente.phone,
-        cpf: cliente.cpf || '',
-      });
-      setAvatarUrl(cliente.avatar_url || null);
-    }
-  }, [cliente, form]);
-
-  const refreshUserData = async () => {
+  const refreshUserData = useCallback(async () => {
     if (!cliente) return;
     
     try {
@@ -159,7 +116,50 @@ export default function Profile() {
     } catch (error) {
       console.error('Error refreshing user data:', error);
     }
-  };
+  }, [cliente, form, setAvatarUrl, updateCliente]);
+
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const canceled = searchParams.get('canceled');
+    const portalReturn = searchParams.get('portal_return');
+
+    if (success === 'true' || portalReturn === 'true') {
+      if (success === 'true') {
+        toast.success("Pagamento realizado com sucesso! Atualizando seu plano...");
+      } else {
+        toast.info("Verificando atualizações do plano...");
+      }
+      
+      // Adiciona um delay inicial para dar tempo do webhook processar
+      const timer1 = setTimeout(() => {
+        refreshUserData();
+      }, 1500);
+
+      // Adiciona uma segunda verificação de segurança
+      const timer2 = setTimeout(() => {
+        refreshUserData();
+      }, 4000);
+
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+      };
+    } else if (canceled === 'true') {
+      toast.info("O processo de pagamento foi cancelado.");
+    }
+  }, [searchParams, refreshUserData]);
+
+  useEffect(() => {
+    if (cliente) {
+      form.reset({
+        name: cliente.name,
+        email: cliente.email || '',
+        phone: cliente.phone,
+        cpf: cliente.cpf || '',
+      });
+      setAvatarUrl(cliente.avatar_url || null);
+    }
+  }, [cliente, form]);
 
   const onSubmit = async (values: z.infer<typeof profileSchema>) => {
     /**

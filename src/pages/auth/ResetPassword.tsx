@@ -59,10 +59,9 @@ export default function ResetPassword() {
       setTimeout(() => {
         navigate('/auth/login');
       }, 1500);
-    } catch (error: any) {
+    } catch (error: unknown) {
       const message =
-        error?.message ||
-        'Não foi possível atualizar sua senha. Tente novamente em instantes.';
+        error instanceof Error ? error.message : 'Não foi possível atualizar sua senha. Tente novamente em instantes.';
       toast.error(message);
     } finally {
       setLoading(false);

@@ -53,7 +53,7 @@ export function useGoals() {
       if (!cliente?.phone) return [];
 
       const { data, error } = await supabase
-        .from('metas' as any)
+        .from('metas')
         .select('*')
         .eq('phone', cliente.phone)
         .order('meta_principal', { ascending: false })

@@ -87,7 +87,7 @@ export function useEvolutionContacts(
   // Carregar contatos salvos do banco de dados
   const loadContacts = useCallback(async () => {
     try {
-      let allData: any[] = [];
+      let allData: EvolutionAPIContact[] = [];
       const PAGE_SIZE = 1000;
       let from = 0;
       let to = PAGE_SIZE - 1;
@@ -200,14 +200,14 @@ export function useEvolutionContacts(
       const evolutionContacts = await response.json();
 
       // Filtrar: remover broadcast lists (@lid)
-      const withoutBroadcastLists = evolutionContacts.filter((c: any) => {
+      const withoutBroadcastLists = evolutionContacts.filter((c: EvolutionAPIContact) => {
         const remoteJid = c.remoteJid || '';
         return remoteJid.includes('@s.whatsapp.net') || remoteJid.includes('@g.us');
       });
 
       // Filtrar grupos se necessário
       const filteredContacts = onlyContacts
-        ? withoutBroadcastLists.filter((c: any) => c.remoteJid?.includes('@s.whatsapp.net'))
+        ? withoutBroadcastLists.filter((c: EvolutionAPIContact) => c.remoteJid?.includes('@s.whatsapp.net'))
         : withoutBroadcastLists;
 
       // Limpar contatos antigos desta instância
@@ -218,7 +218,7 @@ export function useEvolutionContacts(
         .eq('phone', userPhone);
 
       // Preparar dados para salvar
-      const contactsToSave = filteredContacts.map((contact: any) => ({
+      const contactsToSave = filteredContacts.map((contact: EvolutionAPIContact) => ({
         instance_id: instanceId,
         phone: userPhone,
         remote_jid: contact.remoteJid,

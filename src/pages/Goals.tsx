@@ -13,7 +13,7 @@ export default function Goals() {
 
   const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase.from('metas' as any).delete().eq('id', id);
+      const { error } = await supabase.from('metas').delete().eq('id', id);
       if (error) throw error;
       toast.success('Meta excluída com sucesso.');
       refetch();

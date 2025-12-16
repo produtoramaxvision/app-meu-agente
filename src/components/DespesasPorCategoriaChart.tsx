@@ -67,7 +67,7 @@ export const DespesasPorCategoriaChart = memo(function DespesasPorCategoriaChart
         <CardHeader className="pb-3 space-y-3">
           <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-base sm:text-lg">Por Categoria</CardTitle>
-            <Tabs value={categoryType} onValueChange={(v: any) => setCategoryType(v)} className="w-auto">
+            <Tabs value={categoryType} onValueChange={(v: string) => setCategoryType(v as 'saida' | 'entrada')} className="w-auto">
               <TabsList className="h-8 p-1">
                 <TabsTrigger value="saida" className="text-xs px-2 sm:px-3 py-1">Despesas</TabsTrigger>
                 <TabsTrigger value="entrada" className="text-xs px-2 sm:px-3 py-1">Receitas</TabsTrigger>
@@ -92,7 +92,7 @@ export const DespesasPorCategoriaChart = memo(function DespesasPorCategoriaChart
       <CardHeader className="pb-3 space-y-3">
         <div className="flex items-center justify-between gap-3">
           <CardTitle className="text-base sm:text-lg">Por Categoria</CardTitle>
-          <Tabs value={categoryType} onValueChange={(v: any) => setCategoryType(v)} className="w-auto">
+          <Tabs value={categoryType} onValueChange={(v: string) => setCategoryType(v as 'saida' | 'entrada')} className="w-auto">
             <TabsList className="h-8 p-1">
               <TabsTrigger value="saida" className="text-xs px-2 sm:px-3 py-1">Despesas</TabsTrigger>
               <TabsTrigger value="entrada" className="text-xs px-2 sm:px-3 py-1">Receitas</TabsTrigger>

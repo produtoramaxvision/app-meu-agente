@@ -21,10 +21,10 @@ interface SearchContextValue {
 }
 
 interface SearchResults {
-  financial: any[];
-  tasks: any[];
-  agenda: any[];
-  reports: any[];
+  financial: unknown[];
+  tasks: unknown[];
+  agenda: unknown[];
+  reports: unknown[];
   total: number;
 }
 

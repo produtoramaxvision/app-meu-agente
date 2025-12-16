@@ -36,7 +36,7 @@ export function TaskFilters({
         />
       </div>
 
-      <Tabs value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as any)}>
+      <Tabs value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as 'all' | 'pending' | 'done' | 'overdue')}>
         <TabsList className="grid w-full grid-cols-4 p-1 h-auto gap-1">
           <TabsTrigger
             value="all"

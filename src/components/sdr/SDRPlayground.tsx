@@ -48,7 +48,7 @@ export function SDRPlayground() {
         },
       ]);
     }
-  }, [configJson]);
+  }, [configJson, messages.length]);
 
   // Enviar para webhook do playground e exibir resposta do agente real
   const sendToWebhook = async (userMessage: string) => {
@@ -77,8 +77,9 @@ export function SDRPlayground() {
       if (response.ok) {
         const contentType = response.headers.get('content-type') || '';
         if (contentType.includes('application/json')) {
-          const json = await response.json().catch(() => ({} as any));
-          replyText = json.reply || json.message || JSON.stringify(json);
+          const json = await response.json().catch(() => ({} as Record<string, unknown>));
+          const jsonData = json as { reply?: string; message?: string };
+          replyText = jsonData.reply || jsonData.message || JSON.stringify(json);
         } else {
           replyText = await response.text();
         }

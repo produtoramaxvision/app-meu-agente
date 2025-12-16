@@ -38,8 +38,8 @@ interface Props {
   calendars: Calendar[];
   isLoading?: boolean;
   onEventClick?: (evt: Event) => void;
-  onEventCreate: (data: any) => void;
-  onEventDoubleClick: (data: any) => void;
+  onEventCreate: (data: Partial<Event>) => void;
+  onEventDoubleClick: (data: Partial<Event>) => void;
   onEventMove?: (eventId: string, newStartTime: Date, newEndTime: Date) => void;
 }
 
@@ -57,7 +57,7 @@ const prefersReducedMotion = () => {
 };
 
 // Função de debounce para otimizar performance
-function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
+function debounce<T extends (...args: never[]) => unknown>(func: T, wait: number): T {
   let timeout: NodeJS.Timeout;
   return ((...args: Parameters<T>) => {
     clearTimeout(timeout);
@@ -66,15 +66,21 @@ function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
 }
 
 // Componente para eventos arrastáveis
+interface PopoverState {
+  open: boolean;
+  anchor: { top: number; left: number } | null;
+  eventData: Partial<Event>;
+}
+
 interface DraggableEventProps {
   event: Event;
   calendarColor: string;
   allEvents: Event[];
   onEventClick?: (evt: Event) => void;
-  onEventDoubleClick?: (data: any) => void;
+  onEventDoubleClick?: (data: Partial<Event>) => void;
   openEventPopover: string | null;
   setOpenEventPopover: (id: string | null) => void;
-  setPopoverState: (state: any) => void;
+  setPopoverState: (state: PopoverState | ((prev: PopoverState) => PopoverState)) => void;
   lastClickedEvent: string | null;
   setLastClickedEvent: (id: string | null) => void;
   selectedDate: Date;
@@ -260,11 +266,7 @@ export default function AgendaGridDay({ date, events, calendars, isLoading, onEv
   const [hoverIndicator, setHoverIndicator] = useState<{ top: number; time: string } | null>(null);
   const [selection, setSelection] = useState<{ start: number; end: number | null; startTime: Date } | null>(null);
   
-  const [popoverState, setPopoverState] = useState<{
-    open: boolean;
-    anchor: { top: number; left: number } | null;
-    eventData: Partial<any>;
-  }>({ open: false, anchor: null, eventData: {} });
+  const [popoverState, setPopoverState] = useState<PopoverState>({ open: false, anchor: null, eventData: {} });
   const singleClickTimeoutRef = useRef<number | null>(null);
 
   const [openEventPopover, setOpenEventPopover] = useState<string | null>(null);
@@ -304,7 +306,7 @@ export default function AgendaGridDay({ date, events, calendars, isLoading, onEv
     const eventData = dayEvents.find(e => e.id === eventId);
     
     // Capturar posição inicial do ponteiro em Y
-    const activatorEvent = dragEvent.activatorEvent as any;
+    const activatorEvent = dragEvent.activatorEvent as { clientY?: number } | null | undefined;
     if (activatorEvent && typeof activatorEvent.clientY === 'number') {
       setDragStartPointerY(activatorEvent.clientY);
     } else {

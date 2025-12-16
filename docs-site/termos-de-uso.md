@@ -298,7 +298,345 @@ podem variar conforme o Plano contratado e as políticas vigentes, sendo informa
 
 ---
 
-## 14. Alterações dos Termos
+## 14. Direito de Arrependimento (Código de Defesa do Consumidor)
+
+### 14.1. Prazo de Arrependimento
+
+Em conformidade com o **Art. 49 do Código de Defesa do Consumidor (CDC)**, você tem direito de desistir da contratação no prazo de **7 (sete) dias corridos**, contados da data de:
+- Contratação do plano (no caso de contratação à distância)
+- Primeira cobrança efetiva (o que ocorrer primeiro)
+
+Este direito aplica-se a:
+- ✅ Planos Básico, Business e Premium (pagos)
+- ❌ Plano Free (não há contratação onerosa)
+
+### 14.2. Como Exercer o Arrependimento
+
+Para exercer o direito de arrependimento:
+
+**Método 1: Pelo App**
+```
+1. Acesse: Configurações → Assinatura
+2. Clique em "Cancelar e Solicitar Reembolso"
+3. Selecione motivo: "Direito de Arrependimento (CDC)"
+4. Confirme a solicitação
+```
+
+**Método 2: Por Email**
+- Envie para: comercial@meuagente.api.br
+- Assunto: "Exercício de Direito de Arrependimento - CDC"
+- Corpo: Informe seu nome completo, telefone cadastrado e número do pedido
+
+### 14.3. Efeitos do Arrependimento
+
+Após confirmação do arrependimento:
+
+**Reembolso**:
+- ✅ **100%** do valor pago é reembolsado
+- ⏱️ Prazo: Até **10 dias úteis** após solicitação
+- 💳 Forma: Mesmo meio de pagamento utilizado (cartão, PIX, boleto)
+- 📧 Comprovante: Enviado por email
+
+**Dados**:
+- ✅ Seus dados são **preservados** no Plano Free
+- ✅ Configurações básicas mantidas
+- ❌ Agentes exclusivos (SDR, Marketing, Dev, Vídeo) desativados
+- ❌ Integrações avançadas desconectadas
+
+**Sem Multas**:
+- ❌ Nenhuma taxa de cancelamento
+- ❌ Nenhuma penalidade
+- ❌ Nenhum custo adicional
+
+### 14.4. Exceções ao Direito de Arrependimento
+
+O direito de arrependimento **NÃO se aplica** quando:
+- Você já exerceu este direito anteriormente para o mesmo produto
+- Passaram-se mais de 7 dias corridos desde a contratação
+- Houve fraude ou má-fé comprovada
+
+---
+
+## 15. Service Level Agreement (SLA) - Níveis de Serviço
+
+### 15.1. Disponibilidade da Plataforma
+
+O Meu Agente garante os seguintes níveis de disponibilidade (uptime):
+
+| Plano | SLA Mensal | Tempo máximo de indisponibilidade |
+|-------|------------|-----------------------------------|
+| **Free** | 95% | ~36 horas/mês |
+| **Básico** | 98% | ~14 horas/mês |
+| **Business** | 99.5% | ~3,5 horas/mês |
+| **Premium** | 99.9% | ~43 minutos/mês |
+
+**Cálculo**: Disponibilidade = (Tempo Total - Tempo de Indisponibilidade) / Tempo Total × 100
+
+**Exclusões** (não contam para SLA):
+- ⏸️ Manutenções programadas (notificadas com 48h de antecedência)
+- 🔧 Atualizações de segurança emergenciais
+- 🌐 Indisponibilidades de terceiros (AWS, Supabase, WhatsApp, Google)
+- ⚡ Casos fortuitos ou força maior
+
+### 15.2. Tempo de Resposta de Agentes
+
+Tempo máximo de resposta dos agentes de IA:
+
+| Plano | Tempo de Resposta Médio | P95 (95º percentil) |
+|-------|-------------------------|---------------------|
+| **Free** | < 5 segundos | < 15 segundos |
+| **Básico** | < 3 segundos | < 10 segundos |
+| **Business** | < 2 segundos | < 5 segundos |
+| **Premium** | < 1 segundo | < 3 segundos |
+
+**Observações**:
+- Tempos medidos em horários de pico (10h-18h, dias úteis)
+- Agentes com processamento complexo (Vídeo, Dev) podem ter tempos maiores
+- Integra ções com APIs externas (Google Ads, WhatsApp) dependem de latência de terceiros
+
+### 15.3. Suporte Técnico
+
+Tempo de primeira resposta do suporte:
+
+| Plano | Prioridade Crítica | Prioridade Alta | Prioridade Normal |
+|-------|-------------------|-----------------|-------------------|
+| **Free** | 24h úteis | 48h úteis | 72h úteis |
+| **Básico** | 12h úteis | 24h úteis | 48h úteis |
+| **Business** | 2h (24/7) | 4h (24/7) | 8h úteis |
+| **Premium** | 1h (24/7) | 2h (24/7) | 4h úteis |
+
+**Definições**:
+- **Crítica**: Plataforma indisponível, perda de dados, falha de segurança
+- **Alta**: Funcionalidade crítica não funciona, impacto severo no negócio
+- **Normal**: Dúvidas, solicitações, bugs menores, melhorias
+
+### 15.4. Créditos por Descumprimento de SLA
+
+Se não cumprirmos o SLA de disponibilidade:
+
+| Disponibilidade Efetiva | Crédito |
+|------------------------|---------|
+| < 99.9% e ≥ 99.5% | 10% do valor mensal |
+| < 99.5% e ≥ 99.0% | 25% do valor mensal |
+| < 99.0% | 50% do valor mensal |
+
+**Como solicitar crédito**:
+1. Envie email para suporte@meuagente.api.br
+2. Assunto: "Solicitação de Crédito SLA - [Mês/Ano]"
+3. Inclua evidências (prints de indisponibilidade, horários)
+4. Prazo: Até 30 dias após o mês de referência
+
+**Aplicação do crédito**:
+- Descontado na próxima fatura
+- Não cumulativo com outros descontos
+- Não conversível em dinheiro
+- Válido apenas para contratos ativos
+
+---
+
+## 16. Política de Uso Justo (Fair Use Policy)
+
+### 16.1. Limites de Uso
+
+Para garantir performance equitativa para todos os usuários:
+
+**Plano Free**:
+- 50 comandos de agentes/mês
+- 100 MB armazenamento
+- 500 mensagens WhatsApp/mês (quando disponível)
+
+**Plano Básico**:
+- 500 comandos de agentes/mês
+- 1 GB armazenamento
+- 5.000 mensagens WhatsApp/mês
+
+**Plano Business**:
+- ♾️ Comandos ilimitados (com fair use)
+- 10 GB armazenamento
+- 50.000 mensagens WhatsApp/mês
+
+**Plano Premium**:
+- ♾️ Comandos ilimitados (com fair use)
+- 100 GB armazenamento
+- 200.000 mensagens WhatsApp/mês
+
+### 16.2. Fair Use para Planos "Ilimitados"
+
+"Ilimitado" significa uso razoável para operação normal do negócio. **Não é permitido**:
+
+❌ **Uso abusivo**:
+- Mais de 10.000 comandos/dia por usuário único
+- Scripts automatizados que fazem requisições em loop
+- Uso como proxy/gateway para terceiros
+- Mineração de dados ou web scraping massivo
+
+❌ **Compartilhamento de conta**:
+- Revenda de acesso
+- Uso por múltiplas empresas na mesma conta
+- Credenciais compartilhadas com >10 usuários (sem contrato Enterprise)
+
+❌ **Abuso de recursos**:
+- Upload de arquivos > 50 MB (limite por arquivo)
+- Armazenamento de backups não relacionados ao serviço
+- Geração de >100 vídeos/dia (Agente de Vídeo)
+
+### 16.3. Consequências do Abuso
+
+Se detectarmos uso abusivo:
+
+**1ª Ocorrência**: Aviso por email + solicitação de adequação (prazo: 48h)  
+**2ª Ocorrência**: Throttling (redução temporária de velocidade)  
+**3ª Ocorrência**: Suspensão temporária (até 7 dias)  
+**Reincidência**: Suspensão definitiva sem reembolso
+
+**Processo de Contestação**:
+1. Responda ao email de aviso justificando o uso
+2. Se for uso legítimo (ex: evento especial, pico sazonal), podemos aprovar exceção
+3. Se necessário, ofereceremos upgrade para plano Enterprise customizado
+
+---
+
+## 17. Propriedade Intelectual e Licenças
+
+### 17.1. Propriedade do Meu Agente
+
+São de propriedade exclusiva do Meu Agente:
+- ✅ Código-fonte da Plataforma
+- ✅ Marca "Meu Agente" e logos
+- ✅ Design, interface e experiência do usuário (UI/UX)
+- ✅ Algoritmos, modelos de IA e prompts proprietários
+- ✅ Documentação técnica e treinamentos
+- ✅ Dados agregados e anonimizados de uso
+
+### 17.2. Licença Concedida ao Cliente
+
+Você recebe uma licença:
+- **Não exclusiva**: Outros clientes também usam a Plataforma
+- **Não transferível**: Não pode ceder a terceiros sem autorização
+- **Revogável**: Termina ao cancelar o plano ou violar termos
+- **Limitada**: Apenas para fins comerciais legítimos do seu negócio
+
+**Você pode**:
+- ✅ Usar agentes de IA em seu site/WhatsApp
+- ✅ Integrar com seus sistemas via API (quando disponível)
+- ✅ Exportar seus dados em formatos abertos (JSON, CSV, Excel)
+- ✅ Criar conteúdo usando insights da Plataforma
+
+**Você NÃO pode**:
+- ❌ Fazer engenharia reversa do código
+- ❌ Copiar ou clonar a interface
+- ❌ Criar produto concorrente baseado no Meu Agente
+- ❌ Remover avisos de copyright ou marca d'água
+
+### 17.3. Propriedade do Conteúdo do Cliente
+
+Você mantém propriedade de:
+- ✅ Seus dados de negócio (registros financeiros, contatos, etc.)
+- ✅ Conversas e mensagens trocadas com seus clientes
+- ✅ Configurações e personalizações de agentes
+- ✅ Relatórios e análises geradas pela Plataforma
+
+**Licença ao Meu Agente**:
+Você nos concede licença:
+- **Limitada**: Apenas para prestar o serviço
+- **Revogável**: Termina ao deletar os dados
+- **Não exclusiva**: Você pode usar os dados em outros lugares
+
+Para:
+- Armazenar seus dados em nossos servidores
+- Processar dados com agentes de IA
+- Gerar relatórios e análises
+- Backups e recuperação de desastres
+- Melhorias de produto (dados anonimizados)
+
+### 17.4. Feedback e Sugestões
+
+Se você enviar feedback, sugestões ou ideias:
+- Você concede ao Meu Agente direito **irrestrito e perpétuo** de usar essas ideias
+- Sem obrigação de compensação ou crédito
+- Podemos implementar ou não, a nosso critério
+- Você renuncia a qualquer reivindicação de propriedade intelectual sobre isso
+
+---
+
+## 18. Garantias e Isenções de Responsabilidade
+
+### 18.1. Garantias do Meu Agente
+
+Garantimos que:
+- ✅ A Plataforma funciona substancialmente conforme documentado
+- ✅ Agentes de IA processam comandos em linguagem natural
+- ✅ Dados são armazenados com criptografia e backups
+- ✅ Suporte técnico responde conforme SLA do plano
+
+### 18.2. Isenções de Responsabilidade
+
+O Meu Agente **NÃO garante**:
+
+❌ **Resultados específicos**:
+- Não garantimos aumento de vendas, leads ou conversões
+- Performance depende de como você configura e usa a Plataforma
+- Resultados variam por indústria, mercado e execução
+
+❌ **100% de precisão**:
+- Agentes de IA podem ocasionalmente interpretar comandos incorretamente
+- Categorização automática (financeiro) pode errar (~5% dos casos)
+- Qualificação de leads (SDR) é baseada em heurísticas, não garantias
+
+❌ **Disponibilidade absoluta**:
+- Indisponibilidades podem ocorrer (manutenções, falhas de terceiros)
+- Integrações externas (WhatsApp, Google, Stripe) dependem desses fornecedores
+
+❌ **Conformidade legal específica**:
+- Você é responsável por garantir que seu uso está em conformidade com leis aplicáveis
+- Não somos consultores jurídicos, fiscais ou regulatórios
+
+### 18.3. Uso "AS IS"
+
+A Plataforma é fornecida **"COMO ESTÁ" (AS IS)**, sem garantias implícitas de:
+- Adequação a um fim específico
+- Comercialização
+- Não violação de direitos de terceiros
+
+---
+
+## 19. Limitação de Responsabilidade
+
+### 19.1. Danos Não Cobertos
+
+O Meu Agente **NÃO será responsável** por:
+
+❌ **Danos indiretos**:
+- Perda de lucros, receitas ou oportunidades de negócio
+- Perda de dados (exceto se por negligência grave nossa)
+- Danos à reputação
+- Custos de obtenção de produtos substitutos
+
+❌ **Uso indevido**:
+- Danos causados por configuração incorreta
+- Violação de políticas de terceiros (ex: spam no WhatsApp)
+- Uso em desacordo com estes Termos
+
+❌ **Atos de terceiros**:
+- Falhas de provedores (AWS, Supabase, OpenAI, Google, WhatsApp)
+- Ataques de hackers (exceto se por falha de segurança nossa)
+- Ações de autoridades governamentais
+
+### 19.2. Limite Máximo de Indenização
+
+Nossa responsabilidade total, em qualquer caso, está limitada a:
+- **Valor pago** nos últimos 12 meses, OU
+- **R$ 5.000** (cinco mil reais)
+- **O que for MENOR**
+
+**Exceção**: Esta limitação NÃO se aplica a:
+- Danos causados por dolo ou culpa grave
+- Violação de dados pessoais por negligência nossa
+- Obrigações indelegáveis por lei (CDC, LGPD)
+
+---
+
+## 20. Alterações dos Termos
 
 O Meu Agente poderá atualizar estes Termos de Uso a qualquer tempo, para refletir:
 

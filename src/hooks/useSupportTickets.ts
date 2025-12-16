@@ -12,7 +12,7 @@ export interface SupportTicket {
   description: string;
   priority: 'low' | 'medium' | 'high';
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
-  attachments: any[];
+  attachments: string[];
   admin_notes?: string;
   created_at: string;
   updated_at: string;

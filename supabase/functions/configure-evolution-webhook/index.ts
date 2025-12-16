@@ -71,9 +71,9 @@ async function configureWebhookWithRetry(
   evolutionApiUrl: string,
   evolutionApiKey: string,
   instanceName: string,
-  webhookPayload: any,
+  webhookPayload: Record<string, unknown>,
   maxRetries: number = 3
-): Promise<{ success: boolean; data?: any; error?: string; attempts: number }> {
+): Promise<{ success: boolean; data?: unknown; error?: string; attempts: number }> {
   let lastError = ''
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {

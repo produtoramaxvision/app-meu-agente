@@ -14,9 +14,10 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false, // ❌ CRÍTICO: Evita refetch desnecessário
       refetchOnMount: false, // ❌ CRÍTICO: Usa cache quando possível
       refetchOnReconnect: true, // ✅ Refetch quando reconectar
-      retry: (failureCount, error: any) => {
+      retry: (failureCount, error: unknown) => {
         // Não tentar novamente para erros 404 ou 403
-        if (error?.status === 404 || error?.status === 403) return false;
+        const errorWithStatus = error as { status?: number };
+        if (errorWithStatus?.status === 404 || errorWithStatus?.status === 403) return false;
         // Máximo 2 tentativas para outros erros
         return failureCount < 2;
       },

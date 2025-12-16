@@ -5,7 +5,17 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", "docs/**/*.{ts,tsx,js,jsx}"] },
+  { 
+    ignores: [
+      "dist/**",
+      "build/**",
+      ".vite/**",
+      "node_modules/**",
+      "docs/**/*.{ts,tsx,js,jsx}",
+      "*.config.js",
+      "vite.config.ts.timestamp-*"
+    ] 
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -19,7 +29,7 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
+      "react-refresh/only-export-components": "off", // Desabilitado: permite exports de constantes/tipos junto com componentes
       "@typescript-eslint/no-unused-vars": "off",
     },
   },

@@ -77,12 +77,12 @@ export default function Reports() {
   const [categoryType, setCategoryType] = useState<'entrada' | 'saida'>('saida');
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [recordToDelete, setRecordToDelete] = useState<any>(null);
+  const [recordToDelete, setRecordToDelete] = useState<FinanceRecord | null>(null);
   const [selectedRecords, setSelectedRecords] = useState<Set<number>>(new Set());
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [recordToEdit, setRecordToEdit] = useState<any>(null);
+  const [recordToEdit, setRecordToEdit] = useState<FinanceRecord | null>(null);
   const [isExportingCSV, setIsExportingCSV] = useState(false);
   const recordsPerPage = 50;
   const transactionsTableRef = useRef<HTMLDivElement>(null);
@@ -171,7 +171,7 @@ export default function Reports() {
     setSelectedRecords(newSelected);
   };
 
-  const handleToggleStatus = async (record: any) => {
+  const handleToggleStatus = async (record: FinanceRecord) => {
     try {
       const newStatus = record.status === 'pago' ? 'pendente' : 'pago';
       const { error } = await supabase
@@ -216,7 +216,7 @@ export default function Reports() {
     }
   };
 
-  const handleDuplicateRecord = async (record: any) => {
+  const handleDuplicateRecord = async (record: FinanceRecord) => {
     try {
       const { error } = await supabase
         .from('financeiro_registros')
@@ -242,7 +242,7 @@ export default function Reports() {
   
   const COLORS = categoryType === 'saida' ? EXPENSE_COLORS : INCOME_COLORS;
 
-  const renderActiveShape = (props: any) => {
+  const renderActiveShape = (props: { cx: number; cy: number; midAngle: number; innerRadius: number; outerRadius: number; startAngle: number; endAngle: number; fill: string; payload: { name: string }; percent: number; value: number }) => {
     const RADIAN = Math.PI / 180;
     const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
     const sin = Math.sin(-RADIAN * midAngle);

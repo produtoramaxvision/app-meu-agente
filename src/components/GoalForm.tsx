@@ -4,7 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { goalIcons, GoalIcon } from './GoalIcons';
+import { goalIcons } from '@/constants/goalIcons';
+import { GoalIcon } from './GoalIcons';
 
 import { Button } from '@/components/ui/button';
 import { CurrencyInput } from '@/components/ui/currency-input';
@@ -86,12 +87,12 @@ export function GoalForm({ goalToEdit, onSuccess, children, open: externalOpen, 
       };
 
       if (values.meta_principal) {
-        await supabase.from('metas' as any).update({ meta_principal: false }).eq('phone', cliente.phone);
+        await supabase.from('metas').update({ meta_principal: false }).eq('phone', cliente.phone);
       }
 
       const { error } = goalToEdit
-        ? await supabase.from('metas' as any).update(payload).eq('id', goalToEdit.id)
-        : await supabase.from('metas' as any).insert(payload);
+        ? await supabase.from('metas').update(payload).eq('id', goalToEdit.id)
+        : await supabase.from('metas').insert(payload);
 
       if (error) throw error;
 

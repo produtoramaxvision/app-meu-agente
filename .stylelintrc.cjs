@@ -12,14 +12,8 @@ module.exports = {
         ignoreAtRules: ['tailwind', 'apply', 'variants', 'responsive', 'screen', 'layer'],
       },
     ],
-    // Aceitar classes em kebab-case e BEM (__, --)
-    'selector-class-pattern': [
-      /^(?:[a-z][a-z0-9]*(?:-[a-z0-9]+)*)?(?:__(?:[a-z0-9]+(?:-[a-z0-9]+)*))?(?:--(?:[a-z0-9]+(?:-[a-z0-9]+)*))?$/,
-      {
-        resolveNestedSelectors: true,
-        message: 'Use kebab-case ou BEM (block__element--modifier) para classes',
-      },
-    ],
+    // Aceitar classes em kebab-case, BEM (__, --), underscore simples e escapes do Tailwind
+    'selector-class-pattern': null, // Desabilitar para permitir classes do Tailwind com escapes complexos
     // Ignorar propriedades utilitárias do Tailwind usadas em CSS gerado
     'property-no-unknown': [
       true,
@@ -31,6 +25,17 @@ module.exports = {
           '--tw-ring-color',
           '--tw-ring-offset-shadow',
           '--tw-ring-shadow',
+        ],
+      },
+    ],
+    // Permitir pseudo-elementos da View Transition API (experimental, mas válida)
+    'selector-pseudo-element-no-unknown': [
+      true,
+      {
+        ignorePseudoElements: [
+          'view-transition-old',
+          'view-transition-new',
+          'view-transition-group',
         ],
       },
     ],

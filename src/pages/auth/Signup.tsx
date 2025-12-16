@@ -35,7 +35,7 @@ export default function Signup() {
     const hasLowercase = /[a-z]/.test(password);
     const hasUppercase = /[A-Z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
-    const hasSymbol = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>\/?]/.test(password);
+    const hasSymbol = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>?/]/.test(password);
     
     const missing = [];
     if (!hasLowercase) missing.push('letra minúscula');
@@ -102,8 +102,9 @@ export default function Signup() {
         cpf: cleanCpf,
         password: formData.password,
       });
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao criar conta';
+      toast.error(message);
     } finally {
       setLoading(false);
     }

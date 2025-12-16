@@ -64,7 +64,7 @@ export interface Resource {
   name: string;
   type: string;
   capacity: number | null;
-  metadata: any; // JSONB field for flexible data storage
+  metadata: Record<string, unknown>; // JSONB field for flexible data storage
   created_at: string;
   updated_at: string;
 }
@@ -130,6 +130,14 @@ export function useOptimizedAgendaData(options: UseOptimizedAgendaDataOptions) {
   const realtimeChannelRef = useRef<RealtimeChannel | null>(null);
 
   // ✅ OTIMIZAÇÃO 1: Query key estável usando valores primitivos
+  // Extrair expressões complexas para variáveis
+  const startTime = options.startDate.getTime();
+  const endTime = options.endDate.getTime();
+  const calendarIdsKey = options.calendarIds?.sort().join(',') || '';
+  const categoriesKey = options.categories?.sort().join(',') || '';
+  const prioritiesKey = options.priorities?.sort().join(',') || '';
+  const statusesKey = options.statuses?.sort().join(',') || '';
+  
   const stableQueryKeys = useMemo(() => {
     const baseKey = ['agenda-data', cliente?.phone];
     
@@ -139,12 +147,12 @@ export function useOptimizedAgendaData(options: UseOptimizedAgendaDataOptions) {
         ...baseKey, 
         'events',
         options.view,
-        options.startDate.getTime(),
-        options.endDate.getTime(),
-        options.calendarIds?.sort().join(',') || '',
-        options.categories?.sort().join(',') || '',
-        options.priorities?.sort().join(',') || '',
-        options.statuses?.sort().join(',') || '',
+        startTime,
+        endTime,
+        calendarIdsKey,
+        categoriesKey,
+        prioritiesKey,
+        statusesKey,
         debouncedSearchQuery
       ],
       resources: [...baseKey, 'resources'],
@@ -152,12 +160,12 @@ export function useOptimizedAgendaData(options: UseOptimizedAgendaDataOptions) {
   }, [
     cliente?.phone,
     options.view,
-    options.startDate.getTime(),
-    options.endDate.getTime(),
-    options.calendarIds?.sort().join(','),
-    options.categories?.sort().join(','),
-    options.priorities?.sort().join(','),
-    options.statuses?.sort().join(','),
+    startTime,
+    endTime,
+    calendarIdsKey,
+    categoriesKey,
+    prioritiesKey,
+    statusesKey,
     debouncedSearchQuery
   ]);
 
@@ -439,7 +447,7 @@ export function useOptimizedAgendaData(options: UseOptimizedAgendaDataOptions) {
 
   // Mutations otimizadas (mantidas do hook original mas com cache otimizado)
   const createEvent = useMutation({
-    mutationFn: async (eventData: EventFormData | any) => {
+    mutationFn: async (eventData: EventFormData | Partial<Event>) => {
       if (!cliente?.phone) throw new Error('User not authenticated');
 
       // Converter para o formato correto dependendo do que foi recebido
@@ -505,34 +513,35 @@ export function useOptimizedAgendaData(options: UseOptimizedAgendaDataOptions) {
   });
 
   const updateEvent = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Event> | Partial<EventFormData> | any }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Event> | Partial<EventFormData> }) => {
       // ✅ CORREÇÃO: Converter formato EventFormData para Event se necessário
-      let updateData: any = {};
+      let updateData: Record<string, unknown> = {};
 
       if ('start_ts' in updates && updates.start_ts) {
         // Formato já está correto (com start_ts e end_ts)
         updateData = { ...updates };
       } else if ('start_date' in updates && updates.start_date) {
         // Formato EventFormData - precisa converter para start_ts/end_ts
-        const start_ts = new Date(`${(updates as any).start_date.toDateString()} ${(updates as any).start_time}`).toISOString();
-        const end_ts = new Date(`${(updates as any).end_date.toDateString()} ${(updates as any).end_time}`).toISOString();
+        const formData = updates as Partial<EventFormData>;
+        const start_ts = new Date(`${formData.start_date!.toDateString()} ${formData.start_time}`).toISOString();
+        const end_ts = new Date(`${formData.end_date!.toDateString()} ${formData.end_time}`).toISOString();
         
         updateData = {
           title: updates.title,
           description: updates.description || null,
           start_ts,
           end_ts,
-          all_day: (updates as any).all_day ?? false,
-          timezone: (updates as any).timezone || 'America/Sao_Paulo',
-          location: (updates as any).location || null,
-          conference_url: (updates as any).conference_url || null,
-          category: (updates as any).category || null,
-          priority: (updates as any).priority || 'medium',
-          privacy: (updates as any).privacy || 'default',
-          status: (updates as any).status || 'confirmed',
-          color: (updates as any).color || null,
-          calendar_id: (updates as any).calendar_id,
-          lead_remote_jid: (updates as any).lead_remote_jid, // Added for CRM
+          all_day: formData.all_day ?? false,
+          timezone: formData.timezone || 'America/Sao_Paulo',
+          location: formData.location || null,
+          conference_url: formData.conference_url || null,
+          category: formData.category || null,
+          priority: formData.priority || 'medium',
+          privacy: formData.privacy || 'default',
+          status: formData.status || 'confirmed',
+          color: formData.color || null,
+          calendar_id: formData.calendar_id,
+          lead_remote_jid: formData.lead_remote_jid, // Added for CRM
         };
       } else {
         // Formato parcial - apenas atualizar os campos fornecidos

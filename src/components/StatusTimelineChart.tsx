@@ -83,7 +83,7 @@ export const StatusTimelineChart = memo(function StatusTimelineChart() {
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <CardTitle className="text-base sm:text-lg">Evolução de Transações</CardTitle>
-            <Tabs value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)} className="w-auto">
+            <Tabs value={statusFilter} onValueChange={(v: string) => setStatusFilter(v as 'pago' | 'pendente')} className="w-auto">
               <TabsList className="h-8 p-1">
                 <TabsTrigger value="pago" className="text-xs px-2 sm:px-3 py-1">Pago</TabsTrigger>
                 <TabsTrigger value="pendente" className="text-xs px-2 sm:px-3 py-1">Pendente</TabsTrigger>
@@ -107,7 +107,7 @@ export const StatusTimelineChart = memo(function StatusTimelineChart() {
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <CardTitle className="text-base sm:text-lg">Evolução de Transações</CardTitle>
-          <Tabs value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)} className="w-auto">
+          <Tabs value={statusFilter} onValueChange={(v: string) => setStatusFilter(v as 'pago' | 'pendente')} className="w-auto">
             <TabsList className="h-8 p-1">
               <TabsTrigger value="pago" className="text-xs px-2 sm:px-3 py-1">Pago</TabsTrigger>
               <TabsTrigger value="pendente" className="text-xs px-2 sm:px-3 py-1">Pendente</TabsTrigger>
@@ -189,7 +189,7 @@ export const StatusTimelineChart = memo(function StatusTimelineChart() {
                 dataKey="entradas"
                 stroke="hsl(var(--chart-1))"
                 strokeWidth={2}
-                dot={(props: any) => {
+                dot={(props: { cx?: number; cy?: number; payload?: { entradas?: number; date?: string; [key: string]: unknown } }) => {
                   const { cx, cy, payload } = props;
                   // Mostrar dot apenas se houver valor de entrada neste dia
                   if (!payload.entradas || payload.entradas === 0) {
@@ -214,7 +214,7 @@ export const StatusTimelineChart = memo(function StatusTimelineChart() {
                 dataKey="saidas"
                 stroke="hsl(var(--chart-2))"
                 strokeWidth={2}
-                dot={(props: any) => {
+                dot={(props: { cx?: number; cy?: number; payload?: { saidas?: number; date?: string; [key: string]: unknown } }) => {
                   const { cx, cy, payload } = props;
                   // Mostrar dot apenas se houver valor de saída neste dia
                   if (!payload.saidas || payload.saidas === 0) {

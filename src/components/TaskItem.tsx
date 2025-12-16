@@ -113,7 +113,7 @@ const timelinePriorityConfig = {
   };
 
 
-  const handleFormSubmit = (data: any) => {
+  const handleFormSubmit = (data: Partial<Task>) => {
     onEdit({ ...task, ...data });
     setPopoverOpen(false);
     setIsEditing(false);

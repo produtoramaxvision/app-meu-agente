@@ -91,10 +91,11 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
       }
 
       toast.success('Mensagem enviada via WhatsApp.');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao enviar WhatsApp:', error);
+      const message = error instanceof Error ? error.message : 'Verifique a configuração da Evolution API.';
       toast.error('Erro ao enviar mensagem.', {
-        description: error?.message || 'Verifique a configuração da Evolution API.',
+        description: message,
       });
     } finally {
       setSendingWhatsapp(false);

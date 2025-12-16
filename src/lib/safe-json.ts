@@ -13,7 +13,7 @@ import { destr, safeDestr } from 'destr';
 // Tipos para melhor type safety
 export type SafeJSONParseOptions = {
   strict?: boolean;
-  fallback?: any;
+  fallback?: unknown;
 };
 
 // Parse seguro de JSON com proteção contra prototype pollution
@@ -34,8 +34,8 @@ export const safeJSONParse = <T = unknown>(
 
 // Stringify seguro (mantém JSON.stringify padrão)
 export const safeJSONStringify = (
-  obj: any, 
-  replacer?: (key: string, value: any) => any, 
+  obj: unknown, 
+  replacer?: (key: string, value: unknown) => unknown, 
   space?: string | number
 ): string => {
   try {
@@ -47,7 +47,7 @@ export const safeJSONStringify = (
 };
 
 // Verificar se objeto contém propriedades suspeitas
-export const containsSuspiciousProperties = (obj: any): boolean => {
+export const containsSuspiciousProperties = (obj: unknown): boolean => {
   if (!obj || typeof obj !== 'object') return false;
   
   const suspiciousKeys = [
@@ -61,14 +61,14 @@ export const containsSuspiciousProperties = (obj: any): boolean => {
 };
 
 // Sanitizar objeto removendo propriedades suspeitas
-export const sanitizeObject = (obj: any): any => {
+export const sanitizeObject = (obj: unknown): unknown => {
   if (!obj || typeof obj !== 'object') return obj;
   
   if (Array.isArray(obj)) {
     return obj.map(item => sanitizeObject(item));
   }
   
-  const sanitized: any = {};
+  const sanitized: Record<string, unknown> = {};
   
   for (const [key, value] of Object.entries(obj)) {
     // Pular propriedades suspeitas

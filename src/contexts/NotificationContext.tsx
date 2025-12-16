@@ -11,7 +11,7 @@ export interface Notification {
   titulo: string;
   mensagem: string;
   lida: boolean;
-  data: Record<string, any> | null;
+  data: Record<string, unknown> | null;
   created_at: string;
 }
 
@@ -166,7 +166,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
     };
   }, [cliente?.phone]);
 
-  const markAsRead = async (id: string) => {
+  const markAsRead = useCallback(async (id: string) => {
     const notification = notifications.find(n => n.id === id);
     if (!notification || notification.lida) return;
 
@@ -202,9 +202,9 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       
       toast.error('Erro ao marcar notificação como lida.');
     }
-  };
+  }, [notifications, setNotifications, setUnreadCount]);
 
-  const markAsUnread = async (id: string) => {
+  const markAsUnread = useCallback(async (id: string) => {
     const notification = notifications.find(n => n.id === id);
     if (!notification || !notification.lida) return;
 
@@ -226,9 +226,9 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       console.error('Error marking notification as unread:', error);
       toast.error('Erro ao marcar notificação como não lida.');
     }
-  };
+  }, [notifications, setNotifications, setUnreadCount]);
 
-  const markAllAsRead = async () => {
+  const markAllAsRead = useCallback(async () => {
     if (!cliente?.phone || unreadCount === 0) return;
 
     console.log('📖 Marcando todas as notificações como lidas:', unreadCount);
@@ -261,9 +261,9 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       
       toast.error('Erro ao marcar todas as notificações como lidas.');
     }
-  };
+  }, [cliente?.phone, unreadCount, setNotifications, setUnreadCount]);
 
-  const deleteNotification = async (id: string) => {
+  const deleteNotification = useCallback(async (id: string) => {
     console.log('🗑️ Excluindo notificação:', id);
     
     try {
@@ -289,7 +289,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
       console.error('❌ Error deleting notification:', error);
       toast.error('Erro ao excluir notificação.');
     }
-  };
+  }, [notifications, setNotifications, setUnreadCount]);
 
   const refetch = useCallback(() => {
     if (cliente?.phone) {

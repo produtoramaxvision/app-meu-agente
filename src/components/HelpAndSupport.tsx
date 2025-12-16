@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { HelpCircle, MessageSquare, Bug, Lightbulb, FileText, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SupportDialog } from './SupportDialog';
-import { useSidebar } from '@/contexts/SidebarContext';
+import { useSidebarSafe } from '@/contexts/SidebarContext';
 
 type HelpAndSupportProps = {
   mode: 'sidebar' | 'floatingAuth';
@@ -185,7 +185,8 @@ function HelpAndSupportContent({ mode, collapsed }: HelpAndSupportProps & { coll
 
 export function HelpAndSupport({ mode }: HelpAndSupportProps) {
   // Always call hooks at the top level (Rules of Hooks)
-  const { effectiveCollapsed } = useSidebar();
+  // Use safe version that returns defaults when provider is not available
+  const { effectiveCollapsed } = useSidebarSafe();
   
   // For sidebar mode, use collapsed state from context
   // For floatingAuth mode, use false

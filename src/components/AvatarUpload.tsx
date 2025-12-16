@@ -170,14 +170,17 @@ export function AvatarUpload({
       onUploadComplete(publicUrlWithTimestamp);
       
       toast.success('Foto de perfil atualizada com sucesso!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Erro ao fazer upload de avatar:', error);
 
       let errorMessage = 'Erro ao fazer upload da foto.';
 
-      if (error?.message?.includes('row-level security') || error?.message?.includes('RLS')) {
+      const errorMsg = error instanceof Error ? error.message : '';
+      const errorStatusCode = (error as { statusCode?: number })?.statusCode;
+
+      if (errorMsg.includes('row-level security') || errorMsg.includes('RLS')) {
         errorMessage = 'Erro de permissão. Verifique se você está logado corretamente.';
-      } else if (error?.message?.includes('size') || error?.message?.includes('large') || error?.statusCode === 413) {
+      } else if (errorMsg.includes('size') || errorMsg.includes('large') || errorStatusCode === 413) {
         errorMessage = 'Arquivo muito grande. O tamanho máximo é de 600KB.';
       } else if (
         error?.message?.includes('type') ||

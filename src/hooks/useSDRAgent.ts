@@ -66,7 +66,7 @@ export function useSDRAgent() {
       if (!phone) return [];
 
       const { data, error } = await supabase
-        .from('evolution_instances' as any)
+        .from('evolution_instances')
         .select('*')
         .eq('phone', phone)
         .order('created_at', { ascending: true });
@@ -120,7 +120,7 @@ export function useSDRAgent() {
     queryFn: async (): Promise<number> => {
       if (!phone) return 0;
 
-      const { data, error } = await (supabase.rpc as any)('get_max_instances_for_user', {
+      const { data, error } = await supabase.rpc('get_max_instances_for_user', {
         p_phone: phone,
       });
 
@@ -151,7 +151,7 @@ export function useSDRAgent() {
       if (!phone || !selectedInstance?.id) return null;
 
       const { data, error } = await supabase
-        .from('sdr_agent_config' as any)
+        .from('sdr_agent_config')
         .select('*')
         .eq('phone', phone)
         .eq('instance_id', selectedInstance.id)
@@ -260,6 +260,13 @@ export function useSDRAgent() {
   });
 
   // =====================================================
+  // Função estável para refresh (evita deps instáveis)
+  // =====================================================
+  const handleRefreshConnection = useCallback((instanceId?: string) => {
+    refreshConnectionMutation.mutate(instanceId);
+  }, [refreshConnectionMutation]);
+
+  // =====================================================
   // Polling Ativo
   // =====================================================
   useEffect(() => {
@@ -284,14 +291,14 @@ export function useSDRAgent() {
 
         console.log('Polling connection status for:', next.id);
         setLastPolledInstanceId(next.id);
-        refreshConnectionMutation.mutate(next.id);
+        handleRefreshConnection(next.id);
       }, 5000);
     }
 
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [pollingEnabled, refreshConnectionMutation.isPending, instances, lastPolledInstanceId, refreshingInstanceId]);
+  }, [pollingEnabled, refreshConnectionMutation.isPending, instances, lastPolledInstanceId, refreshingInstanceId, handleRefreshConnection]);
 
   // =====================================================
   // Mutation: Configurar Webhook
@@ -402,7 +409,7 @@ export function useSDRAgent() {
   // =====================================================
   const updateDisplayNameMutation = useMutation({
     mutationFn: async ({ instanceId, displayName }: { instanceId: string; displayName: string }) => {
-      const { data, error } = await (supabase.rpc as any)('update_instance_display_name', {
+      const { data, error } = await supabase.rpc('update_instance_display_name', {
         p_instance_id: instanceId,
         p_display_name: displayName,
       });
@@ -435,7 +442,7 @@ export function useSDRAgent() {
       }
 
       const { data: existingConfig } = await supabase
-        .from('sdr_agent_config' as any)
+        .from('sdr_agent_config')
         .select('id')
         .eq('phone', phone)
         .eq('instance_id', selectedInstance.id)
@@ -443,9 +450,9 @@ export function useSDRAgent() {
 
       if (existingConfig) {
         const { error } = await supabase
-          .from('sdr_agent_config' as any)
+          .from('sdr_agent_config')
           .update({
-            config_json: configJson as any,
+            config_json: configJson as Record<string, unknown>,
             updated_at: new Date().toISOString(),
           })
           .eq('phone', phone)
@@ -454,11 +461,11 @@ export function useSDRAgent() {
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from('sdr_agent_config' as any)
+          .from('sdr_agent_config')
           .insert({
             phone,
             instance_id: selectedInstance.id,
-            config_json: configJson as any,
+            config_json: configJson as Record<string, unknown>,
             is_active: true,
           });
 
@@ -480,8 +487,8 @@ export function useSDRAgent() {
   // Mutation: Atualizar seção específica da config
   // =====================================================
   const updateConfigSectionMutation = useMutation({
-    mutationFn: async ({ section, data }: { section: string; data: any }) => {
-      const { data: result, error } = await (supabase.rpc as any)('update_sdr_config_section', {
+    mutationFn: async ({ section, data }: { section: string; data: Record<string, unknown> }) => {
+      const { data: result, error } = await supabase.rpc('update_sdr_config_section', {
         p_phone: phone,
         p_section: section,
         p_data: data,
@@ -511,7 +518,7 @@ export function useSDRAgent() {
       presence_penalty: number;
       max_tokens: number;
     }) => {
-      const { data: result, error } = await (supabase.rpc as any)('update_sdr_ia_config', {
+      const { data: result, error } = await supabase.rpc('update_sdr_ia_config', {
         p_phone: phone,
         p_model: iaConfig.model,
         p_temperature: iaConfig.temperature,
@@ -623,8 +630,8 @@ export function useSDRAgent() {
     if (autoRefreshedInstanceId === selectedInstance.id) return;
 
     setAutoRefreshedInstanceId(selectedInstance.id);
-    refreshConnectionMutation.mutate(selectedInstance.id);
-  }, [phone, selectedInstance, refreshConnectionMutation.isPending, autoRefreshedInstanceId]);
+    handleRefreshConnection(selectedInstance.id);
+  }, [phone, selectedInstance, refreshConnectionMutation.isPending, autoRefreshedInstanceId, handleRefreshConnection]);
 
   // =====================================================
   // Helpers
@@ -641,7 +648,7 @@ export function useSDRAgent() {
     saveConfigMutation.mutate(configJson);
   }, [saveConfigMutation]);
 
-  const updateSection = useCallback((section: string, data: any) => {
+  const updateSection = useCallback((section: string, data: Record<string, unknown>) => {
     updateConfigSectionMutation.mutate({ section, data });
   }, [updateConfigSectionMutation]);
 

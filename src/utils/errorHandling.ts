@@ -40,8 +40,8 @@ export interface StructuredError {
   type: ErrorType;
   severity: ErrorSeverity;
   message: string;
-  originalError: any;
-  context?: Record<string, any>;
+  originalError: unknown;
+  context?: Record<string, unknown>;
   timestamp: Date;
   retryable: boolean;
   userMessage: string;
@@ -70,11 +70,16 @@ export const DEFAULT_RETRY_CONFIG: RetryConfig = {
 };
 
 // ✅ CLASSIFICAÇÃO AUTOMÁTICA DE ERROS
-export function classifyError(error: any): StructuredError {
+export function classifyError(error: unknown): StructuredError {
   const timestamp = new Date();
   
+  // Type guard para erro com propriedades básicas
+  const isErrorLike = (err: unknown): err is { name?: string; message?: string; code?: string; details?: string } => {
+    return typeof err === 'object' && err !== null;
+  };
+  
   // Erro de rede
-  if (error.name === 'NetworkError' || error.message?.includes('fetch')) {
+  if (isErrorLike(error) && (error.name === 'NetworkError' || error.message?.includes('fetch'))) {
     return {
       type: ErrorType.NETWORK,
       severity: ErrorSeverity.MEDIUM,
@@ -87,7 +92,7 @@ export function classifyError(error: any): StructuredError {
   }
   
   // Erro do Supabase/PostgreSQL
-  if (error.code || error.details) {
+  if (isErrorLike(error) && (error.code || error.details)) {
     const postgrestError = error as PostgrestError;
     
     switch (postgrestError.code) {
@@ -299,7 +304,7 @@ export class ErrorLogger {
     return ErrorLogger.instance;
   }
   
-  log(error: StructuredError, context?: Record<string, any>): void {
+  log(error: StructuredError, context?: Record<string, unknown>): void {
     const enrichedError = {
       ...error,
       context: { ...error.context, ...context },
@@ -401,7 +406,7 @@ export function handleUserNotification(error: StructuredError): void {
 // ✅ WRAPPER PRINCIPAL PARA OPERAÇÕES SUPABASE
 export async function executeSupabaseOperation<T>(
   operation: () => Promise<T>,
-  context?: Record<string, any>,
+  context?: Record<string, unknown>,
   retryConfig?: Partial<RetryConfig>
 ): Promise<T> {
   const logger = ErrorLogger.getInstance();

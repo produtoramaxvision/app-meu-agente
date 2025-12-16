@@ -51,12 +51,13 @@ export function useStripeCheckout() {
         throw new Error('URL de checkout não recebida.');
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Checkout error:', err);
       
       let message = 'Erro ao iniciar checkout.';
+      const errMsg = err instanceof Error ? err.message : '';
       
-      if (err.message.includes('Cliente não encontrado')) {
+      if (errMsg.includes('Cliente não encontrado')) {
         message = 'Cliente não encontrado. Entre em contato com o suporte.';
       } else if (err.message.includes('plano inválido')) {
         message = 'Plano selecionado inválido.';

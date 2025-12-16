@@ -221,7 +221,7 @@ export function SDRConfigForm() {
   const updateField = <K extends keyof AgenteConfigJSON>(
     section: K,
     field: keyof AgenteConfigJSON[K],
-    value: any
+    value: AgenteConfigJSON[K][keyof AgenteConfigJSON[K]]
   ) => {
     setFormData((prev) => ({
       ...prev,
@@ -240,7 +240,7 @@ export function SDRConfigForm() {
       ...formData,
       ia_config: {
         ...formData.ia_config,
-        model: null as any,
+        model: null,
       },
     };
     saveConfig(payload);

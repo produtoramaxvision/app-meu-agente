@@ -31,7 +31,7 @@ export default function Tasks() {
 
   const counts = getTaskCounts();
 
-  const handleFormSubmit = (data: any) => {
+  const handleFormSubmit = (data: Partial<Task>) => {
     if (taskToEdit) {
       updateTask.mutate(
         { id: taskToEdit.id, updates: data },

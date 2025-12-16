@@ -59,7 +59,7 @@ export interface EventReminder {
   event_id: string;
   method: string;
   offset_minutes: number;
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
 }
 
 export interface Resource {
@@ -68,7 +68,7 @@ export interface Resource {
   type: string;
   name: string;
   capacity: number | null;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -152,32 +152,36 @@ export function useAgendaData(options: UseAgendaDataOptions) {
   });
 
   // ✅ CORREÇÃO CRÍTICA: Estabilizar query key usando valores primitivos
+  // Extrair expressões complexas para variáveis
+  const startTime = options.startDate.getTime();
+  const endTime = options.endDate.getTime();
+  const calendarIdsKey = options.calendarIds?.join(',') || '';
+  const categoriesKey = options.categories?.join(',') || '';
+  const prioritiesKey = options.priorities?.join(',') || '';
+  const statusesKey = options.statuses?.join(',') || '';
+  
   const queryKey = useMemo(() => {
-    // Converter datas para timestamps para estabilidade
-    const startTime = options.startDate.getTime();
-    const endTime = options.endDate.getTime();
-    
     return [
       'events', 
       cliente?.phone, 
       options.view, 
       startTime, 
       endTime, 
-      options.calendarIds?.join(',') || '', 
-      options.categories?.join(',') || '', 
-      options.priorities?.join(',') || '', 
-      options.statuses?.join(',') || '', 
+      calendarIdsKey, 
+      categoriesKey, 
+      prioritiesKey, 
+      statusesKey, 
       options.searchQuery || ''
     ];
   }, [
     cliente?.phone, 
     options.view, 
-    options.startDate.getTime(), 
-    options.endDate.getTime(), 
-    options.calendarIds?.join(','), 
-    options.categories?.join(','), 
-    options.priorities?.join(','), 
-    options.statuses?.join(','), 
+    startTime, 
+    endTime, 
+    calendarIdsKey, 
+    categoriesKey, 
+    prioritiesKey, 
+    statusesKey, 
     options.searchQuery
   ]);
 
@@ -543,7 +547,7 @@ export function useAgendaData(options: UseAgendaDataOptions) {
       };
 
       // Atualizar cache otimisticamente
-      queryClient.setQueryData(['events', cliente?.phone], (old: any) => {
+      queryClient.setQueryData(['events', cliente?.phone], (old: Event[] | undefined) => {
         return old ? [...old, optimisticEvent] : [optimisticEvent];
       });
 
@@ -590,7 +594,7 @@ export function useAgendaData(options: UseAgendaDataOptions) {
         }
       }
 
-      const updateData: any = {};
+      const updateData: Partial<Record<keyof Event, unknown>> = {};
       if (eventFields.title !== undefined) updateData.title = eventFields.title;
       if (eventFields.description !== undefined) updateData.description = eventFields.description;
       if (eventFields.start_ts !== undefined) updateData.start_ts = eventFields.start_ts.toISOString();

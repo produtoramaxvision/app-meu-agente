@@ -74,7 +74,7 @@ export function PlansSection() {
         successUrl: `${window.location.origin}/perfil?tab=plans&success=true`,
         cancelUrl: `${window.location.origin}/perfil?tab=plans&canceled=true`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Error is already handled by useStripeCheckout hook (toast displayed)
       console.error('Upgrade error:', error);
     } finally {
@@ -100,9 +100,10 @@ export function PlansSection() {
       if (data?.url) {
         window.location.href = data.url;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error:', error);
-      toast.error(error.message || "Erro ao acessar o portal. Tente novamente.");
+      const message = error instanceof Error ? error.message : "Erro ao acessar o portal. Tente novamente.";
+      toast.error(message);
     }
   };
 

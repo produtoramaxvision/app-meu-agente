@@ -35,7 +35,7 @@ export default function Chat() {
       id: session.id,
       title: session.title || 'Nova conversa',
       updatedAt: session.updatedAt,
-      messageCount: (session as any).messageCount || 0,
+      messageCount: ('messageCount' in session ? (session as { messageCount?: number }).messageCount : 0) || 0,
     })),
     [allSessions]
   );
