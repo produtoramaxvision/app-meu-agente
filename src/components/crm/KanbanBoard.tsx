@@ -23,10 +23,15 @@ export function KanbanBoard({ onCardClick, columns, moveCard }: KanbanBoardProps
   };
 
   const handleDragEnd = () => {
+    // Limpar IMEDIATAMENTE para evitar cards opacos
     setDraggingContact(null);
   };
 
   const handleDrop = (contactId: string, currentStatus: string, newStatus: LeadStatus) => {
+    // Limpar o dragging ANTES de mover o card
+    // Isso evita o problema de cards ficarem opacos após o drop
+    setDraggingContact(null);
+    
     if (currentStatus !== newStatus) {
       moveCard(contactId, newStatus);
     }

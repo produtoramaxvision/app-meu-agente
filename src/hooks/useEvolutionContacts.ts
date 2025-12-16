@@ -278,30 +278,29 @@ export function useEvolutionContacts(
 
   // Atualizar contato (apenas campos CRM)
   const updateContact = useCallback(async (contactId: string, updates: Partial<EvolutionContact>) => {
-    try {
-      const { error } = await supabase
-        .from('evolution_contacts')
-        .update(updates)
-        .eq('id', contactId);
+    // Atualizar estado local PRIMEIRO (atualização otimista)
+    setContacts((prev) =>
+      prev.map((contact) =>
+        contact.id === contactId ? { ...contact, ...updates } : contact
+      )
+    );
 
-      if (error) throw error;
+    // Depois atualizar no banco
+    const { error } = await supabase
+      .from('evolution_contacts')
+      .update(updates)
+      .eq('id', contactId);
 
-      // Atualizar estado local
-      setContacts((prev) =>
-        prev.map((contact) =>
-          contact.id === contactId ? { ...contact, ...updates } : contact
-        )
-      );
-
-      toast.success('Contato atualizado', {
-        description: 'Alterações salvas com sucesso',
-      });
-    } catch (error) {
-      toast.error('Erro ao atualizar', {
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
-      });
+    if (error) {
+      // Se falhar, reverte a atualização otimista
+      await loadContacts();
+      throw error;
     }
-  }, []);
+
+    // Recarregar imediatamente para garantir que métricas sejam recalculadas
+    // Isso resolve o problema do "Valor do pipeline" não atualizar
+    await loadContacts();
+  }, [loadContacts]);
 
   // Load inicial
   useEffect(() => {

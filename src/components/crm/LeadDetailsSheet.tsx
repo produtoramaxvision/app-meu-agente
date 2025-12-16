@@ -20,6 +20,7 @@ import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useSDRAgent } from '@/hooks/useSDRAgent';
+import { useEvolutionContacts } from '@/hooks/useEvolutionContacts';
 import { toast } from 'sonner';
 
 interface LeadDetailsSheetProps {
@@ -33,7 +34,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
   const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
   const [estimatedValue, setEstimatedValue] = useState<string>('');
   const [isSavingValue, setIsSavingValue] = useState(false);
-  const { instance, updateContact } = useSDRAgent();
+  const { instance } = useSDRAgent();
   const evolutionApiUrl = useMemo(
     () => import.meta.env.VITE_EVOLUTION_API_URL || 'https://evolution-api.com',
     []
@@ -42,6 +43,15 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
     () => import.meta.env.VITE_EVOLUTION_API_KEY || '',
     []
   );
+  
+  const { updateContact } = useEvolutionContacts({
+    instanceId: instance?.id || '',
+    instanceName: instance?.instance_name || '',
+    evolutionApiUrl,
+    evolutionApiKey,
+    onlyContacts: false,
+    syncOnMount: false,
+  });
   
   // Use tasks filtered by this lead
   const { tasks, createTask, toggleTaskCompletion } = useTasksData(
@@ -53,7 +63,12 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
   // Inicializar valor estimado quando contato mudar
   useMemo(() => {
     if (contact?.crm_estimated_value) {
-      setEstimatedValue(contact.crm_estimated_value.toString());
+      // Formatar o valor do banco (ex: 1500 -> "1.500,00")
+      const formatted = contact.crm_estimated_value.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      setEstimatedValue(formatted);
     } else {
       setEstimatedValue('');
     }
@@ -128,8 +143,10 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
   const handleSaveEstimatedValue = async () => {
     if (!contact) return;
     
-    // Parse valor (remover R$ e vírgulas, converter para número)
-    const numericValue = parseFloat(estimatedValue.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+    // Parse valor: remove formatação e converte para número
+    // formatCurrency já divide por 100, então precisamos remover apenas a formatação de milhar/decimal
+    const cleanValue = estimatedValue.replace(/\./g, '').replace(',', '.');
+    const numericValue = parseFloat(cleanValue) || 0;
     
     setIsSavingValue(true);
     try {
@@ -137,6 +154,15 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
         crm_estimated_value: numericValue
       });
       toast.success('Valor estimado atualizado!');
+      
+      // O useEvolutionContacts agora faz refresh automático após updateContact
+      // Isso garante que as métricas do pipeline sejam recalculadas
+      
+      // Aguardar um tick para garantir que o estado se propague antes de fechar
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Fechar o sheet após salvar com sucesso
+      onOpenChange(false);
     } catch (error) {
       console.error('Erro ao atualizar valor estimado:', error);
       toast.error('Erro ao salvar valor estimado');
@@ -146,11 +172,11 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
   };
 
   const formatCurrency = (value: string) => {
-    // Remove caracteres não numéricos exceto ponto e vírgula
+    // Remove caracteres não numéricos
     const numbers = value.replace(/[^\d]/g, '');
     if (!numbers) return '';
     
-    // Converte para número e formata
+    // Converte para número (já está em centavos, ex: 150000 = R$ 1.500,00)
     const num = parseInt(numbers) / 100;
     return num.toLocaleString('pt-BR', {
       minimumFractionDigits: 2,
