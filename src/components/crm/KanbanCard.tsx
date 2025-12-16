@@ -48,7 +48,7 @@ export function KanbanCard({ contact, onClick, onDragStart, onDragEnd, isDraggin
       onDragEnd={handleDragEnd}
       className={cn(
         "group relative mb-3 transition-all cursor-move",
-        isCurrentlyDragging && "opacity-50 scale-95"
+        isCurrentlyDragging && "opacity-50 scale-95 z-50"
       )}
     >
       <Card 
@@ -61,7 +61,6 @@ export function KanbanCard({ contact, onClick, onDragStart, onDragEnd, isDraggin
             onClick(contact);
           }
         }}
-        onMouseDown={(e) => e.stopPropagation()}
       >
         <CardContent className="p-3 space-y-3">
           {/* Header */}
@@ -110,7 +109,10 @@ export function KanbanCard({ contact, onClick, onDragStart, onDragEnd, isDraggin
         </CardContent>
         
         {/* Quick Actions Hover Overlay (Desktop) */}
-        <div className="absolute right-2 top-2 hidden group-hover:flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0">
+        <div className={cn(
+          "absolute right-2 top-2 hidden group-hover:flex flex-col gap-1 transition-all duration-200 translate-x-2 group-hover:translate-x-0",
+          isCurrentlyDragging ? "pointer-events-none opacity-0" : "opacity-0 group-hover:opacity-100"
+        )}>
           <Button size="icon" variant="secondary" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); /* TODO: Open WhatsApp */ }}>
             <MessageCircle className="h-3 w-3" />
           </Button>

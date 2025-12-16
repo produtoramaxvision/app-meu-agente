@@ -50,6 +50,8 @@ export interface EvolutionContact {
   crm_last_interaction_at: string | null;
   crm_lead_status: LeadStatus | null;
   crm_lead_score: number;
+  crm_estimated_value: number; // Valor estimado do deal em reais
+  crm_closed_at: string | null; // Data de fechamento (ganho ou perdido)
   
   created_at: string;
   updated_at: string;

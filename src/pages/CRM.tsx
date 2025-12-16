@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CRMLayout } from '@/components/crm/CRMLayout';
 import { KanbanBoard } from '@/components/crm/KanbanBoard';
+import { DashboardView } from '@/components/crm/DashboardView';
 import { LeadDetailsSheet } from '@/components/crm/LeadDetailsSheet';
 import { EvolutionContact } from '@/types/sdr';
 import { useCRMPipeline } from '@/hooks/useCRMPipeline';
@@ -11,11 +12,16 @@ import { Separator } from '@/components/ui/separator';
 import { Loader2, Phone, MessageCircle, Sparkles, ArrowUpRight } from 'lucide-react';
 import { ProtectedFeature } from '@/components/ProtectedFeature';
 import { useAuth } from '@/contexts/AuthContext';
+import { AnimatePresence, motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 export default function CRM() {
   const [selectedContact, setSelectedContact] = useState<EvolutionContact | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'kanban' | 'lista'>('kanban');
+  const [viewMode, setViewMode] = useState<'kanban' | 'lista' | 'dashboard'>('kanban');
   const [search, setSearch] = useState('');
   const { cliente } = useAuth();
   const { metrics, loading, columns, moveCard } = useCRMPipeline();
@@ -24,12 +30,12 @@ export default function CRM() {
   useEffect(() => {
     if (!cliente?.phone) return;
     const stored = localStorage.getItem(`crm_view_${cliente.phone}`);
-    if (stored === 'kanban' || stored === 'lista') {
+    if (stored === 'kanban' || stored === 'lista' || stored === 'dashboard') {
       setViewMode(stored);
     }
   }, [cliente?.phone]);
 
-  const handleViewChange = (mode: 'kanban' | 'lista') => {
+  const handleViewChange = (mode: 'kanban' | 'lista' | 'dashboard') => {
     setViewMode(mode);
     if (cliente?.phone) {
       localStorage.setItem(`crm_view_${cliente.phone}`, mode);
@@ -49,26 +55,110 @@ export default function CRM() {
     }
   };
 
-  const HeaderStats = () => (
-    <div className="hidden lg:flex items-center gap-6 text-sm">
-      <div className="flex flex-col">
-        <span className="text-muted-foreground text-xs">Total Leads</span>
-        <span className="font-semibold">{metrics.totalLeads}</span>
+  const handleExportCSV = () => {
+    try {
+      // Preparar dados para exportação
+      const dataToExport = columns.flatMap(col => 
+        col.contacts.map(contact => ({
+          'Nome': contact.push_name || contact.remote_jid.split('@')[0],
+          'Telefone': contact.phone || '',
+          'Status': col.label,
+          'Score': contact.crm_lead_score || 0,
+          'Valor Estimado (R$)': contact.crm_estimated_value 
+            ? contact.crm_estimated_value.toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              })
+            : '0,00',
+          'Data de Fechamento': contact.crm_closed_at 
+            ? format(new Date(contact.crm_closed_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })
+            : '',
+          'Criado em': contact.created_at 
+            ? format(new Date(contact.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })
+            : ''
+        }))
+      );
+
+      // Criar CSV
+      const headers = Object.keys(dataToExport[0] || {});
+      const csvContent = [
+        headers.join(','),
+        ...dataToExport.map(row => 
+          headers.map(header => {
+            const value = row[header as keyof typeof row] || '';
+            // Escapar vírgulas e aspas
+            return `"${String(value).replace(/"/g, '""')}"`;
+          }).join(',')
+        )
+      ].join('\n');
+
+      // Download
+      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `crm_pipeline_${format(new Date(), 'yyyyMMdd_HHmmss')}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success('Pipeline exportado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao exportar:', error);
+      toast.error('Erro ao exportar pipeline');
+    }
+  };
+
+  const HeaderStats = () => {
+    // Cores baseadas em benchmarks da indústria
+    const getWinRateColor = (rate: number) => {
+      if (rate >= 40) return 'text-green-600';
+      if (rate >= 20) return 'text-amber-600';
+      return 'text-red-600';
+    };
+
+    const getQualificationColor = (rate: number) => {
+      if (rate >= 50) return 'text-green-600';
+      if (rate >= 30) return 'text-amber-600';
+      return 'text-red-600';
+    };
+
+    return (
+      <div className="hidden lg:flex items-center gap-3 text-sm">
+        <div className="flex flex-col">
+          <span className="text-muted-foreground text-xs">Total Leads</span>
+          <span className="font-semibold">{metrics.totalLeads}</span>
+        </div>
+        <Separator orientation="vertical" className="h-8" />
+        <div className="flex flex-col">
+          <span className="text-muted-foreground text-xs">Win Rate</span>
+          <span className={cn('font-semibold', getWinRateColor(metrics.winRate))}>
+            {metrics.winRate}%
+          </span>
+        </div>
+        <Separator orientation="vertical" className="h-8" />
+        <div className="flex flex-col">
+          <span className="text-muted-foreground text-xs">Pipeline Value</span>
+          <span className="font-semibold text-blue-600">
+            R$ {(metrics.pipelineValue / 1000).toFixed(1)}k
+          </span>
+        </div>
+        <Separator orientation="vertical" className="h-8" />
+        <div className="flex flex-col">
+          <span className="text-muted-foreground text-xs">Sales Velocity</span>
+          <span className="font-semibold">{metrics.salesVelocity} dias</span>
+        </div>
+        <Separator orientation="vertical" className="h-8" />
+        <div className="flex flex-col">
+          <span className="text-muted-foreground text-xs">Qualification Rate</span>
+          <span className={cn('font-semibold', getQualificationColor(metrics.qualificationRate))}>
+            {metrics.qualificationRate}%
+          </span>
+        </div>
       </div>
-      <div className="flex flex-col">
-        <span className="text-muted-foreground text-xs">Valor Total (Est.)</span>
-        <span className="font-semibold text-green-600">R$ {metrics.totalValue.toLocaleString('pt-BR')}</span>
-      </div>
-      <div className="flex flex-col">
-        <span className="text-muted-foreground text-xs">Taxa de Conversão</span>
-        <span className="font-semibold">
-          {metrics.totalLeads > 0 
-            ? Math.round(((metrics.byStatus['ganho'] || 0) / metrics.totalLeads) * 100) 
-            : 0}%
-        </span>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const listContacts = useMemo(() => {
     return columns.flatMap((col) =>
@@ -107,15 +197,46 @@ export default function CRM() {
         onViewChange={handleViewChange}
         searchValue={search}
         onSearchChange={setSearch}
+        onExport={handleExportCSV}
       >
         {loading ? (
           <div className="h-full flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : viewMode === 'kanban' ? (
-          <KanbanBoard onCardClick={handleCardClick} columns={filteredColumns} moveCard={moveCard} />
         ) : (
-          <div className="p-6 h-full overflow-y-auto">
+          <AnimatePresence mode="wait">
+            {viewMode === 'dashboard' ? (
+              <motion.div
+                key="dashboard"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className="h-full"
+              >
+                <DashboardView metrics={metrics} />
+              </motion.div>
+            ) : viewMode === 'kanban' ? (
+              <motion.div
+                key="kanban"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className="h-full"
+              >
+                <KanbanBoard onCardClick={handleCardClick} columns={filteredColumns} moveCard={moveCard} />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="lista"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className="h-full"
+              >
+                <div className="p-6 h-full overflow-y-auto">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {filteredListContacts.length === 0 && (
                 <Card className="col-span-full">
@@ -180,7 +301,10 @@ export default function CRM() {
                 </Card>
               ))}
             </div>
-          </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         )}
 
         <LeadDetailsSheet 

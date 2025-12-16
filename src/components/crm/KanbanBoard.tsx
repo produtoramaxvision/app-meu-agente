@@ -33,7 +33,7 @@ export function KanbanBoard({ onCardClick, columns, moveCard }: KanbanBoardProps
   };
 
   return (
-    <div className="flex h-full items-start gap-4 overflow-x-auto pb-4 px-6 pt-6 snap-x">
+    <div className="flex h-full items-start gap-4 lg:overflow-x-auto pb-4 px-6 pt-6 snap-x">
       {columns.map((col) => (
         <div key={col.id} className="snap-center">
           <KanbanColumn

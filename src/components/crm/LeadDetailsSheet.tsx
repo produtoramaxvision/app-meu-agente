@@ -31,7 +31,9 @@ interface LeadDetailsSheetProps {
 export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsSheetProps) {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
-  const { instance } = useSDRAgent();
+  const [estimatedValue, setEstimatedValue] = useState<string>('');
+  const [isSavingValue, setIsSavingValue] = useState(false);
+  const { instance, updateContact } = useSDRAgent();
   const evolutionApiUrl = useMemo(
     () => import.meta.env.VITE_EVOLUTION_API_URL || 'https://evolution-api.com',
     []
@@ -47,6 +49,15 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
     undefined, 
     contact?.remote_jid
   );
+
+  // Inicializar valor estimado quando contato mudar
+  useMemo(() => {
+    if (contact?.crm_estimated_value) {
+      setEstimatedValue(contact.crm_estimated_value.toString());
+    } else {
+      setEstimatedValue('');
+    }
+  }, [contact]);
 
   if (!contact) return null;
 
@@ -114,6 +125,44 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
     setNewTaskTitle('');
   };
 
+  const handleSaveEstimatedValue = async () => {
+    if (!contact) return;
+    
+    // Parse valor (remover R$ e vírgulas, converter para número)
+    const numericValue = parseFloat(estimatedValue.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+    
+    setIsSavingValue(true);
+    try {
+      await updateContact(contact.id, {
+        crm_estimated_value: numericValue
+      });
+      toast.success('Valor estimado atualizado!');
+    } catch (error) {
+      console.error('Erro ao atualizar valor estimado:', error);
+      toast.error('Erro ao salvar valor estimado');
+    } finally {
+      setIsSavingValue(false);
+    }
+  };
+
+  const formatCurrency = (value: string) => {
+    // Remove caracteres não numéricos exceto ponto e vírgula
+    const numbers = value.replace(/[^\d]/g, '');
+    if (!numbers) return '';
+    
+    // Converte para número e formata
+    const num = parseInt(numbers) / 100;
+    return num.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  const handleEstimatedValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCurrency(e.target.value);
+    setEstimatedValue(formatted);
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-[400px] sm:w-[540px] flex flex-col h-full p-0">
@@ -130,7 +179,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
                 <span className="flex items-center gap-1.5">
                   <Phone className="h-3.5 w-3.5" /> {contact.phone}
                 </span>
-                <div className="flex gap-2 mt-2">
+                <div className="flex gap-2 mt-2 flex-wrap">
                   <Badge variant="outline" className="text-xs bg-background/50">
                     {contact.crm_lead_status || 'Novo'}
                   </Badge>
@@ -165,6 +214,36 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
             <Button size="icon" variant="secondary">
               <Mail className="h-4 w-4" />
             </Button>
+          </div>
+
+          {/* Campo de Valor Estimado */}
+          <div className="mt-4 space-y-2">
+            <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              Valor Estimado do Deal
+            </label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">R$</span>
+                <Input
+                  type="text"
+                  placeholder="0,00"
+                  value={estimatedValue}
+                  onChange={handleEstimatedValueChange}
+                  className="pl-10"
+                />
+              </div>
+              <Button 
+                onClick={handleSaveEstimatedValue} 
+                disabled={isSavingValue || !estimatedValue}
+                size="default"
+              >
+                {isSavingValue ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  'Salvar'
+                )}
+              </Button>
+            </div>
           </div>
         </div>
 

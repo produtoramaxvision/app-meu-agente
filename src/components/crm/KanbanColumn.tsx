@@ -82,8 +82,8 @@ export function KanbanColumn({ id, title, color, contacts, onCardClick, onDrop, 
       </div>
 
       {/* Droppable Area - COLUNA INTEIRA */}
-      <div className="flex flex-1 flex-col p-2 min-h-0 overflow-y-auto">
-        <div className="flex flex-1 flex-col gap-2 pb-2 pr-2.5 min-h-0 pointer-events-auto">
+      <div className="flex flex-1 flex-col p-2 min-h-0 overflow-y-auto pointer-events-auto">
+        <div className="flex flex-1 flex-col gap-2 pb-2 pr-2.5 min-h-0">
           {contacts.map((contact) => (
             <KanbanCard 
               key={contact.id} 

@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Plus, Filter, MoreHorizontal, LayoutGrid, List } from 'lucide-react';
+import { Search, Plus, Filter, MoreHorizontal, LayoutGrid, List, BarChart3, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { motion } from 'framer-motion';
@@ -9,13 +9,14 @@ import { motion } from 'framer-motion';
 interface CRMLayoutProps {
   children: ReactNode;
   headerStats?: ReactNode;
-  viewMode: 'kanban' | 'lista';
-  onViewChange: (mode: 'kanban' | 'lista') => void;
+  viewMode: 'kanban' | 'lista' | 'dashboard';
+  onViewChange: (mode: 'kanban' | 'lista' | 'dashboard') => void;
   searchValue: string;
   onSearchChange: (value: string) => void;
+  onExport?: () => void;
 }
 
-export function CRMLayout({ children, headerStats, viewMode, onViewChange, searchValue, onSearchChange }: CRMLayoutProps) {
+export function CRMLayout({ children, headerStats, viewMode, onViewChange, searchValue, onSearchChange, onExport }: CRMLayoutProps) {
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-[hsl(var(--sidebar-bg))]">
       {/* CRM Header */}
@@ -70,7 +71,33 @@ export function CRMLayout({ children, headerStats, viewMode, onViewChange, searc
             >
               <List className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
             </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                'group relative h-7 w-7 rounded-md transition-all duration-200',
+                'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
+                viewMode === 'dashboard' &&
+                  'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
+              )}
+              onClick={() => onViewChange('dashboard')}
+              aria-pressed={viewMode === 'dashboard'}
+            >
+              <BarChart3 className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+            </Button>
           </div>
+
+          {onExport && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="hidden md:flex items-center gap-2"
+              onClick={onExport}
+            >
+              <Download className="h-4 w-4" />
+              Exportar
+            </Button>
+          )}
 
           <Button
             size="sm"
@@ -92,7 +119,7 @@ export function CRMLayout({ children, headerStats, viewMode, onViewChange, searc
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-hidden bg-[hsl(var(--sidebar-bg))]">
+      <div className="flex-1 overflow-auto bg-[hsl(var(--sidebar-bg))]">
         {children}
       </div>
     </div>
