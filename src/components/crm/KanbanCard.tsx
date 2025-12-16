@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { EvolutionContact } from '@/types/sdr';
+import { EvolutionContact, LeadStatus } from '@/types/sdr';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,44 @@ import { Phone, MessageCircle, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+const STATUS_STYLES: Record<LeadStatus, { bg: string; border: string; stripe: string }> = {
+  novo: {
+    bg: 'bg-blue-500/5',
+    border: 'border-blue-500/40',
+    stripe: 'bg-blue-500',
+  },
+  contatado: {
+    bg: 'bg-indigo-500/5',
+    border: 'border-indigo-500/40',
+    stripe: 'bg-indigo-500',
+  },
+  qualificado: {
+    bg: 'bg-purple-500/5',
+    border: 'border-purple-500/40',
+    stripe: 'bg-purple-500',
+  },
+  proposta: {
+    bg: 'bg-amber-500/5',
+    border: 'border-amber-500/40',
+    stripe: 'bg-amber-500',
+  },
+  negociando: {
+    bg: 'bg-orange-500/5',
+    border: 'border-orange-500/40',
+    stripe: 'bg-orange-500',
+  },
+  ganho: {
+    bg: 'bg-green-500/5',
+    border: 'border-green-500/40',
+    stripe: 'bg-green-500',
+  },
+  perdido: {
+    bg: 'bg-red-500/5',
+    border: 'border-red-500/40',
+    stripe: 'bg-red-500',
+  },
+};
 
 interface KanbanCardProps {
   contact: EvolutionContact;
@@ -40,6 +78,8 @@ export function KanbanCard({ contact, onClick, onDragStart, onDragEnd, isDraggin
     'bg-blue-500';
 
   const isCurrentlyDragging = isDragging || isDraggingLocal;
+  const status = (contact.crm_lead_status || 'novo') as LeadStatus;
+  const statusStyles = STATUS_STYLES[status];
 
   return (
     <div
@@ -53,8 +93,9 @@ export function KanbanCard({ contact, onClick, onDragStart, onDragEnd, isDraggin
     >
       <Card 
         className={cn(
-          "cursor-grab active:cursor-grabbing hover:shadow-md transition-all hover:border-primary/50",
-          contact.crm_lead_score > 0 && "border-l-4"
+          "relative cursor-grab active:cursor-grabbing hover:shadow-lg transition-all hover:border-primary/60 overflow-hidden",
+          statusStyles.bg,
+          statusStyles.border
         )}
         onClick={(e) => {
           if (!isCurrentlyDragging) {
@@ -62,6 +103,14 @@ export function KanbanCard({ contact, onClick, onDragStart, onDragEnd, isDraggin
           }
         }}
       >
+        {/* Faixa de cor baseada na coluna/status */}
+        <div
+          className={cn(
+            "absolute inset-x-0 top-0 h-1",
+            statusStyles.stripe
+          )}
+        />
+
         <CardContent className="p-3 space-y-3">
           {/* Header */}
           <div className="flex items-start justify-between gap-2">

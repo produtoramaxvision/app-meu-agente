@@ -63,20 +63,6 @@ export function CRMLayout({ children, headerStats, viewMode, onViewChange, searc
               className={cn(
                 'group relative h-7 w-7 rounded-md transition-all duration-200',
                 'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
-                viewMode === 'lista' &&
-                  'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
-              )}
-              onClick={() => onViewChange('lista')}
-              aria-pressed={viewMode === 'lista'}
-            >
-              <List className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                'group relative h-7 w-7 rounded-md transition-all duration-200',
-                'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
                 viewMode === 'dashboard' &&
                   'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
               )}
@@ -84,6 +70,20 @@ export function CRMLayout({ children, headerStats, viewMode, onViewChange, searc
               aria-pressed={viewMode === 'dashboard'}
             >
               <BarChart3 className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                'group relative h-7 w-7 rounded-md transition-all duration-200',
+                'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
+                viewMode === 'lista' &&
+                  'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
+              )}
+              onClick={() => onViewChange('lista')}
+              aria-pressed={viewMode === 'lista'}
+            >
+              <List className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
             </Button>
           </div>
 

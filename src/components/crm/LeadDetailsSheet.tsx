@@ -196,7 +196,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
           <div className="flex gap-2 mt-6">
             <Button 
               className="flex-1 gap-2" 
-              variant="default" 
+              variant="outline" 
               onClick={handleSendWhatsapp}
               disabled={sendingWhatsapp}
             >
@@ -211,7 +211,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
               <Phone className="h-4 w-4" />
               Ligar
             </Button>
-            <Button size="icon" variant="secondary">
+            <Button size="icon" variant="outline">
               <Mail className="h-4 w-4" />
             </Button>
           </div>
@@ -236,6 +236,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
                 onClick={handleSaveEstimatedValue} 
                 disabled={isSavingValue || !estimatedValue}
                 size="default"
+                variant="outline"
               >
                 {isSavingValue ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -283,7 +284,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
                     onChange={(e) => setNewTaskTitle(e.target.value)}
                     className="flex-1"
                   />
-                  <Button type="submit" size="icon" disabled={!newTaskTitle.trim()}>
+                  <Button type="submit" size="icon" variant="outline" disabled={!newTaskTitle.trim()}>
                     <Plus className="h-4 w-4" />
                   </Button>
                 </form>

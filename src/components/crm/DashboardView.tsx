@@ -51,7 +51,7 @@ export function DashboardView({ metrics, className }: DashboardViewProps) {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Win Rate
+                Taxa de ganho
               </CardTitle>
               <Award className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -75,7 +75,7 @@ export function DashboardView({ metrics, className }: DashboardViewProps) {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Pipeline Value
+                Valor do pipeline
               </CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -99,7 +99,7 @@ export function DashboardView({ metrics, className }: DashboardViewProps) {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Sales Velocity
+                Velocidade de vendas
               </CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -123,7 +123,7 @@ export function DashboardView({ metrics, className }: DashboardViewProps) {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Qualification Rate
+                Taxa de qualificação
               </CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>

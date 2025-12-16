@@ -127,31 +127,31 @@ export default function CRM() {
     return (
       <div className="hidden lg:flex items-center gap-3 text-sm">
         <div className="flex flex-col">
-          <span className="text-muted-foreground text-xs">Total Leads</span>
+          <span className="text-muted-foreground text-xs">Total de leads</span>
           <span className="font-semibold">{metrics.totalLeads}</span>
         </div>
         <Separator orientation="vertical" className="h-8" />
         <div className="flex flex-col">
-          <span className="text-muted-foreground text-xs">Win Rate</span>
+          <span className="text-muted-foreground text-xs">Taxa de ganho</span>
           <span className={cn('font-semibold', getWinRateColor(metrics.winRate))}>
             {metrics.winRate}%
           </span>
         </div>
         <Separator orientation="vertical" className="h-8" />
         <div className="flex flex-col">
-          <span className="text-muted-foreground text-xs">Pipeline Value</span>
+          <span className="text-muted-foreground text-xs">Valor do pipeline</span>
           <span className="font-semibold text-blue-600">
             R$ {(metrics.pipelineValue / 1000).toFixed(1)}k
           </span>
         </div>
         <Separator orientation="vertical" className="h-8" />
         <div className="flex flex-col">
-          <span className="text-muted-foreground text-xs">Sales Velocity</span>
+          <span className="text-muted-foreground text-xs">Velocidade de vendas</span>
           <span className="font-semibold">{metrics.salesVelocity} dias</span>
         </div>
         <Separator orientation="vertical" className="h-8" />
         <div className="flex flex-col">
-          <span className="text-muted-foreground text-xs">Qualification Rate</span>
+          <span className="text-muted-foreground text-xs">Taxa de qualificação</span>
           <span className={cn('font-semibold', getQualificationColor(metrics.qualificationRate))}>
             {metrics.qualificationRate}%
           </span>
