@@ -109,9 +109,11 @@ export default function Agenda() {
           endDate: endOfDay(selectedDate) 
         };
       case 'week':
+        // Para a visualização semanal estendida, carregamos todos os eventos do mês
+        // e mostramos as semanas empilhadas na interface
         return { 
-          startDate: startOfWeek(selectedDate, { locale: ptBR }), 
-          endDate: endOfWeek(selectedDate, { locale: ptBR }) 
+          startDate: startOfMonth(selectedDate), 
+          endDate: endOfMonth(selectedDate) 
         };
       case 'month':
       case 'year':
@@ -129,6 +131,23 @@ export default function Agenda() {
     dateRange?.from, 
     dateRange?.to
   ]);
+
+  // Semanas visíveis na view "Semana": todas as semanas que cobrem o mês atual
+  const weekStarts = useMemo(() => {
+    const monthStart = startOfMonth(selectedDate);
+    const monthEnd = endOfMonth(selectedDate);
+
+    const firstWeekStart = startOfWeek(monthStart, { locale: ptBR });
+    const weeks: Date[] = [];
+
+    let current = firstWeekStart;
+    while (current <= monthEnd) {
+      weeks.push(current);
+      current = addWeeks(current, 1);
+    }
+
+    return weeks;
+  }, [selectedDate]);
 
   // Removido: useEffect problemático que causava invalidação desnecessária
   // A invalidação de queries deve ser feita apenas quando necessário
@@ -645,14 +664,19 @@ export default function Agenda() {
                   />
                 )}
                 {view === 'week' && (
-                  <AgendaGridWeek
-                    weekDate={selectedDate}
-                    events={events}
-                    calendars={calendars}
-                    isLoading={isLoading}
-                    onEventClick={onEventClick}
-                    onEventMove={onEventMove}
-                  />
+                  <div className="space-y-4">
+                    {weekStarts.map((weekStartDate) => (
+                      <AgendaGridWeek
+                        key={weekStartDate.toISOString()}
+                        weekDate={weekStartDate}
+                        events={events}
+                        calendars={calendars}
+                        isLoading={isLoading}
+                        onEventClick={onEventClick}
+                        onEventMove={onEventMove}
+                      />
+                    ))}
+                  </div>
                 )}
                 {view === 'month' && (
                   <AgendaGridMonth

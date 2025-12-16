@@ -36,24 +36,27 @@ export default function AgendaYearHeatmap({ yearDate, events }: Props) {
   };
 
   return (
-    <Card className="p-4 custom-scrollbar smooth-scrollbar overflow-y-auto max-h-[500px]">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-center">
+    <Card className="p-5 md:p-6 lg:p-7 space-y-6">
+      <div className="space-y-1 text-center">
+        <h3 className="text-xl md:text-2xl font-semibold tracking-tight">
           {format(yearDate, 'yyyy')} - Visão Anual
         </h3>
-        <p className="text-sm text-text-muted text-center mt-1">
+        <p className="text-sm md:text-base text-text-muted">
           Heatmap de eventos por dia do ano
         </p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
         {Array.from({ length: 12 }).map((_, m) => {
           const monthDays = days.filter(d => getMonth(d) === m);
           return (
-            <div key={m} className="border rounded-lg p-3">
-              <div className="text-sm font-semibold mb-2">
+            <div
+              key={m}
+              className="border border-border/40 rounded-lg bg-card/40 hover:bg-card/60 transition-all duration-200 p-3 flex flex-col gap-2 shadow-sm hover:shadow-md"
+            >
+              <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-text-muted">
                 {format(new Date(yearDate.getFullYear(), m, 1), 'MMMM')}
               </div>
-              <div className="grid grid-cols-7 gap-1">
+              <div className="grid grid-cols-7 gap-1.5 pt-1">
                 <TooltipProvider>
                   {monthDays.map(d => {
                     const key = d.toISOString().slice(0,10);

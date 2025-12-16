@@ -53,16 +53,16 @@ export function AnimatedTabs({ tabs, defaultTab, className }: AnimatedTabsProps)
           ))}
         </div>
 
-        {/* Tablet Layout - Horizontal scroll (640px - 1023px) */}
+        {/* Tablet Layout - Distribuição fluida (640px - 1023px) */}
         <div className="hidden sm:block lg:hidden">
           <div className="overflow-x-auto scrollbar-hide">
-            <div className="flex gap-2 bg-muted/50 backdrop-blur-sm p-1 rounded-xl border min-w-max">
+            <div className="flex gap-2 bg-muted/50 backdrop-blur-sm p-1 rounded-xl border w-full">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "relative flex-shrink-0 px-4 py-2 text-sm font-medium rounded-lg text-muted-foreground outline-none transition-colors flex items-center justify-center gap-2 min-w-fit",
+                    "relative flex-1 px-4 py-2 text-sm font-medium rounded-lg text-muted-foreground outline-none transition-colors flex items-center justify-center gap-2",
                     "hover:text-foreground hover:bg-background/50",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   )}
