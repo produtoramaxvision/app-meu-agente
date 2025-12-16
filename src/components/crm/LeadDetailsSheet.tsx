@@ -20,16 +20,16 @@ import { useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useSDRAgent } from '@/hooks/useSDRAgent';
-import { useEvolutionContacts } from '@/hooks/useEvolutionContacts';
 import { toast } from 'sonner';
 
 interface LeadDetailsSheetProps {
   contact: EvolutionContact | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onUpdateContact?: (contactId: string, updates: Partial<EvolutionContact>) => Promise<void>;
 }
 
-export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsSheetProps) {
+export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact }: LeadDetailsSheetProps) {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
   const [estimatedValue, setEstimatedValue] = useState<string>('');
@@ -43,15 +43,6 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
     () => import.meta.env.VITE_EVOLUTION_API_KEY || '',
     []
   );
-  
-  const { updateContact } = useEvolutionContacts({
-    instanceId: instance?.id || '',
-    instanceName: instance?.instance_name || '',
-    evolutionApiUrl,
-    evolutionApiKey,
-    onlyContacts: false,
-    syncOnMount: false,
-  });
   
   // Use tasks filtered by this lead
   const { tasks, createTask, toggleTaskCompletion } = useTasksData(
@@ -141,7 +132,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
   };
 
   const handleSaveEstimatedValue = async () => {
-    if (!contact) return;
+    if (!contact || !onUpdateContact) return;
     
     // Parse valor: remove formatação e converte para número
     // formatCurrency já divide por 100, então precisamos remover apenas a formatação de milhar/decimal
@@ -150,7 +141,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange }: LeadDetailsShe
     
     setIsSavingValue(true);
     try {
-      await updateContact(contact.id, {
+      await onUpdateContact(contact.id, {
         crm_estimated_value: numericValue
       });
       toast.success('Valor estimado atualizado!');

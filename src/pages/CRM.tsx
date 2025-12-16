@@ -24,7 +24,7 @@ export default function CRM() {
   const [viewMode, setViewMode] = useState<'kanban' | 'lista' | 'dashboard'>('kanban');
   const [search, setSearch] = useState('');
   const { cliente } = useAuth();
-  const { metrics, loading, columns, moveCard } = useCRMPipeline();
+  const { metrics, loading, columns, moveCard, updateContact } = useCRMPipeline();
 
   // Persistência por usuário
   useEffect(() => {
@@ -310,7 +310,8 @@ export default function CRM() {
         <LeadDetailsSheet 
           contact={selectedContact} 
           open={detailsOpen} 
-          onOpenChange={handleOpenChange} 
+          onOpenChange={handleOpenChange}
+          onUpdateContact={updateContact}
         />
       </CRMLayout>
     </ProtectedFeature>

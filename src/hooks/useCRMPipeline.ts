@@ -166,7 +166,8 @@ export function useCRMPipeline() {
     metrics,
     loading,
     moveCard,
-    refresh
+    refresh,
+    updateContact,
   };
 }
 
