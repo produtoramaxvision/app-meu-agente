@@ -1,7 +1,10 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { CustomFieldsManager } from './CustomFieldsManager';
+import { NotificationSettings } from '@/components/settings/NotificationSettings';
 import { Input } from '@/components/ui/input';
-import { Search, Plus, Filter, MoreHorizontal, LayoutGrid, List, BarChart3, Download } from 'lucide-react';
+import { Search, Plus, Filter, MoreHorizontal, LayoutGrid, List, BarChart3, Download, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { motion } from 'framer-motion';
@@ -14,9 +17,10 @@ interface CRMLayoutProps {
   searchValue: string;
   onSearchChange: (value: string) => void;
   onExport?: () => void;
+  onNewLead?: () => void;
 }
 
-export function CRMLayout({ children, headerStats, viewMode, onViewChange, searchValue, onSearchChange, onExport }: CRMLayoutProps) {
+export function CRMLayout({ children, headerStats, viewMode, onViewChange, searchValue, onSearchChange, onExport, onNewLead }: CRMLayoutProps) {
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-[hsl(var(--sidebar-bg))]">
       {/* CRM Header */}
@@ -85,6 +89,35 @@ export function CRMLayout({ children, headerStats, viewMode, onViewChange, searc
             >
               <List className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
             </Button>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    'group relative h-7 w-7 rounded-md transition-all duration-200',
+                    'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md'
+                  )}
+                >
+                  <Settings className="h-4 w-4 transition-transform duration-200 group-hover:rotate-90" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Configurações do CRM</SheetTitle>
+                </SheetHeader>
+                <div className="space-y-6 py-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Campos Personalizados</h3>
+                    <CustomFieldsManager />
+                  </div>
+                  <div className="border-t pt-6">
+                    <h3 className="text-lg font-semibold mb-4">Notificações em Tempo Real</h3>
+                    <NotificationSettings />
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
 
           {onExport && (
@@ -106,6 +139,7 @@ export function CRMLayout({ children, headerStats, viewMode, onViewChange, searc
               'group relative flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
               'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md'
             )}
+            onClick={onNewLead}
           >
             <Plus className="h-4 w-4 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-90" />
             <motion.span

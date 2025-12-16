@@ -10,6 +10,7 @@ import { AuthLayout } from "./components/layout/AuthLayout";
 import { AppLayout } from "./components/layout/AppLayout";
 import { initPerformanceMonitoring } from "./lib/performance-monitor";
 import { PageLoadingFallback } from "./components/PageLoadingFallback";
+import { useRealtimeNotifications } from "./hooks/useRealtimeNotifications";
 
 import { CheckoutPendingHandler } from "./components/CheckoutPendingHandler";
 
@@ -39,21 +40,19 @@ const CRM = lazy(() => import("./pages/CRM"));
 // Inicializar monitoramento de performance
 initPerformanceMonitoring();
 
-const App = () => (
-  <BrowserRouter 
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true
-      }}
-    >
-      <ThemeProvider>
-        <AuthProvider>
-          <CheckoutPendingHandler />
-          <TooltipProvider>
-            <Sonner />
-            <SearchProvider>
-              <Suspense fallback={<PageLoadingFallback />}>
-                <Routes>
+// Componente interno que usa o hook de notificações
+function AppContent() {
+  // Hook de notificações em tempo real (Supabase Realtime)
+  useRealtimeNotifications();
+
+  return (
+    <>
+      <CheckoutPendingHandler />
+      <TooltipProvider>
+        <Sonner />
+        <SearchProvider>
+          <Suspense fallback={<PageLoadingFallback />}>
+            <Routes>
                   <Route path="/" element={<Navigate to="/chat" replace />} />
                   <Route path="/auth/login" element={<AuthLayout><Login /></AuthLayout>} />
                   <Route path="/auth/signup" element={<AuthLayout><Signup /></AuthLayout>} />
@@ -153,6 +152,20 @@ const App = () => (
               </Suspense>
             </SearchProvider>
           </TooltipProvider>
+        </>
+  );
+}
+
+const App = () => (
+  <BrowserRouter 
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true
+      }}
+    >
+      <ThemeProvider>
+        <AuthProvider>
+          <AppContent />
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

@@ -3,7 +3,8 @@ import { CRMLayout } from '@/components/crm/CRMLayout';
 import { KanbanBoard } from '@/components/crm/KanbanBoard';
 import { DashboardView } from '@/components/crm/DashboardView';
 import { LeadDetailsSheet } from '@/components/crm/LeadDetailsSheet';
-import { EvolutionContact } from '@/types/sdr';
+import { CreateLeadDialog } from '@/components/crm/CreateLeadDialog';
+import { EvolutionContact, LeadStatus } from '@/types/sdr';
 import { useCRMPipeline } from '@/hooks/useCRMPipeline';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,14 +18,16 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function CRM() {
   const [selectedContact, setSelectedContact] = useState<EvolutionContact | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [createLeadOpen, setCreateLeadOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'kanban' | 'lista' | 'dashboard'>('kanban');
   const [search, setSearch] = useState('');
   const { cliente } = useAuth();
-  const { metrics, loading, columns, moveCard, updateContact } = useCRMPipeline();
+  const { metrics, loading, columns, moveCard, updateContact, refresh } = useCRMPipeline();
 
   // Persistência por usuário
   useEffect(() => {
@@ -52,6 +55,85 @@ export default function CRM() {
     if (!open) {
       // Small delay to prevent flashing content while closing
       setTimeout(() => setSelectedContact(null), 300);
+    }
+  };
+
+  const handleCreateLead = async (data: {
+    name: string;
+    phone: string;
+    email?: string;
+    estimatedValue?: string;
+    status: LeadStatus;
+    notes?: string;
+  }) => {
+    try {
+      if (!cliente?.phone) {
+        throw new Error('Telefone do usuário não encontrado');
+      }
+
+      // Buscar a instância ativa do usuário
+      const { data: instances, error: instanceError } = await supabase
+        .from('evolution_instances')
+        .select('id')
+        .eq('phone', cliente.phone)
+        .eq('connection_status', 'connected')
+        .limit(1)
+        .single();
+
+      if (instanceError || !instances) {
+        throw new Error('Nenhuma instância conectada encontrada');
+      }
+
+      // Normalizar telefone (remover caracteres especiais)
+      const normalizedPhone = data.phone.replace(/[^0-9]/g, '');
+      const remoteJid = `${normalizedPhone}@s.whatsapp.net`;
+
+      // Criar contato na tabela evolution_contacts
+      const newContact = {
+        instance_id: instances.id,
+        phone: cliente.phone,
+        remote_jid: remoteJid,
+        push_name: data.name,
+        profile_pic_url: null,
+        is_group: false,
+        is_saved: false,
+        synced_at: new Date().toISOString(),
+        sync_source: 'manual' as const,
+        crm_notes: data.notes || null,
+        crm_tags: [],
+        crm_favorite: false,
+        crm_last_interaction_at: new Date().toISOString(),
+        crm_lead_status: data.status,
+        crm_lead_score: 10, // Score inicial para leads manuais
+        crm_estimated_value: data.estimatedValue ? parseFloat(data.estimatedValue) : null,
+        crm_closed_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error: insertError } = await supabase
+        .from('evolution_contacts')
+        .insert([newContact]);
+
+      if (insertError) {
+        console.error('Error inserting contact:', insertError);
+        throw insertError;
+      }
+
+      toast.success('Lead criado com sucesso!', {
+        description: `${data.name} foi adicionado ao pipeline`,
+      });
+
+      // Recarregar dados do CRM
+      if (refresh) {
+        await refresh();
+      }
+    } catch (error) {
+      console.error('Error creating lead:', error);
+      toast.error('Erro ao criar lead', {
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+      });
+      throw error;
     }
   };
 
@@ -198,6 +280,7 @@ export default function CRM() {
         searchValue={search}
         onSearchChange={setSearch}
         onExport={handleExportCSV}
+        onNewLead={() => setCreateLeadOpen(true)}
       >
         {loading ? (
           <div className="h-full flex items-center justify-center">
@@ -312,6 +395,12 @@ export default function CRM() {
           open={detailsOpen} 
           onOpenChange={handleOpenChange}
           onUpdateContact={updateContact}
+        />
+
+        <CreateLeadDialog 
+          open={createLeadOpen}
+          onOpenChange={setCreateLeadOpen}
+          onCreateLead={handleCreateLead}
         />
       </CRMLayout>
     </ProtectedFeature>

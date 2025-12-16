@@ -278,6 +278,9 @@ export function useEvolutionContacts(
 
   // Atualizar contato (apenas campos CRM)
   const updateContact = useCallback(async (contactId: string, updates: Partial<EvolutionContact>) => {
+    // Guardar estado anterior para possível rollback
+    const previousContacts = [...contacts];
+
     // Atualizar estado local PRIMEIRO (atualização otimista)
     setContacts((prev) =>
       prev.map((contact) =>
@@ -285,22 +288,26 @@ export function useEvolutionContacts(
       )
     );
 
-    // Depois atualizar no banco
-    const { error } = await supabase
-      .from('evolution_contacts')
-      .update(updates)
-      .eq('id', contactId);
+    try {
+      // Atualizar no banco
+      const { error } = await supabase
+        .from('evolution_contacts')
+        .update(updates)
+        .eq('id', contactId);
 
-    if (error) {
-      // Se falhar, reverte a atualização otimista
-      await loadContacts();
+      if (error) {
+        throw error;
+      }
+
+      // ✅ Sucesso! Atualização otimista permanece
+      // Não recarregamos todos os contatos - a UI já foi atualizada
+    } catch (error) {
+      // ❌ Erro: reverter para estado anterior (rollback)
+      console.error('Error updating contact, rolling back:', error);
+      setContacts(previousContacts);
       throw error;
     }
-
-    // Recarregar imediatamente para garantir que métricas sejam recalculadas
-    // Isso resolve o problema do "Valor do pipeline" não atualizar
-    await loadContacts();
-  }, [loadContacts]);
+  }, [contacts]);
 
   // Load inicial
   useEffect(() => {

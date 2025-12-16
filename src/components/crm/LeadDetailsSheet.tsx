@@ -16,11 +16,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageCircle, Phone, Calendar, CheckSquare, Plus, Mail, Loader2 } from 'lucide-react';
 import { useTasksData, TaskFormData } from '@/hooks/useTasksData';
 import { Input } from '@/components/ui/input';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
+import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useSDRAgent } from '@/hooks/useSDRAgent';
 import { toast } from 'sonner';
+import { useCustomFieldDefinitions, useCustomFieldValues } from '@/hooks/useCustomFields';
+import { CustomFieldRenderer } from './CustomFieldRenderer';
 
 interface LeadDetailsSheetProps {
   contact: EvolutionContact | null;
@@ -34,7 +37,13 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
   const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
   const [estimatedValue, setEstimatedValue] = useState<string>('');
   const [isSavingValue, setIsSavingValue] = useState(false);
+  const [notes, setNotes] = useState<string>('');
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
   const { instance } = useSDRAgent();
+  
+  // Custom Fields
+  const { definitions } = useCustomFieldDefinitions();
+  const { values, saveValue } = useCustomFieldValues(contact?.id);
   const evolutionApiUrl = useMemo(
     () => import.meta.env.VITE_EVOLUTION_API_URL || 'https://evolution-api.com',
     []
@@ -64,6 +73,41 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
       setEstimatedValue('');
     }
   }, [contact]);
+
+  // Sincronizar notas quando contato mudar
+  useEffect(() => {
+    if (contact?.crm_notes) {
+      setNotes(contact.crm_notes);
+    } else {
+      setNotes('');
+    }
+  }, [contact?.id, contact?.crm_notes]);
+
+  // Auto-save de notas com debounce
+  useEffect(() => {
+    if (!contact || notes === (contact.crm_notes || '')) {
+      return; // Não salvar se notas não mudaram
+    }
+
+    const timeoutId = setTimeout(async () => {
+      if (onUpdateContact) {
+        setIsSavingNotes(true);
+        try {
+          await onUpdateContact(contact.id, { crm_notes: notes });
+          toast.success('Notas salvas automaticamente', {
+            duration: 2000,
+          });
+        } catch (error) {
+          console.error('Error saving notes:', error);
+          toast.error('Erro ao salvar notas');
+        } finally {
+          setIsSavingNotes(false);
+        }
+      }
+    }, 500); // Debounce de 500ms
+
+    return () => clearTimeout(timeoutId);
+  }, [notes, contact, onUpdateContact]);
 
   if (!contact) return null;
 
@@ -269,7 +313,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
         <div className="flex-1 overflow-hidden flex flex-col">
           <Tabs defaultValue="tasks" className="flex-1 flex flex-col h-full">
             <div className="px-6 pt-4 border-b bg-background">
-              <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0 h-auto">
+              <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0 h-auto overflow-x-auto">
                 <TabsTrigger 
                   value="tasks" 
                   className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
@@ -288,6 +332,14 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
                 >
                   Notas
                 </TabsTrigger>
+                {definitions.length > 0 && (
+                  <TabsTrigger 
+                    value="custom" 
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+                  >
+                    Campos Extras
+                  </TabsTrigger>
+                )}
               </TabsList>
             </div>
 
@@ -356,13 +408,63 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
             {/* Notes Tab */}
             <TabsContent value="notes" className="flex-1 overflow-hidden p-6 m-0 border-0">
               <div className="space-y-4">
-                <div className="p-3 border rounded-lg bg-muted/20">
-                  <p className="text-sm text-muted-foreground italic">
-                    {contact.crm_notes || "Nenhuma nota adicionada."}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-foreground">
+                      Notas e Observações
+                    </label>
+                    {isSavingNotes && (
+                      <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Salvando...
+                      </span>
+                    )}
+                  </div>
+                  <Textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Adicione notas sobre este lead... (auto-salvamento ativado)"
+                    className="min-h-[200px] resize-none"
+                    disabled={isSavingNotes || !onUpdateContact}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {notes.length}/500 caracteres • Salva automaticamente após parar de digitar
                   </p>
                 </div>
               </div>
             </TabsContent>
+
+            {/* Custom Fields Tab */}
+            {definitions.length > 0 && (
+              <TabsContent value="custom" className="flex-1 overflow-hidden m-0 border-0">
+                <ScrollArea className="h-full">
+                  <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+                    {definitions
+                      .sort((a, b) => a.display_order - b.display_order)
+                      .map((def) => (
+                        <div key={def.id}>
+                          <CustomFieldRenderer
+                            definition={def}
+                            value={values?.[def.field_key]}
+                            onChange={async (value) => {
+                              await saveValue.mutateAsync({
+                                field_key: def.field_key,
+                                value,
+                              });
+                            }}
+                          />
+                        </div>
+                      ))}
+                    
+                    {definitions.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground text-sm border rounded-lg border-dashed">
+                        Nenhum campo personalizado configurado
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            )}
           </Tabs>
         </div>
       </SheetContent>
