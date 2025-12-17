@@ -52,6 +52,8 @@ export interface EvolutionContact {
   crm_lead_score: number;
   crm_estimated_value: number; // Valor estimado do deal em reais
   crm_closed_at: string | null; // Data de fechamento (ganho ou perdido)
+  crm_loss_reason: string | null; // Motivo da perda (quando status = perdido)
+  crm_loss_reason_details: string | null; // Detalhes adicionais do motivo da perda
   
   created_at: string;
   updated_at: string;

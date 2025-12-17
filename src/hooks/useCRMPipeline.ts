@@ -4,6 +4,7 @@ import { useSDRAgent } from './useSDRAgent';
 import { useAuth } from '@/contexts/AuthContext';
 import { EvolutionContact, LeadStatus } from '@/types/sdr';
 import { toast } from 'sonner';
+import { useActivityLog } from './useActivityLog';
 
 export const CRM_COLUMNS: { id: LeadStatus; label: string; color: string }[] = [
   { id: 'novo', label: 'Novo', color: 'bg-blue-500' },
@@ -29,6 +30,9 @@ export interface PipelineMetrics {
 export function useCRMPipeline() {
   const { instance } = useSDRAgent();
   const { cliente } = useAuth();
+  
+  // Hook para registrar atividades (sem contactId específico)
+  const { logStatusChange } = useActivityLog(null);
   
   // ⚡ OTIMIZAÇÃO: Usar novo hook com React Query
   const { 
@@ -131,7 +135,16 @@ export function useCRMPipeline() {
     };
   }, [pipelineContacts]);
 
-  const moveCard = useCallback(async (contactId: string, newStatus: LeadStatus) => {
+  const moveCard = useCallback(async (
+    contactId: string, 
+    newStatus: LeadStatus,
+    lossReason?: string,
+    lossReasonDetails?: string
+  ) => {
+    // Obter status anterior para registrar no log
+    const contact = pipelineContacts.find(c => c.id === contactId);
+    const oldStatus = contact?.crm_lead_status || 'novo';
+    
     try {
       // Preparar atualização com lógica de crm_closed_at
       const updateData: Partial<EvolutionContact> = { 
@@ -141,13 +154,24 @@ export function useCRMPipeline() {
       // Se moveu para ganho ou perdido, registrar data de fechamento
       if (newStatus === 'ganho' || newStatus === 'perdido') {
         updateData.crm_closed_at = new Date().toISOString();
+        
+        // Se for perdido e tiver motivo, adicionar
+        if (newStatus === 'perdido' && lossReason) {
+          updateData.crm_loss_reason = lossReason;
+          updateData.crm_loss_reason_details = lossReasonDetails || null;
+        }
       } 
-      // Se estava em ganho/perdido e voltou para outro status, limpar data de fechamento
+      // Se estava em ganho/perdido e voltou para outro status, limpar data de fechamento e motivo de perda
       else {
         updateData.crm_closed_at = null;
+        updateData.crm_loss_reason = null;
+        updateData.crm_loss_reason_details = null;
       }
 
       await updateContact(contactId, updateData);
+      
+      // Registrar atividade de mudança de status
+      await logStatusChange(contactId, oldStatus, newStatus);
       
       // Feedback visual
       if (newStatus === 'ganho') {
@@ -159,7 +183,7 @@ export function useCRMPipeline() {
       console.error('Erro ao mover card:', error);
       toast.error('Erro ao atualizar status do lead');
     }
-  }, [updateContact]);
+  }, [updateContact, logStatusChange, pipelineContacts]);
 
   return {
     columns,

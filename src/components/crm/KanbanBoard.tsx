@@ -12,12 +12,20 @@ type ColumnType = {
 
 interface KanbanBoardProps {
   onCardClick: (contact: EvolutionContact) => void;
+  onCardEdit?: (contact: EvolutionContact) => void;
+  onCardDelete?: (contact: EvolutionContact) => void;
   columns: ColumnType[];
   moveCard: (contactId: string, newStatus: LeadStatus) => Promise<void>;
 }
 
 // ⚡ OTIMIZAÇÃO: React.memo evita re-renders desnecessários do board
-export const KanbanBoard = memo(function KanbanBoard({ onCardClick, columns, moveCard }: KanbanBoardProps) {
+export const KanbanBoard = memo(function KanbanBoard({ 
+  onCardClick, 
+  onCardEdit,
+  onCardDelete,
+  columns, 
+  moveCard 
+}: KanbanBoardProps) {
   // ⚡ OTIMIZAÇÃO: useCallback estabiliza referência do handler
   const handleDragEnd = useCallback((result: DropResult) => {
     const { destination, source, draggableId } = result;
@@ -56,6 +64,8 @@ export const KanbanBoard = memo(function KanbanBoard({ onCardClick, columns, mov
               color={col.color}
               contacts={col.contacts}
               onCardClick={onCardClick}
+              onCardEdit={onCardEdit}
+              onCardDelete={onCardDelete}
             />
           </div>
         ))}

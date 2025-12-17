@@ -4,6 +4,7 @@ import { KanbanBoard } from '@/components/crm/KanbanBoard';
 import { DashboardView } from '@/components/crm/DashboardView';
 import { LeadDetailsSheet } from '@/components/crm/LeadDetailsSheet';
 import { CreateLeadDialog } from '@/components/crm/CreateLeadDialog';
+import { LossReasonDialog, type LossReasonId } from '@/components/crm/LossReasonDialog';
 import { EvolutionContact, LeadStatus } from '@/types/sdr';
 import { useCRMPipeline } from '@/hooks/useCRMPipeline';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -86,6 +87,8 @@ export default function CRM() {
   const [createLeadOpen, setCreateLeadOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'kanban' | 'lista' | 'dashboard'>('kanban');
   const [search, setSearch] = useState('');
+  const [lossReasonDialogOpen, setLossReasonDialogOpen] = useState(false);
+  const [pendingLossMove, setPendingLossMove] = useState<{ contactId: string; contact: EvolutionContact } | null>(null);
   const { cliente } = useAuth();
   const { metrics, loading, columns, moveCard, updateContact, refresh } = useCRMPipeline();
 
@@ -111,6 +114,45 @@ export default function CRM() {
     setDetailsOpen(true);
   }, []);
 
+  const handleCardEdit = useCallback((contact: EvolutionContact) => {
+    // Por enquanto, abre o details sheet (que permite edição)
+    // Futuramente pode abrir um dialog específico de edição
+    setSelectedContact(contact);
+    setDetailsOpen(true);
+    toast.info('Modo de edição', {
+      description: 'Edite os campos e clique em "Salvar" para atualizar o lead.',
+    });
+  }, []);
+
+  const handleCardDelete = useCallback(async (contact: EvolutionContact) => {
+    const confirmed = window.confirm(
+      `Tem certeza que deseja excluir o lead "${contact.push_name || contact.phone}"?\n\nEsta ação não pode ser desfeita.`
+    );
+    
+    if (!confirmed) return;
+
+    try {
+      const { error } = await supabase
+        .from('evolution_contacts')
+        .delete()
+        .eq('id', contact.id);
+
+      if (error) throw error;
+
+      toast.success('Lead excluído', {
+        description: `${contact.push_name || contact.phone} foi removido do CRM.`,
+      });
+
+      // Refresh para atualizar a lista
+      await refresh();
+    } catch (error) {
+      console.error('Erro ao excluir lead:', error);
+      toast.error('Erro ao excluir lead', {
+        description: 'Não foi possível excluir o lead. Tente novamente.',
+      });
+    }
+  }, [refresh]);
+
   const handleOpenChange = useCallback((open: boolean) => {
     setDetailsOpen(open);
     if (!open) {
@@ -122,6 +164,28 @@ export default function CRM() {
   const handleOpenCreateLead = useCallback(() => {
     setCreateLeadOpen(true);
   }, []);
+
+  // Interceptar movimento para "perdido" para coletar motivo
+  const handleMoveCard = useCallback(async (contactId: string, newStatus: LeadStatus) => {
+    const contact = columns.flatMap(c => c.contacts).find(c => c.id === contactId);
+    
+    if (newStatus === 'perdido' && contact) {
+      // Abrir dialog para coletar motivo
+      setPendingLossMove({ contactId, contact });
+      setLossReasonDialogOpen(true);
+    } else {
+      // Movimento normal
+      await moveCard(contactId, newStatus);
+    }
+  }, [columns, moveCard]);
+
+  // Confirmar perda com motivo
+  const handleConfirmLoss = useCallback(async (reason: LossReasonId, details?: string) => {
+    if (!pendingLossMove) return;
+    
+    await moveCard(pendingLossMove.contactId, 'perdido', reason, details);
+    setPendingLossMove(null);
+  }, [pendingLossMove, moveCard]);
 
   // ⚡ OTIMIZAÇÃO: useCallback para handler de criação de lead
   const handleCreateLead = useCallback(async (data: {
@@ -316,7 +380,13 @@ export default function CRM() {
             )}
             {viewMode === 'kanban' && (
               <div className="h-full">
-                <KanbanBoard onCardClick={handleCardClick} columns={filteredColumns} moveCard={moveCard} />
+                <KanbanBoard 
+                  onCardClick={handleCardClick} 
+                  onCardEdit={handleCardEdit}
+                  onCardDelete={handleCardDelete}
+                  columns={filteredColumns} 
+                  moveCard={handleMoveCard} 
+                />
               </div>
             )}
             {viewMode === 'lista' && (
@@ -403,6 +473,13 @@ export default function CRM() {
           open={createLeadOpen}
           onOpenChange={setCreateLeadOpen}
           onCreateLead={handleCreateLead}
+        />
+
+        <LossReasonDialog
+          open={lossReasonDialogOpen}
+          onOpenChange={setLossReasonDialogOpen}
+          leadName={pendingLossMove?.contact.push_name || 'este lead'}
+          onConfirm={handleConfirmLoss}
         />
       </CRMLayout>
     </ProtectedFeature>

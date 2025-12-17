@@ -24,6 +24,8 @@ import { useSDRAgent } from '@/hooks/useSDRAgent';
 import { toast } from 'sonner';
 import { useCustomFieldDefinitions, useCustomFieldValues } from '@/hooks/useCustomFields';
 import { CustomFieldRenderer } from './CustomFieldRenderer';
+import { useActivityLog } from '@/hooks/useActivityLog';
+import { ActivityTimeline } from './ActivityTimeline';
 
 interface LeadDetailsSheetProps {
   contact: EvolutionContact | null;
@@ -44,6 +46,9 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
   // Custom Fields
   const { definitions } = useCustomFieldDefinitions();
   const { values, saveValue } = useCustomFieldValues(contact?.id);
+  
+  // Activity Log
+  const { activities, isLoading: isLoadingActivities, logValueUpdate, logNoteUpdate } = useActivityLog(contact?.id);
   const evolutionApiUrl = useMemo(
     () => import.meta.env.VITE_EVOLUTION_API_URL || 'https://evolution-api.com',
     []
@@ -94,6 +99,10 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
         setIsSavingNotes(true);
         try {
           await onUpdateContact(contact.id, { crm_notes: notes });
+          
+          // Registrar atividade de atualização de notas
+          await logNoteUpdate(contact.id);
+          
           toast.success('Notas salvas automaticamente', {
             duration: 2000,
           });
@@ -107,7 +116,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
     }, 500); // Debounce de 500ms
 
     return () => clearTimeout(timeoutId);
-  }, [notes, contact, onUpdateContact]);
+  }, [notes, contact, onUpdateContact, logNoteUpdate]);
 
   if (!contact) return null;
 
@@ -182,12 +191,19 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
     // formatCurrency já divide por 100, então precisamos remover apenas a formatação de milhar/decimal
     const cleanValue = estimatedValue.replace(/\./g, '').replace(',', '.');
     const numericValue = parseFloat(cleanValue) || 0;
+    const oldValue = contact.crm_estimated_value || 0;
     
     setIsSavingValue(true);
     try {
       await onUpdateContact(contact.id, {
         crm_estimated_value: numericValue
       });
+      
+      // Registrar atividade de mudança de valor (apenas se mudou)
+      if (oldValue !== numericValue) {
+        await logValueUpdate(contact.id, oldValue, numericValue);
+      }
+      
       toast.success('Valor estimado atualizado!');
       
       // O useEvolutionContacts agora faz refresh automático após updateContact
@@ -307,6 +323,33 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
               </Button>
             </div>
           </div>
+
+          {/* Motivo de Perda (only when status is "perdido") */}
+          {contact.crm_lead_status === 'perdido' && contact.crm_loss_reason && (
+            <div className="mt-4 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-red-500" />
+                <h4 className="text-sm font-semibold text-red-700 dark:text-red-400">
+                  Motivo da Perda
+                </h4>
+              </div>
+              <p className="text-sm text-red-600 dark:text-red-300">
+                {contact.crm_loss_reason === 'price' && '💰 Preço muito alto'}
+                {contact.crm_loss_reason === 'competitor' && '🏆 Escolheu concorrente'}
+                {contact.crm_loss_reason === 'timing' && '⏰ Não é o momento'}
+                {contact.crm_loss_reason === 'no_budget' && '💸 Sem orçamento'}
+                {contact.crm_loss_reason === 'no_response' && '📵 Sem resposta'}
+                {contact.crm_loss_reason === 'not_qualified' && '❌ Lead não qualificado'}
+                {contact.crm_loss_reason === 'changed_needs' && '🔄 Necessidades mudaram'}
+                {contact.crm_loss_reason === 'other' && '📝 Outro motivo'}
+              </p>
+              {contact.crm_loss_reason_details && (
+                <p className="text-xs text-red-600/80 dark:text-red-400/80 italic border-t border-red-200 dark:border-red-900 pt-2">
+                  "{contact.crm_loss_reason_details}"
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Content Tabs */}
@@ -331,6 +374,12 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
                   className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
                 >
                   Notas
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="history" 
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+                >
+                  Histórico
                 </TabsTrigger>
                 {definitions.length > 0 && (
                   <TabsTrigger 
@@ -432,6 +481,18 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
                   </p>
                 </div>
               </div>
+            </TabsContent>
+
+            {/* History Tab */}
+            <TabsContent value="history" className="flex-1 overflow-hidden m-0 border-0">
+              <ScrollArea className="h-full">
+                <div className="p-4 sm:p-6">
+                  <ActivityTimeline 
+                    activities={activities} 
+                    isLoading={isLoadingActivities}
+                  />
+                </div>
+              </ScrollArea>
             </TabsContent>
 
             {/* Custom Fields Tab */}
