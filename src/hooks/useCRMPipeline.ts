@@ -180,6 +180,21 @@ export function useCRMPipeline() {
         updateData.crm_score_updated_at = new Date().toISOString();
       }
 
+      // ⚡ NOVO (Fase 3.5): Auto-setar probabilidade de fechamento se não houver valor customizado
+      // Se o contato não tem probabilidade customizada (null), setar default do novo status
+      if (contact && contact.crm_win_probability === null) {
+        const DEFAULT_WIN_PROBABILITY: Record<LeadStatus, number> = {
+          novo: 10,
+          contatado: 20,
+          qualificado: 40,
+          proposta: 60,
+          negociando: 80,
+          ganho: 100,
+          perdido: 0,
+        };
+        updateData.crm_win_probability = DEFAULT_WIN_PROBABILITY[newStatus];
+      }
+
       await updateContact(contactId, updateData);
       
       // Registrar atividade de mudança de status

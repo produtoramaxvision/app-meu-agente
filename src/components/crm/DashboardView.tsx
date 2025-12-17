@@ -1,31 +1,37 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowDown, ArrowUp, TrendingUp, DollarSign, Clock, Target, Award, Zap } from 'lucide-react';
+import { 
+  TrendingUp, 
+  DollarSign, 
+  Clock, 
+  Target, 
+  Award, 
+  Users,
+  Activity,
+  BarChart3
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PipelineMetrics } from '@/hooks/useCRMPipeline';
+import { EvolutionContact } from '@/types/sdr';
+import { useTemporalMetrics } from '@/hooks/useTemporalMetrics';
+import { CRMPeriodSelector, CRMPeriodType } from './CRMPeriodSelector';
+import { CRMMetricCard, CRMMetricsGrid } from './CRMMetricCard';
+import { CRMTrendChart } from './CRMTrendChart';
+import { CRMForecastCard } from './CRMForecastCard';
 
 interface DashboardViewProps {
   metrics: PipelineMetrics;
+  contacts: EvolutionContact[];
   className?: string;
 }
 
-export function DashboardView({ metrics, className }: DashboardViewProps) {
-  // Determinar cores baseadas em benchmarks da indústria
-  const getWinRateColor = (rate: number) => {
-    if (rate >= 40) return { bg: 'bg-green-600', text: 'text-green-600' };
-    if (rate >= 20) return { bg: 'bg-amber-600', text: 'text-amber-600' };
-    return { bg: 'bg-red-600', text: 'text-red-600' };
-  };
-
-  const getQualificationColor = (rate: number) => {
-    if (rate >= 50) return { bg: 'bg-green-600', text: 'text-green-600' };
-    if (rate >= 30) return { bg: 'bg-amber-600', text: 'text-amber-600' };
-    return { bg: 'bg-red-600', text: 'text-red-600' };
-  };
-
-  const winRateColors = getWinRateColor(metrics.winRate);
-  const qualificationColors = getQualificationColor(metrics.qualificationRate);
+export function DashboardView({ metrics, contacts, className }: DashboardViewProps) {
+  const [period, setPeriod] = useState<CRMPeriodType>('this_month');
+  
+  // Hook de métricas temporais
+  const temporalMetrics = useTemporalMetrics({ contacts, period });
 
   // Dados para funil de conversão
   const funnelStages = [
@@ -39,113 +45,173 @@ export function DashboardView({ metrics, className }: DashboardViewProps) {
 
   const maxCount = Math.max(...funnelStages.map(s => s.count), 1);
 
+  // Formatadores
+  const currencyFormatter = (value: number) => 
+    `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  
+  const percentFormatter = (value: number) => `${value}`;
+
   return (
-    <div className={cn("p-6 space-y-6 overflow-y-auto", className)}>
-      {/* Cards de Métricas Principais */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Win Rate */}
-        <motion.div
-          whileHover={{ y: -4, boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
-          transition={{ type: "spring", stiffness: 400, damping: 20 }}
-        >
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Taxa de ganho
-              </CardTitle>
-              <Award className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className={cn("text-2xl font-bold mb-2", winRateColors.text)}>
-                {metrics.winRate}%
+    <div className={cn("p-4 sm:p-6 space-y-6 overflow-y-auto", className)}>
+      {/* Header com seletor de período */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold">Dashboard CRM</h2>
+          <p className="text-sm text-muted-foreground">
+            Acompanhe suas métricas de vendas em tempo real
+          </p>
+        </div>
+        <CRMPeriodSelector 
+          value={period} 
+          onChange={setPeriod}
+          compact={false}
+        />
+      </div>
+
+      {/* Cards de Métricas com Comparativo Temporal */}
+      <CRMMetricsGrid>
+        <CRMMetricCard
+          title="Novos Leads"
+          icon={Users}
+          metric={temporalMetrics.leads}
+          iconColor="text-blue-500"
+        />
+        <CRMMetricCard
+          title="Conversões"
+          icon={Award}
+          metric={temporalMetrics.conversions}
+          iconColor="text-green-500"
+        />
+        <CRMMetricCard
+          title="Receita"
+          icon={DollarSign}
+          metric={temporalMetrics.revenue}
+          formatter={currencyFormatter}
+          iconColor="text-emerald-500"
+        />
+        <CRMMetricCard
+          title="Win Rate"
+          icon={Target}
+          metric={temporalMetrics.winRate}
+          suffix="%"
+          formatter={percentFormatter}
+          iconColor="text-purple-500"
+        />
+      </CRMMetricsGrid>
+
+      {/* Gráfico de Tendência + Forecast */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <CRMTrendChart 
+          data={temporalMetrics.trendData}
+          periodLabel={temporalMetrics.periodLabel}
+        />
+        <CRMForecastCard 
+          forecast={temporalMetrics.forecast}
+        />
+      </div>
+
+      {/* Seção de Métricas Secundárias */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Ticket Médio com comparativo */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-amber-500/10">
+                <BarChart3 className="h-4 w-4 text-amber-500" />
               </div>
-              <p className="flex items-center text-xs font-medium text-muted-foreground">
-                <TrendingUp className="h-3 w-3 mr-1" />
-                Taxa de conversão
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Ticket Médio
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-amber-600">
+                {currencyFormatter(temporalMetrics.avgDealSize.current)}
+              </span>
+              {temporalMetrics.avgDealSize.changeDirection !== 'neutral' && (
+                <Badge
+                  variant="secondary"
+                  className={cn(
+                    "text-xs",
+                    temporalMetrics.avgDealSize.trend === 'positive' 
+                      ? "bg-green-500/10 text-green-600" 
+                      : "bg-red-500/10 text-red-600"
+                  )}
+                >
+                  {temporalMetrics.avgDealSize.changeDirection === 'up' ? '+' : '-'}
+                  {temporalMetrics.avgDealSize.change}%
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Média dos deals ganhos no período
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Velocidade de Vendas */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-indigo-500/10">
+                <Clock className="h-4 w-4 text-indigo-500" />
+              </div>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Ciclo de Vendas
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-indigo-600">
+                {metrics.salesVelocity}
+              </span>
+              <span className="text-sm text-muted-foreground">dias</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Tempo médio para fechar um deal
+            </p>
+          </CardContent>
+        </Card>
 
         {/* Pipeline Value */}
-        <motion.div
-          whileHover={{ y: -4, boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
-          transition={{ type: "spring", stiffness: 400, damping: 20 }}
-        >
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Valor do pipeline
-              </CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600 mb-2">
-                R$ {(metrics.pipelineValue / 1000).toFixed(1)}k
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-cyan-500/10">
+                <Activity className="h-4 w-4 text-cyan-500" />
               </div>
-              <p className="flex items-center text-xs font-medium text-muted-foreground">
-                <Zap className="h-3 w-3 mr-1" />
-                Negócios em aberto
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Sales Velocity */}
-        <motion.div
-          whileHover={{ y: -4, boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
-          transition={{ type: "spring", stiffness: 400, damping: 20 }}
-        >
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Velocidade de vendas
+                Pipeline Aberto
               </CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold mb-2">
-                {metrics.salesVelocity} dias
-              </div>
-              <p className="flex items-center text-xs font-medium text-muted-foreground">
-                <Target className="h-3 w-3 mr-1" />
-                Tempo médio de fechamento
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Qualification Rate */}
-        <motion.div
-          whileHover={{ y: -4, boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)" }}
-          transition={{ type: "spring", stiffness: 400, damping: 20 }}
-        >
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Taxa de qualificação
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className={cn("text-2xl font-bold mb-2", qualificationColors.text)}>
-                {metrics.qualificationRate}%
-              </div>
-              <p className="flex items-center text-xs font-medium text-muted-foreground">
-                <ArrowUp className="h-3 w-3 mr-1" />
-                Leads qualificados
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-cyan-600">
+                {currencyFormatter(metrics.pipelineValue)}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Valor total em negociação
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Funil de Conversão */}
       <Card>
         <CardHeader>
-          <CardTitle>Funil de Conversão</CardTitle>
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            <CardTitle>Funil de Conversão</CardTitle>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Distribuição atual dos leads por estágio
+          </p>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           {funnelStages.map((stage, index) => {
             const percentage = maxCount > 0 ? (stage.count / maxCount) * 100 : 0;
             const nextStage = funnelStages[index + 1];
@@ -192,17 +258,24 @@ export function DashboardView({ metrics, className }: DashboardViewProps) {
       <div className="grid gap-6 sm:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Ticket Médio</CardTitle>
+            <CardTitle>Taxa de Qualificação</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">
-              R$ {metrics.avgDealSize.toLocaleString('pt-BR', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })}
+            <div className="flex items-baseline gap-2">
+              <span className={cn(
+                "text-3xl font-bold",
+                metrics.qualificationRate >= 50 ? "text-green-600" :
+                metrics.qualificationRate >= 30 ? "text-amber-600" :
+                "text-red-600"
+              )}>
+                {metrics.qualificationRate}%
+              </span>
+              <span className="text-sm text-muted-foreground">
+                dos leads
+              </span>
             </div>
             <p className="text-sm text-muted-foreground mt-2">
-              Valor médio dos deals ganhos
+              Leads que avançaram para qualificado ou além
             </p>
           </CardContent>
         </Card>

@@ -4,3 +4,8 @@ project_id = "teexqwlnfdlcruqbmwuz"
 # são enviados sem token pelo provedor externo.
 [functions.evolution-webhook]
 verify_jwt = false
+
+# Desabilita verificação de JWT para process-automations, pois é invocado
+# pelo pg_cron/pg_net via trigger interno do banco sem JWT de usuário.
+[functions.process-automations]
+verify_jwt = false

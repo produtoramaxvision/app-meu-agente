@@ -235,9 +235,25 @@ export const KanbanCard = memo(function KanbanCard({
                 <p className="text-xs text-muted-foreground truncate">{contact.phone}</p>
               </div>
             </div>
-            {contact.crm_lead_score !== null && contact.crm_lead_score !== undefined && contact.crm_lead_score > 0 && (
-              <LeadScoreBadge score={contact.crm_lead_score} size="sm" showLabel={false} />
-            )}
+            <div className="flex items-center gap-1 shrink-0">
+              {contact.crm_lead_score !== null && contact.crm_lead_score !== undefined && contact.crm_lead_score > 0 && (
+                <LeadScoreBadge score={contact.crm_lead_score} size="sm" showLabel={false} />
+              )}
+              {/* Badge de Probabilidade de Fechamento (Fase 3.5) */}
+              {contact.crm_win_probability !== null && status !== 'ganho' && status !== 'perdido' && (
+                <Badge 
+                  variant="outline" 
+                  className="text-[10px] px-1.5 py-0 h-5 font-medium"
+                  style={{
+                    backgroundColor: `hsl(${(contact.crm_win_probability / 100) * 120}, 70%, 95%)`,
+                    borderColor: `hsl(${(contact.crm_win_probability / 100) * 120}, 70%, 60%)`,
+                    color: `hsl(${(contact.crm_win_probability / 100) * 120}, 70%, 30%)`,
+                  }}
+                >
+                  {contact.crm_win_probability}%
+                </Badge>
+              )}
+            </div>
           </div>
 
           {/* Loss Reason (only for "perdido" status) */}

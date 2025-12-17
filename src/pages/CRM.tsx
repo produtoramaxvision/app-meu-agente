@@ -331,6 +331,11 @@ export default function CRM() {
     );
   }, [columns]);
 
+  // Todos os contatos para métricas temporais (sem metadata extra)
+  const allContacts = useMemo(() => {
+    return columns.flatMap((col) => col.contacts);
+  }, [columns]);
+
   const normalizedFilter = search.trim().toLowerCase();
 
   const filteredColumns = useMemo(() => {
@@ -469,7 +474,7 @@ export default function CRM() {
             {/* ⚡ OTIMIZAÇÃO: Removido AnimatePresence - causa layout thrashing durante drag */}
             {viewMode === 'dashboard' && (
               <div className="h-full animate-in fade-in duration-200">
-                <DashboardView metrics={metrics} />
+                <DashboardView metrics={metrics} contacts={allContacts} />
               </div>
             )}
             {viewMode === 'kanban' && (

@@ -2,10 +2,11 @@ import { ReactNode, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { CustomFieldsManager } from './CustomFieldsManager';
+import { AutomationsManager } from './AutomationsManager';
 import { NotificationSettings } from '@/components/settings/NotificationSettings';
 import { FilterPanel } from './FilterPanel';
 import { Input } from '@/components/ui/input';
-import { Search, Plus, Filter, MoreHorizontal, LayoutGrid, List, BarChart3, Download, Settings } from 'lucide-react';
+import { Search, Plus, Filter, MoreHorizontal, LayoutGrid, List, BarChart3, Download, Settings, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { motion } from 'framer-motion';
@@ -107,6 +108,8 @@ export function CRMLayout({ children, headerStats, viewMode, onViewChange, searc
             >
               <List className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
             </Button>
+            
+            {/* Automations Button */}
             <Sheet>
               <SheetTrigger asChild>
                 <Button
@@ -116,6 +119,32 @@ export function CRMLayout({ children, headerStats, viewMode, onViewChange, searc
                     'group relative h-7 w-7 rounded-md transition-all duration-200',
                     'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md'
                   )}
+                  title="Automações"
+                >
+                  <Zap className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Automações do CRM</SheetTitle>
+                </SheetHeader>
+                <div className="py-6">
+                  <AutomationsManager />
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            {/* Settings Button */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    'group relative h-7 w-7 rounded-md transition-all duration-200',
+                    'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md'
+                  )}
+                  title="Configurações"
                 >
                   <Settings className="h-4 w-4 transition-transform duration-200 group-hover:rotate-90" />
                 </Button>

@@ -7,7 +7,7 @@
  * - Custom fields preenchidos (20 pontos)
  */
 
-import { EvolutionContact } from '@/types/sdr';
+import { EvolutionContact, LeadStatus } from '@/types/sdr';
 import { differenceInDays } from 'date-fns';
 
 // Pontos por status no pipeline
@@ -19,6 +19,17 @@ const STATUS_POINTS: Record<string, number> = {
   'negociando': 30,
   'ganho': 35, // Máximo para já ganho (para histórico)
   'perdido': 0
+};
+
+// Probabilidades padrão por status (para forecast) - Fase 3.5
+export const DEFAULT_WIN_PROBABILITY: Record<LeadStatus, number> = {
+  novo: 10,
+  contatado: 20,
+  qualificado: 40,
+  proposta: 60,
+  negociando: 80,
+  ganho: 100,
+  perdido: 0,
 };
 
 /**

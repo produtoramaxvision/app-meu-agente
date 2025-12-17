@@ -54,6 +54,7 @@ export interface EvolutionContact {
   crm_closed_at: string | null; // Data de fechamento (ganho ou perdido)
   crm_loss_reason: string | null; // Motivo da perda (quando status = perdido)
   crm_loss_reason_details: string | null; // Detalhes adicionais do motivo da perda
+  crm_win_probability: number | null; // Probabilidade de fechamento (0-100%). Se null, usa default do status
   
   created_at: string;
   updated_at: string;

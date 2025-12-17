@@ -18,6 +18,7 @@ import { useTasksData, TaskFormData } from '@/hooks/useTasksData';
 import { Input } from '@/components/ui/input';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { Textarea } from '@/components/ui/textarea';
+import { Slider } from '@/components/ui/slider';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useSDRAgent } from '@/hooks/useSDRAgent';
@@ -27,7 +28,8 @@ import { CustomFieldRenderer } from './CustomFieldRenderer';
 import { useActivityLog } from '@/hooks/useActivityLog';
 import { ActivityTimeline } from './ActivityTimeline';
 import { LeadScoreBadge } from './LeadScoreBadge';
-import { getScoreImprovementTips } from '@/utils/leadScoring';
+import { getScoreImprovementTips, DEFAULT_WIN_PROBABILITY } from '@/utils/leadScoring';
+import { LeadStatus } from '@/types/sdr';
 
 interface LeadDetailsSheetProps {
   contact: EvolutionContact | null;
@@ -43,6 +45,8 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
   const [isSavingValue, setIsSavingValue] = useState(false);
   const [notes, setNotes] = useState<string>('');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [winProbability, setWinProbability] = useState<number[]>([50]);
+  const [isSavingProbability, setIsSavingProbability] = useState(false);
   const { instance } = useSDRAgent();
   
   // Custom Fields
@@ -89,6 +93,20 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
       setNotes('');
     }
   }, [contact?.id, contact?.crm_notes]);
+
+  // Sincronizar probabilidade quando contato mudar (Fase 3.5)
+  useEffect(() => {
+    if (contact) {
+      // Se tem probabilidade customizada, usa ela
+      if (contact.crm_win_probability !== null) {
+        setWinProbability([contact.crm_win_probability]);
+      } else {
+        // Senão, usa default do status
+        const defaultProb = DEFAULT_WIN_PROBABILITY[contact.crm_lead_status as LeadStatus] || 50;
+        setWinProbability([defaultProb]);
+      }
+    }
+  }, [contact]);
 
   // Auto-save de notas com debounce
   useEffect(() => {
@@ -224,6 +242,28 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
     }
   };
 
+  // Handler para salvar probabilidade (Fase 3.5)
+  const handleSaveProbability = async () => {
+    if (!contact || !onUpdateContact) return;
+    
+    const newProb = winProbability[0];
+    setIsSavingProbability(true);
+    try {
+      await onUpdateContact(contact.id, {
+        crm_win_probability: newProb
+      });
+      
+      toast.success('Probabilidade atualizada!', {
+        description: `Nova probabilidade: ${newProb}%`,
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar probabilidade:', error);
+      toast.error('Erro ao salvar probabilidade');
+    } finally {
+      setIsSavingProbability(false);
+    }
+  };
+
   const formatCurrency = (value: string) => {
     // Remove caracteres não numéricos
     const numbers = value.replace(/[^\d]/g, '');
@@ -254,19 +294,17 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
             </Avatar>
             <div className="flex-1 space-y-1">
               <SheetTitle className="text-xl">{contact.push_name || contact.remote_jid.split('@')[0]}</SheetTitle>
-              <SheetDescription className="flex flex-col gap-1">
-                <span className="flex items-center gap-1.5">
-                  <Phone className="h-3.5 w-3.5" /> {contact.phone}
-                </span>
-                <div className="flex gap-2 mt-2 flex-wrap">
-                  <Badge variant="outline" className="text-xs bg-background/50">
-                    {contact.crm_lead_status || 'Novo'}
-                  </Badge>
-                  {contact.crm_lead_score !== null && contact.crm_lead_score !== undefined && contact.crm_lead_score > 0 && (
-                    <LeadScoreBadge score={contact.crm_lead_score} size="md" showLabel showTooltip />
-                  )}
-                </div>
+              <SheetDescription className="flex items-center gap-1.5">
+                <Phone className="h-3.5 w-3.5" /> {contact.phone}
               </SheetDescription>
+              <div className="flex gap-2 mt-2 flex-wrap">
+                <Badge variant="outline" className="text-xs bg-background/50">
+                  {contact.crm_lead_status || 'Novo'}
+                </Badge>
+                {contact.crm_lead_score !== null && contact.crm_lead_score !== undefined && contact.crm_lead_score > 0 && (
+                  <LeadScoreBadge score={contact.crm_lead_score} size="md" showLabel showTooltip />
+                )}
+              </div>
             </div>
           </div>
 
@@ -323,6 +361,62 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
               </Button>
             </div>
           </div>
+
+          {/* Campo de Probabilidade de Fechamento (Fase 3.5) - Não exibir para ganho/perdido */}
+          {contact.crm_lead_status !== 'ganho' && contact.crm_lead_status !== 'perdido' && (
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-muted-foreground">
+                  Probabilidade de Fechamento
+                </label>
+                <Badge 
+                  variant="secondary"
+                  className="text-xs font-semibold"
+                  style={{
+                    backgroundColor: `hsl(${(winProbability[0] / 100) * 120}, 70%, 95%)`,
+                    borderColor: `hsl(${(winProbability[0] / 100) * 120}, 70%, 60%)`,
+                    color: `hsl(${(winProbability[0] / 100) * 120}, 70%, 30%)`,
+                  }}
+                >
+                  {winProbability[0]}%
+                </Badge>
+              </div>
+              <div className="space-y-3">
+                <Slider
+                  value={winProbability}
+                  onValueChange={setWinProbability}
+                  max={100}
+                  min={0}
+                  step={5}
+                  className="w-full"
+                  aria-label="Probabilidade de Fechamento"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>0%</span>
+                  <span className="text-[10px] opacity-70">
+                    {contact.crm_win_probability === null 
+                      ? `Padrão: ${DEFAULT_WIN_PROBABILITY[contact.crm_lead_status as LeadStatus] || 50}%`
+                      : 'Customizado'}
+                  </span>
+                  <span>100%</span>
+                </div>
+                {contact.crm_win_probability !== winProbability[0] && (
+                  <Button
+                    onClick={handleSaveProbability}
+                    disabled={isSavingProbability}
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {isSavingProbability ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : null}
+                    Salvar Probabilidade
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Motivo de Perda (only when status is "perdido") */}
           {contact.crm_lead_status === 'perdido' && contact.crm_loss_reason && (
