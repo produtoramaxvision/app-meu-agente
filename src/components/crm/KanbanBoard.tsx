@@ -1,3 +1,73 @@
+import { memo, useCallback } from 'react';
+import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import { KanbanColumn } from './KanbanColumn';
+import { EvolutionContact, LeadStatus } from '@/types/sdr';
+
+type ColumnType = {
+  id: LeadStatus;
+  label: string;
+  color: string;
+  contacts: EvolutionContact[];
+};
+
+interface KanbanBoardProps {
+  onCardClick: (contact: EvolutionContact) => void;
+  columns: ColumnType[];
+  moveCard: (contactId: string, newStatus: LeadStatus) => Promise<void>;
+}
+
+// ⚡ OTIMIZAÇÃO: React.memo evita re-renders desnecessários do board
+export const KanbanBoard = memo(function KanbanBoard({ onCardClick, columns, moveCard }: KanbanBoardProps) {
+  // ⚡ OTIMIZAÇÃO: useCallback estabiliza referência do handler
+  const handleDragEnd = useCallback((result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    // Não fazer nada se dropped fora de um droppable
+    if (!destination) {
+      return;
+    }
+
+    // Não fazer nada se dropped na mesma posição
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    // Mover o card para a nova coluna (status)
+    const newStatus = destination.droppableId as LeadStatus;
+    const currentStatus = source.droppableId as LeadStatus;
+
+    if (currentStatus !== newStatus) {
+      // Apenas atualizar status se mudou de coluna
+      moveCard(draggableId, newStatus);
+    }
+  }, [moveCard]);
+
+  return (
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <div className="flex h-full items-stretch gap-4 pb-4 px-6 pt-6 snap-x lg:overflow-x-auto lg:snap-none">
+        {columns.map((col) => (
+          <div key={col.id} className="snap-center h-full">
+            <KanbanColumn
+              id={col.id}
+              title={col.label}
+              color={col.color}
+              contacts={col.contacts}
+              onCardClick={onCardClick}
+            />
+          </div>
+        ))}
+      </div>
+    </DragDropContext>
+  );
+});
+
+/* ═══════════════════════════════════════════════════════════════════
+   🗄️  CÓDIGO ANTIGO (HTML5 DRAG DROP) - MANTIDO COMO BACKUP
+   ═══════════════════════════════════════════════════════════════════
+
 import { useState } from 'react';
 import { KanbanColumn } from './KanbanColumn';
 import { EvolutionContact, LeadStatus } from '@/types/sdr';
@@ -23,13 +93,10 @@ export function KanbanBoard({ onCardClick, columns, moveCard }: KanbanBoardProps
   };
 
   const handleDragEnd = () => {
-    // Limpar IMEDIATAMENTE para evitar cards opacos
     setDraggingContact(null);
   };
 
   const handleDrop = (contactId: string, currentStatus: string, newStatus: LeadStatus) => {
-    // Limpar o dragging ANTES de mover o card
-    // Isso evita o problema de cards ficarem opacos após o drop
     setDraggingContact(null);
     
     if (currentStatus !== newStatus) {
@@ -57,4 +124,6 @@ export function KanbanBoard({ onCardClick, columns, moveCard }: KanbanBoardProps
     </div>
   );
 }
+
+   ═══════════════════════════════════════════════════════════════════ */
 

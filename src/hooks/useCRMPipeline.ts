@@ -1,6 +1,7 @@
-import { useState, useMemo, useCallback } from 'react';
-import { useEvolutionContacts } from './useEvolutionContacts';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useCRMContacts } from './useCRMContacts';
 import { useSDRAgent } from './useSDRAgent';
+import { useAuth } from '@/contexts/AuthContext';
 import { EvolutionContact, LeadStatus } from '@/types/sdr';
 import { toast } from 'sonner';
 
@@ -27,19 +28,18 @@ export interface PipelineMetrics {
 
 export function useCRMPipeline() {
   const { instance } = useSDRAgent();
+  const { cliente } = useAuth();
   
+  // ⚡ OTIMIZAÇÃO: Usar novo hook com React Query
   const { 
     contacts, 
     loading, 
     updateContact, 
     refresh 
-  } = useEvolutionContacts({
+  } = useCRMContacts({
     instanceId: instance?.id || '',
-    instanceName: instance?.instance_name || '',
-    evolutionApiUrl: import.meta.env.VITE_EVOLUTION_API_URL || 'https://evolution-api.com',
-    evolutionApiKey: import.meta.env.VITE_EVOLUTION_API_KEY || '',
-    onlyContacts: true,
-    autoRefresh: true
+    userPhone: cliente?.phone || null,
+    enabled: !!instance?.id && !!cliente?.phone,
   });
 
   // Filtrar apenas contatos que têm status ou assumir 'novo' para todos?

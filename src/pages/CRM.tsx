@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback, memo } from 'react';
 import { CRMLayout } from '@/components/crm/CRMLayout';
 import { KanbanBoard } from '@/components/crm/KanbanBoard';
 import { DashboardView } from '@/components/crm/DashboardView';
@@ -10,15 +10,75 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Phone, MessageCircle, Sparkles, ArrowUpRight } from 'lucide-react';
+import { Loader2, MessageCircle, Sparkles, ArrowUpRight } from 'lucide-react';
 import { ProtectedFeature } from '@/components/ProtectedFeature';
 import { useAuth } from '@/contexts/AuthContext';
-import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+
+// ⚡ OTIMIZAÇÃO: HeaderStats extraído como componente separado com memo
+interface HeaderStatsProps {
+  metrics: {
+    totalLeads: number;
+    winRate: number;
+    pipelineValue: number;
+    salesVelocity: number;
+    qualificationRate: number;
+  };
+}
+
+const HeaderStats = memo(function HeaderStats({ metrics }: HeaderStatsProps) {
+  // Cores baseadas em benchmarks da indústria
+  const getWinRateColor = (rate: number) => {
+    if (rate >= 40) return 'text-green-600';
+    if (rate >= 20) return 'text-amber-600';
+    return 'text-red-600';
+  };
+
+  const getQualificationColor = (rate: number) => {
+    if (rate >= 50) return 'text-green-600';
+    if (rate >= 30) return 'text-amber-600';
+    return 'text-red-600';
+  };
+
+  return (
+    <div className="hidden lg:flex items-center gap-3 text-sm">
+      <div className="flex flex-col">
+        <span className="text-muted-foreground text-xs">Total de leads</span>
+        <span className="font-semibold">{metrics.totalLeads}</span>
+      </div>
+      <Separator orientation="vertical" className="h-8" />
+      <div className="flex flex-col">
+        <span className="text-muted-foreground text-xs">Taxa de ganho</span>
+        <span className={cn('font-semibold', getWinRateColor(metrics.winRate))}>
+          {metrics.winRate}%
+        </span>
+      </div>
+      <Separator orientation="vertical" className="h-8" />
+      <div className="flex flex-col">
+        <span className="text-muted-foreground text-xs">Valor do pipeline</span>
+        <span className="font-semibold text-blue-600">
+          R$ {(metrics.pipelineValue / 1000).toFixed(1)}k
+        </span>
+      </div>
+      <Separator orientation="vertical" className="h-8" />
+      <div className="flex flex-col">
+        <span className="text-muted-foreground text-xs">Velocidade de vendas</span>
+        <span className="font-semibold">{metrics.salesVelocity} dias</span>
+      </div>
+      <Separator orientation="vertical" className="h-8" />
+      <div className="flex flex-col">
+        <span className="text-muted-foreground text-xs">Taxa de qualificação</span>
+        <span className={cn('font-semibold', getQualificationColor(metrics.qualificationRate))}>
+          {metrics.qualificationRate}%
+        </span>
+      </div>
+    </div>
+  );
+});
 
 export default function CRM() {
   const [selectedContact, setSelectedContact] = useState<EvolutionContact | null>(null);
@@ -38,27 +98,33 @@ export default function CRM() {
     }
   }, [cliente?.phone]);
 
-  const handleViewChange = (mode: 'kanban' | 'lista' | 'dashboard') => {
+  // ⚡ OTIMIZAÇÃO: useCallback estabiliza referências de handlers
+  const handleViewChange = useCallback((mode: 'kanban' | 'lista' | 'dashboard') => {
     setViewMode(mode);
     if (cliente?.phone) {
       localStorage.setItem(`crm_view_${cliente.phone}`, mode);
     }
-  };
+  }, [cliente?.phone]);
 
-  const handleCardClick = (contact: EvolutionContact) => {
+  const handleCardClick = useCallback((contact: EvolutionContact) => {
     setSelectedContact(contact);
     setDetailsOpen(true);
-  };
+  }, []);
 
-  const handleOpenChange = (open: boolean) => {
+  const handleOpenChange = useCallback((open: boolean) => {
     setDetailsOpen(open);
     if (!open) {
       // Small delay to prevent flashing content while closing
       setTimeout(() => setSelectedContact(null), 300);
     }
-  };
+  }, []);
 
-  const handleCreateLead = async (data: {
+  const handleOpenCreateLead = useCallback(() => {
+    setCreateLeadOpen(true);
+  }, []);
+
+  // ⚡ OTIMIZAÇÃO: useCallback para handler de criação de lead
+  const handleCreateLead = useCallback(async (data: {
     name: string;
     phone: string;
     email?: string;
@@ -135,9 +201,10 @@ export default function CRM() {
       });
       throw error;
     }
-  };
+  }, [cliente?.phone, refresh]);
 
-  const handleExportCSV = () => {
+  // ⚡ OTIMIZAÇÃO: useCallback para handler de exportação
+  const handleExportCSV = useCallback(() => {
     try {
       // Preparar dados para exportação
       const dataToExport = columns.flatMap(col => 
@@ -190,57 +257,7 @@ export default function CRM() {
       console.error('Erro ao exportar:', error);
       toast.error('Erro ao exportar pipeline');
     }
-  };
-
-  const HeaderStats = () => {
-    // Cores baseadas em benchmarks da indústria
-    const getWinRateColor = (rate: number) => {
-      if (rate >= 40) return 'text-green-600';
-      if (rate >= 20) return 'text-amber-600';
-      return 'text-red-600';
-    };
-
-    const getQualificationColor = (rate: number) => {
-      if (rate >= 50) return 'text-green-600';
-      if (rate >= 30) return 'text-amber-600';
-      return 'text-red-600';
-    };
-
-    return (
-      <div className="hidden lg:flex items-center gap-3 text-sm">
-        <div className="flex flex-col">
-          <span className="text-muted-foreground text-xs">Total de leads</span>
-          <span className="font-semibold">{metrics.totalLeads}</span>
-        </div>
-        <Separator orientation="vertical" className="h-8" />
-        <div className="flex flex-col">
-          <span className="text-muted-foreground text-xs">Taxa de ganho</span>
-          <span className={cn('font-semibold', getWinRateColor(metrics.winRate))}>
-            {metrics.winRate}%
-          </span>
-        </div>
-        <Separator orientation="vertical" className="h-8" />
-        <div className="flex flex-col">
-          <span className="text-muted-foreground text-xs">Valor do pipeline</span>
-          <span className="font-semibold text-blue-600">
-            R$ {(metrics.pipelineValue / 1000).toFixed(1)}k
-          </span>
-        </div>
-        <Separator orientation="vertical" className="h-8" />
-        <div className="flex flex-col">
-          <span className="text-muted-foreground text-xs">Velocidade de vendas</span>
-          <span className="font-semibold">{metrics.salesVelocity} dias</span>
-        </div>
-        <Separator orientation="vertical" className="h-8" />
-        <div className="flex flex-col">
-          <span className="text-muted-foreground text-xs">Taxa de qualificação</span>
-          <span className={cn('font-semibold', getQualificationColor(metrics.qualificationRate))}>
-            {metrics.qualificationRate}%
-          </span>
-        </div>
-      </div>
-    );
-  };
+  }, [columns]);
 
   const listContacts = useMemo(() => {
     return columns.flatMap((col) =>
@@ -271,54 +288,39 @@ export default function CRM() {
     });
   }, [listContacts, normalizedFilter]);
 
+  // ⚡ OTIMIZAÇÃO: Memoizar referência do HeaderStats para evitar re-renders
+  const headerStatsElement = useMemo(() => <HeaderStats metrics={metrics} />, [metrics]);
+
   return (
     <ProtectedFeature permission="canAccessSDRAgent" featureName="CRM de Vendas">
       <CRMLayout
-        headerStats={<HeaderStats />}
+        headerStats={headerStatsElement}
         viewMode={viewMode}
         onViewChange={handleViewChange}
         searchValue={search}
         onSearchChange={setSearch}
         onExport={handleExportCSV}
-        onNewLead={() => setCreateLeadOpen(true)}
+        onNewLead={handleOpenCreateLead}
       >
         {loading ? (
           <div className="h-full flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <AnimatePresence mode="wait">
-            {viewMode === 'dashboard' ? (
-              <motion.div
-                key="dashboard"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className="h-full"
-              >
+          <>
+            {/* ⚡ OTIMIZAÇÃO: Removido AnimatePresence - causa layout thrashing durante drag */}
+            {viewMode === 'dashboard' && (
+              <div className="h-full animate-in fade-in duration-200">
                 <DashboardView metrics={metrics} />
-              </motion.div>
-            ) : viewMode === 'kanban' ? (
-              <motion.div
-                key="kanban"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className="h-full"
-              >
+              </div>
+            )}
+            {viewMode === 'kanban' && (
+              <div className="h-full">
                 <KanbanBoard onCardClick={handleCardClick} columns={filteredColumns} moveCard={moveCard} />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="lista"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className="h-full"
-              >
+              </div>
+            )}
+            {viewMode === 'lista' && (
+              <div className="h-full animate-in fade-in duration-200">
                 <div className="p-6 h-full overflow-y-auto">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {filteredListContacts.length === 0 && (
@@ -385,9 +387,9 @@ export default function CRM() {
               ))}
             </div>
                 </div>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
+          </>
         )}
 
         <LeadDetailsSheet 
@@ -406,4 +408,3 @@ export default function CRM() {
     </ProtectedFeature>
   );
 }
-

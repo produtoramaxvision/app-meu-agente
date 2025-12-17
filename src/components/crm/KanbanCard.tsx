@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useCallback } from 'react';
 import { EvolutionContact, LeadStatus } from '@/types/sdr';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -50,26 +50,33 @@ const STATUS_STYLES: Record<LeadStatus, { bg: string; border: string; stripe: st
 interface KanbanCardProps {
   contact: EvolutionContact;
   onClick: (contact: EvolutionContact) => void;
-  onDragStart?: (contact: EvolutionContact) => void;
-  onDragEnd?: () => void;
   isDragging?: boolean;
 }
 
-export function KanbanCard({ contact, onClick, onDragStart, onDragEnd, isDragging = false }: KanbanCardProps) {
-  const [isDraggingLocal, setIsDraggingLocal] = useState(false);
+// ⚡ OTIMIZAÇÃO: React.memo evita re-renders desnecessários do card
+// Só re-renderiza se contact ou isDragging mudarem
+export const KanbanCard = memo(function KanbanCard({ 
+  contact, 
+  onClick, 
+  isDragging = false 
+}: KanbanCardProps) {
+  // ⚡ OTIMIZAÇÃO: useCallback estabiliza referência do handler
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    if (!isDragging) {
+      onClick(contact);
+    }
+  }, [isDragging, onClick, contact]);
 
-  const handleDragStart = (e: React.DragEvent) => {
-    setIsDraggingLocal(true);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('contactId', contact.id);
-    e.dataTransfer.setData('currentStatus', contact.crm_lead_status || 'novo');
-    onDragStart?.(contact);
-  };
+  // ⚡ OTIMIZAÇÃO: useCallback para handlers de ações rápidas
+  const handleMessageClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    // TODO: Open WhatsApp
+  }, []);
 
-  const handleDragEnd = () => {
-    setIsDraggingLocal(false);
-    onDragEnd?.();
-  };
+  const handlePhoneClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    // TODO: Call
+  }, []);
 
   // Temperature logic (mocked for now based on score or default)
   const temperatureColor = 
@@ -77,31 +84,24 @@ export function KanbanCard({ contact, onClick, onDragStart, onDragEnd, isDraggin
     contact.crm_lead_score > 50 ? 'bg-orange-500' :
     'bg-blue-500';
 
-  const isCurrentlyDragging = isDragging || isDraggingLocal;
   const status = (contact.crm_lead_status || 'novo') as LeadStatus;
   const statusStyles = STATUS_STYLES[status];
 
   return (
     <div
-      draggable
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
       className={cn(
-        "group relative mb-3 transition-all cursor-move",
-        isCurrentlyDragging && "opacity-50 scale-95 z-50"
+        "group relative mb-3 transition-all",
+        isDragging && "opacity-60 rotate-2"
       )}
     >
       <Card 
         className={cn(
           "relative cursor-grab active:cursor-grabbing hover:shadow-lg transition-all hover:border-primary/60 overflow-hidden",
           statusStyles.bg,
-          statusStyles.border
+          statusStyles.border,
+          isDragging && "shadow-2xl scale-105"
         )}
-        onClick={(e) => {
-          if (!isCurrentlyDragging) {
-            onClick(contact);
-          }
-        }}
+        onClick={handleClick}
       >
         {/* Faixa de cor baseada na coluna/status */}
         <div
@@ -160,17 +160,16 @@ export function KanbanCard({ contact, onClick, onDragStart, onDragEnd, isDraggin
         {/* Quick Actions Hover Overlay (Desktop) */}
         <div className={cn(
           "absolute right-2 top-2 hidden group-hover:flex flex-col gap-1 transition-all duration-200 translate-x-2 group-hover:translate-x-0",
-          isCurrentlyDragging ? "pointer-events-none opacity-0" : "opacity-0 group-hover:opacity-100"
+          isDragging ? "pointer-events-none opacity-0" : "opacity-0 group-hover:opacity-100"
         )}>
-          <Button size="icon" variant="secondary" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); /* TODO: Open WhatsApp */ }}>
+          <Button size="icon" variant="secondary" className="h-6 w-6" onClick={handleMessageClick}>
             <MessageCircle className="h-3 w-3" />
           </Button>
-          <Button size="icon" variant="secondary" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); /* TODO: Call */ }}>
+          <Button size="icon" variant="secondary" className="h-6 w-6" onClick={handlePhoneClick}>
             <Phone className="h-3 w-3" />
           </Button>
         </div>
       </Card>
     </div>
   );
-}
-
+});
