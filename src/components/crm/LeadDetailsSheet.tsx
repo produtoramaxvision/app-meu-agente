@@ -26,6 +26,8 @@ import { useCustomFieldDefinitions, useCustomFieldValues } from '@/hooks/useCust
 import { CustomFieldRenderer } from './CustomFieldRenderer';
 import { useActivityLog } from '@/hooks/useActivityLog';
 import { ActivityTimeline } from './ActivityTimeline';
+import { LeadScoreBadge } from './LeadScoreBadge';
+import { getScoreImprovementTips } from '@/utils/leadScoring';
 
 interface LeadDetailsSheetProps {
   contact: EvolutionContact | null;
@@ -260,10 +262,8 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
                   <Badge variant="outline" className="text-xs bg-background/50">
                     {contact.crm_lead_status || 'Novo'}
                   </Badge>
-                  {contact.crm_lead_score > 0 && (
-                    <Badge variant="outline" className="text-xs bg-background/50">
-                      Score: {contact.crm_lead_score}
-                    </Badge>
+                  {contact.crm_lead_score !== null && contact.crm_lead_score !== undefined && contact.crm_lead_score > 0 && (
+                    <LeadScoreBadge score={contact.crm_lead_score} size="md" showLabel showTooltip />
                   )}
                 </div>
               </SheetDescription>

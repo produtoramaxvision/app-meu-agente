@@ -7,6 +7,7 @@ import { CreateLeadDialog } from '@/components/crm/CreateLeadDialog';
 import { LossReasonDialog, type LossReasonId } from '@/components/crm/LossReasonDialog';
 import { EvolutionContact, LeadStatus } from '@/types/sdr';
 import { useCRMPipeline } from '@/hooks/useCRMPipeline';
+import { useLeadFilters, type LeadFilters } from '@/hooks/useLeadFilters';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -91,6 +92,7 @@ export default function CRM() {
   const [pendingLossMove, setPendingLossMove] = useState<{ contactId: string; contact: EvolutionContact } | null>(null);
   const { cliente } = useAuth();
   const { metrics, loading, columns, moveCard, updateContact, refresh } = useCRMPipeline();
+  const { filters, setFilter, clearFilters, applyPreset, activeFiltersCount, hasActiveFilters } = useLeadFilters();
 
   // Persistência por usuário
   useEffect(() => {
@@ -332,25 +334,107 @@ export default function CRM() {
   const normalizedFilter = search.trim().toLowerCase();
 
   const filteredColumns = useMemo(() => {
-    if (!normalizedFilter) return columns;
-    return columns.map((col) => ({
+    // Aplicar filtro de busca + filtros avançados
+    const filtered = columns.map((col) => ({
       ...col,
       contacts: col.contacts.filter((c) => {
+        // 1. Filtro de busca (nome ou telefone)
         const name = (c.push_name || '').toLowerCase();
         const phone = (c.phone || '').toLowerCase();
-        return name.includes(normalizedFilter) || phone.includes(normalizedFilter);
+        const matchesSearch = !normalizedFilter || name.includes(normalizedFilter) || phone.includes(normalizedFilter);
+        
+        if (!matchesSearch) return false;
+
+        // 2. Filtro de status (múltiplo)
+        if (hasActiveFilters && filters.status.length > 0) {
+          if (!filters.status.includes(c.crm_lead_status as LeadStatus)) return false;
+        }
+
+        // 3. Filtro de score (range)
+        if (hasActiveFilters && (filters.scoreRange[0] !== 0 || filters.scoreRange[1] !== 100)) {
+          const score = c.crm_lead_score || 0;
+          if (score < filters.scoreRange[0] || score > filters.scoreRange[1]) return false;
+        }
+
+        // 4. Filtro de valor estimado (range em centavos)
+        if (hasActiveFilters && (filters.valueRange[0] !== 0 || filters.valueRange[1] !== 1000000000)) {
+          const value = c.crm_estimated_value || 0;
+          if (value < filters.valueRange[0] || value > filters.valueRange[1]) return false;
+        }
+
+        // 5. Filtro de data de criação (range)
+        if (hasActiveFilters && (filters.dateRange.from || filters.dateRange.to)) {
+          const createdAt = new Date(c.created_at);
+          if (filters.dateRange.from && createdAt < filters.dateRange.from) return false;
+          if (filters.dateRange.to) {
+            const endOfDay = new Date(filters.dateRange.to);
+            endOfDay.setHours(23, 59, 59, 999);
+            if (createdAt > endOfDay) return false;
+          }
+        }
+
+        // 6. Filtro de tags (múltiplo)
+        if (hasActiveFilters && filters.tags.length > 0) {
+          const contactTags = c.crm_tags || [];
+          const hasMatchingTag = filters.tags.some(tag => contactTags.includes(tag));
+          if (!hasMatchingTag) return false;
+        }
+
+        // TODO: 7. Filtro de campos customizados (implementar quando necessário)
+        // if (hasActiveFilters && Object.keys(filters.customFields).length > 0) {
+        //   // Lógica de filtragem por custom fields
+        // }
+
+        return true;
       })
     }));
-  }, [columns, normalizedFilter]);
+
+    return filtered;
+  }, [columns, normalizedFilter, filters, hasActiveFilters]);
 
   const filteredListContacts = useMemo(() => {
-    if (!normalizedFilter) return listContacts;
     return listContacts.filter((c) => {
+      // 1. Filtro de busca
       const name = (c.push_name || '').toLowerCase();
       const phone = (c.phone || '').toLowerCase();
-      return name.includes(normalizedFilter) || phone.includes(normalizedFilter);
+      const matchesSearch = !normalizedFilter || name.includes(normalizedFilter) || phone.includes(normalizedFilter);
+      
+      if (!matchesSearch) return false;
+
+      // 2. Aplicar mesmos filtros do Kanban
+      if (hasActiveFilters && filters.status.length > 0) {
+        if (!filters.status.includes(c.crm_lead_status as LeadStatus)) return false;
+      }
+
+      if (hasActiveFilters && (filters.scoreRange[0] !== 0 || filters.scoreRange[1] !== 100)) {
+        const score = c.crm_lead_score || 0;
+        if (score < filters.scoreRange[0] || score > filters.scoreRange[1]) return false;
+      }
+
+      if (hasActiveFilters && (filters.valueRange[0] !== 0 || filters.valueRange[1] !== 1000000000)) {
+        const value = c.crm_estimated_value || 0;
+        if (value < filters.valueRange[0] || value > filters.valueRange[1]) return false;
+      }
+
+      if (hasActiveFilters && (filters.dateRange.from || filters.dateRange.to)) {
+        const createdAt = new Date(c.created_at);
+        if (filters.dateRange.from && createdAt < filters.dateRange.from) return false;
+        if (filters.dateRange.to) {
+          const endOfDay = new Date(filters.dateRange.to);
+          endOfDay.setHours(23, 59, 59, 999);
+          if (createdAt > endOfDay) return false;
+        }
+      }
+
+      if (hasActiveFilters && filters.tags.length > 0) {
+        const contactTags = c.crm_tags || [];
+        const hasMatchingTag = filters.tags.some(tag => contactTags.includes(tag));
+        if (!hasMatchingTag) return false;
+      }
+
+      return true;
     });
-  }, [listContacts, normalizedFilter]);
+  }, [listContacts, normalizedFilter, filters, hasActiveFilters]);
 
   // ⚡ OTIMIZAÇÃO: Memoizar referência do HeaderStats para evitar re-renders
   const headerStatsElement = useMemo(() => <HeaderStats metrics={metrics} />, [metrics]);
@@ -365,6 +449,16 @@ export default function CRM() {
         onSearchChange={setSearch}
         onExport={handleExportCSV}
         onNewLead={handleOpenCreateLead}
+        filters={filters}
+        onFiltersChange={(newFilters) => {
+          // Atualizar filtros um por um (setFilter espera chave-valor individual)
+          Object.entries(newFilters).forEach(([key, value]) => {
+            setFilter(key as keyof LeadFilters, value as LeadFilters[keyof LeadFilters]);
+          });
+        }}
+        onClearFilters={clearFilters}
+        onApplyPreset={applyPreset}
+        activeFiltersCount={activeFiltersCount}
       >
         {loading ? (
           <div className="h-full flex items-center justify-center">

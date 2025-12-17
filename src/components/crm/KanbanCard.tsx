@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useCustomFieldDefinitions, useCustomFieldValues } from '@/hooks/useCustomFields';
+import { LeadScoreBadge } from './LeadScoreBadge';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -123,12 +124,6 @@ export const KanbanCard = memo(function KanbanCard({
     e.stopPropagation();
   }, []);
 
-  // Temperature logic (mocked for now based on score or default)
-  const temperatureColor = 
-    contact.crm_lead_score > 80 ? 'bg-red-500' :
-    contact.crm_lead_score > 50 ? 'bg-orange-500' :
-    'bg-blue-500';
-
   const status = (contact.crm_lead_status || 'novo') as LeadStatus;
   const statusStyles = STATUS_STYLES[status];
 
@@ -240,10 +235,8 @@ export const KanbanCard = memo(function KanbanCard({
                 <p className="text-xs text-muted-foreground truncate">{contact.phone}</p>
               </div>
             </div>
-            {contact.crm_lead_score > 0 && (
-               <Badge variant="outline" className={cn("text-[10px] px-1 h-5", temperatureColor, "text-white border-none")}>
-                 {contact.crm_lead_score}°
-               </Badge>
+            {contact.crm_lead_score !== null && contact.crm_lead_score !== undefined && contact.crm_lead_score > 0 && (
+              <LeadScoreBadge score={contact.crm_lead_score} size="sm" showLabel={false} />
             )}
           </div>
 

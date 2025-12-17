@@ -5,6 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { EvolutionContact, LeadStatus } from '@/types/sdr';
 import { toast } from 'sonner';
 import { useActivityLog } from './useActivityLog';
+import { calculateLeadScore } from '@/utils/leadScoring';
+import { useCustomFieldValues } from './useCustomFields';
 
 export const CRM_COLUMNS: { id: LeadStatus; label: string; color: string }[] = [
   { id: 'novo', label: 'Novo', color: 'bg-blue-500' },
@@ -166,6 +168,16 @@ export function useCRMPipeline() {
         updateData.crm_closed_at = null;
         updateData.crm_loss_reason = null;
         updateData.crm_loss_reason_details = null;
+      }
+
+      // ⚡ NOVO: Calcular score atualizado após mudança de status
+      // Nota: Não temos acesso aos custom fields aqui, então passamos 0
+      // O score será recalculado mais precisamente quando custom fields mudarem
+      if (contact) {
+        const updatedContact = { ...contact, ...updateData };
+        const newScore = calculateLeadScore(updatedContact, 0);
+        updateData.crm_lead_score = newScore;
+        updateData.crm_score_updated_at = new Date().toISOString();
       }
 
       await updateContact(contactId, updateData);

@@ -3,11 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { CustomFieldsManager } from './CustomFieldsManager';
 import { NotificationSettings } from '@/components/settings/NotificationSettings';
+import { FilterPanel } from './FilterPanel';
 import { Input } from '@/components/ui/input';
 import { Search, Plus, Filter, MoreHorizontal, LayoutGrid, List, BarChart3, Download, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { motion } from 'framer-motion';
+import { LeadFilters, FilterPresetKey } from '@/hooks/useLeadFilters';
 
 interface CRMLayoutProps {
   children: ReactNode;
@@ -18,9 +20,14 @@ interface CRMLayoutProps {
   onSearchChange: (value: string) => void;
   onExport?: () => void;
   onNewLead?: () => void;
+  filters?: LeadFilters;
+  onFiltersChange?: (filters: LeadFilters) => void;
+  onClearFilters?: () => void;
+  onApplyPreset?: (presetKey: FilterPresetKey) => void;
+  activeFiltersCount?: number;
 }
 
-export function CRMLayout({ children, headerStats, viewMode, onViewChange, searchValue, onSearchChange, onExport, onNewLead }: CRMLayoutProps) {
+export function CRMLayout({ children, headerStats, viewMode, onViewChange, searchValue, onSearchChange, onExport, onNewLead, filters, onFiltersChange, onClearFilters, onApplyPreset, activeFiltersCount }: CRMLayoutProps) {
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-[hsl(var(--sidebar-bg))]">
       {/* CRM Header */}
@@ -36,6 +43,17 @@ export function CRMLayout({ children, headerStats, viewMode, onViewChange, searc
         </div>
 
         <div className="flex items-center gap-3 min-w-0">
+          {/* FilterPanel - Renderizado condicionalmente se props existirem */}
+          {filters && onFiltersChange && onClearFilters && (
+            <FilterPanel
+              filters={filters}
+              onFiltersChange={onFiltersChange}
+              onClearFilters={onClearFilters}
+              onApplyPreset={onApplyPreset}
+              activeFiltersCount={activeFiltersCount || 0}
+            />
+          )}
+
           <div className="relative hidden md:block w-56 lg:w-64 max-w-xs shrink-0">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input

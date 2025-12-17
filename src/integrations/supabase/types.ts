@@ -9,91 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      custom_fields_definitions: {
-        Row: {
-          cliente_phone: string
-          created_at: string | null
-          display_order: number | null
-          field_key: string
-          field_label: string
-          field_type: string
-          id: string
-          options: Json | null
-          required: boolean | null
-          show_in_card: boolean | null
-          show_in_list: boolean | null
-          updated_at: string | null
-        }
-        Insert: {
-          cliente_phone: string
-          created_at?: string | null
-          display_order?: number | null
-          field_key: string
-          field_label: string
-          field_type: string
-          id?: string
-          options?: Json | null
-          required?: boolean | null
-          show_in_card?: boolean | null
-          show_in_list?: boolean | null
-          updated_at?: string | null
-        }
-        Update: {
-          cliente_phone?: string
-          created_at?: string | null
-          display_order?: number | null
-          field_key?: string
-          field_label?: string
-          field_type?: string
-          id?: string
-          options?: Json | null
-          required?: boolean | null
-          show_in_card?: boolean | null
-          show_in_list?: boolean | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_custom_fields_cliente"
-            columns: ["cliente_phone"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["phone"]
-          },
-        ]
-      }
-      custom_fields_values: {
-        Row: {
-          contact_id: string
-          field_key: string
-          id: string
-          updated_at: string | null
-          value: Json
-        }
-        Insert: {
-          contact_id: string
-          field_key: string
-          id?: string
-          updated_at?: string | null
-          value: Json
-        }
-        Update: {
-          contact_id?: string
-          field_key?: string
-          id?: string
-          updated_at?: string | null
-          value?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_custom_fields_contact"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "evolution_contacts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       chat_ia_messages: {
         Row: {
           content: string
@@ -125,7 +40,22 @@ export type Database = {
           session_id?: string
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "chat_ia_messages_phone_fkey"
+            columns: ["phone"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["phone"]
+          },
+          {
+            foreignKeyName: "chat_ia_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_ia_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       chat_ia_sessions: {
         Row: {
@@ -149,7 +79,15 @@ export type Database = {
           title?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "chat_ia_sessions_phone_fkey"
+            columns: ["phone"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["phone"]
+          },
+        ]
       }
       clientes: {
         Row: {
@@ -208,75 +146,6 @@ export type Database = {
         }
         Relationships: []
       }
-      evolution_contacts: {
-        Row: {
-          created_at: string | null
-          crm_closed_at: string | null
-          crm_estimated_value: number | null
-          crm_favorite: boolean | null
-          crm_last_interaction_at: string | null
-          crm_lead_score: number | null
-          crm_lead_status: string | null
-          crm_notes: string | null
-          crm_tags: string[] | null
-          id: string
-          instance_id: string
-          is_group: boolean | null
-          is_saved: boolean | null
-          phone: string
-          profile_pic_url: string | null
-          push_name: string | null
-          remote_jid: string
-          sync_source: string | null
-          synced_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          crm_closed_at?: string | null
-          crm_estimated_value?: number | null
-          crm_favorite?: boolean | null
-          crm_last_interaction_at?: string | null
-          crm_lead_score?: number | null
-          crm_lead_status?: string | null
-          crm_notes?: string | null
-          crm_tags?: string[] | null
-          id?: string
-          instance_id: string
-          is_group?: boolean | null
-          is_saved?: boolean | null
-          phone: string
-          profile_pic_url?: string | null
-          push_name?: string | null
-          remote_jid: string
-          sync_source?: string | null
-          synced_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          crm_closed_at?: string | null
-          crm_estimated_value?: number | null
-          crm_favorite?: boolean | null
-          crm_last_interaction_at?: string | null
-          crm_lead_score?: number | null
-          crm_lead_status?: string | null
-          crm_notes?: string | null
-          crm_tags?: string[] | null
-          id?: string
-          instance_id?: string
-          is_group?: boolean | null
-          is_saved?: boolean | null
-          phone?: string
-          profile_pic_url?: string | null
-          push_name?: string | null
-          remote_jid?: string
-          sync_source?: string | null
-          synced_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -287,5 +156,113 @@ export type Database = {
     Enums: {
       [_ in never]: never
     }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
 }
+
+type DefaultSchema = Database[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof Database },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof Database },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
