@@ -66,13 +66,15 @@ function HelpAndSupportContent({ mode, collapsed }: HelpAndSupportProps & { coll
       aria-label="Abrir menu de ajuda e suporte"
       className={cn(
         'group relative overflow-hidden flex w-full items-center justify-start gap-3 rounded-lg text-sm font-medium transition-all duration-200',
-        mode === 'sidebar' && 'px-3 py-2.5 text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:scale-105 hover:shadow-lg',
-        mode === 'floatingAuth' && 'fixed bottom-6 left-6 h-12 w-12 rounded-full bg-surface shadow-lg border hover:scale-110 hover:bg-surface-hover z-50'
+        mode === 'sidebar' && 'px-3 py-2.5 text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
+        mode === 'floatingAuth' && 'fixed bottom-6 left-6 h-12 w-12 rounded-full bg-surface shadow-lg border hover:scale-110 hover:bg-surface-hover z-50 justify-center gap-0'
       )}
       size={mode === 'floatingAuth' ? 'icon' : 'default'}
     >
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
-      <HelpCircle className={cn('h-5 w-5 flex-shrink-0 relative z-10 transition-transform group-hover:scale-110', mode === 'floatingAuth' && 'text-text-muted')} />
+      <div className={cn("relative z-10 transition-transform duration-200 group-hover:scale-110", mode === 'floatingAuth' && 'flex items-center justify-center')}>
+        <HelpCircle className={cn('h-5 w-5 flex-shrink-0', mode === 'floatingAuth' && 'text-text-muted')} />
+      </div>
       {mode === 'sidebar' && (
         <motion.span
           initial={false}
@@ -81,7 +83,7 @@ function HelpAndSupportContent({ mode, collapsed }: HelpAndSupportProps & { coll
             width: collapsed ? 0 : 'auto',
           }}
           transition={{ duration: 0.2, ease: 'easeInOut' }}
-          className="relative z-10 whitespace-pre !p-0 !m-0 inline-block overflow-hidden"
+          className="relative z-10 transition-transform duration-200 group-hover:translate-x-0.5 whitespace-pre !p-0 !m-0 inline-block overflow-hidden"
           style={{ whiteSpace: 'nowrap' }}
         >
           Ajuda
