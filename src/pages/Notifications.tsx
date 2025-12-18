@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
+import { TestNotificationButton } from '@/components/TestNotificationButton';
 
 type Filter = 'all' | 'unread';
 
@@ -45,6 +46,8 @@ export default function Notifications() {
           </p>
         </div>
         
+        {/* Botão de teste para desenvolvimento */}
+        <TestNotificationButton />
       </div>
 
 

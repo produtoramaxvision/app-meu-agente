@@ -5,6 +5,7 @@ import { DashboardView } from '@/components/crm/DashboardView';
 import { LeadDetailsSheet } from '@/components/crm/LeadDetailsSheet';
 import { CreateLeadDialog } from '@/components/crm/CreateLeadDialog';
 import { LossReasonDialog, type LossReasonId } from '@/components/crm/LossReasonDialog';
+import { SendWhatsAppDialog } from '@/components/crm/SendWhatsAppDialog';
 import { EvolutionContact, LeadStatus } from '@/types/sdr';
 import { useCRMPipeline } from '@/hooks/useCRMPipeline';
 import { useLeadFilters, type LeadFilters } from '@/hooks/useLeadFilters';
@@ -90,6 +91,8 @@ export default function CRM() {
   const [search, setSearch] = useState('');
   const [lossReasonDialogOpen, setLossReasonDialogOpen] = useState(false);
   const [pendingLossMove, setPendingLossMove] = useState<{ contactId: string; contact: EvolutionContact } | null>(null);
+  const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
+  const [whatsappContact, setWhatsappContact] = useState<EvolutionContact | null>(null);
   const { cliente } = useAuth();
   const { metrics, loading, columns, moveCard, updateContact, refresh } = useCRMPipeline();
   const { filters, setFilter, clearFilters, applyPreset, activeFiltersCount, hasActiveFilters } = useLeadFilters();
@@ -135,8 +138,17 @@ export default function CRM() {
     });
   }, []);
 
-  const handleCardInteraction = useCallback((contact: EvolutionContact, _type: 'message' | 'call') => {
+  const handleCardInteraction = useCallback((contact: EvolutionContact, type: 'message' | 'call') => {
     void recordInteraction(contact);
+    
+    if (type === 'message') {
+      // Abrir dialog de enviar mensagem via WhatsApp
+      setWhatsappContact(contact);
+      setWhatsappDialogOpen(true);
+    } else if (type === 'call') {
+      // Futuramente pode abrir dialog de ligação ou iniciar chamada
+      toast.info('Funcionalidade de chamada em breve!');
+    }
   }, [recordInteraction]);
 
   const handleCardDelete = useCallback(async (contact: EvolutionContact) => {
@@ -597,6 +609,14 @@ export default function CRM() {
           onOpenChange={setLossReasonDialogOpen}
           leadName={pendingLossMove?.contact.push_name || 'este lead'}
           onConfirm={handleConfirmLoss}
+        />
+
+        <SendWhatsAppDialog
+          open={whatsappDialogOpen}
+          onOpenChange={setWhatsappDialogOpen}
+          contactName={whatsappContact?.push_name || whatsappContact?.remote_jid.split('@')[0] || ''}
+          contactPhone={whatsappContact?.phone || ''}
+          contactRemoteJid={whatsappContact?.remote_jid || ''}
         />
       </CRMLayout>
     </ProtectedFeature>

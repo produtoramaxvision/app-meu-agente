@@ -6,7 +6,7 @@ import { AutomationsManager } from './AutomationsManager';
 import { NotificationSettings } from '@/components/settings/NotificationSettings';
 import { FilterPanel } from './FilterPanel';
 import { Input } from '@/components/ui/input';
-import { Search, Plus, Filter, MoreHorizontal, LayoutGrid, List, BarChart3, Download, Settings, Zap } from 'lucide-react';
+import { Search, Plus, Filter, MoreHorizontal, LayoutGrid, List, BarChart3, Download, Settings, Zap, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { motion } from 'framer-motion';
@@ -65,10 +65,21 @@ export function CRMLayout({ children, headerStats, viewMode, onViewChange, searc
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por nome ou telefone..."
-              className="pl-8 h-9"
+              className="pl-8 pr-8 h-9"
               value={searchValue}
               onChange={(e) => onSearchChange(e.target.value)}
             />
+            {searchValue && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1 h-7 w-7 rounded-md hover:bg-muted"
+                onClick={() => onSearchChange('')}
+                aria-label="Limpar busca"
+              >
+                <X className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>
+            )}
           </div>
           
           <div className="flex items-center border rounded-md p-1 bg-muted/20">

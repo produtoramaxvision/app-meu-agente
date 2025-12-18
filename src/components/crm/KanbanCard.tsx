@@ -64,6 +64,16 @@ const STATUS_STYLES: Record<LeadStatus, { bg: string; border: string; stripe: st
   },
 };
 
+// Helper para calcular estilos de probabilidade de fechamento
+function getWinProbabilityStyles(probability: number) {
+  const hue = (probability / 100) * 120; // 0 (red) to 120 (green)
+  return {
+    backgroundColor: `hsl(${hue}, 70%, 95%)`,
+    borderColor: `hsl(${hue}, 70%, 60%)`,
+    color: `hsl(${hue}, 70%, 30%)`,
+  };
+}
+
 type LeadInteractionType = 'message' | 'call';
 
 interface KanbanCardProps {
@@ -224,14 +234,15 @@ export const KanbanCard = memo(function KanbanCard({
                   variant="ghost"
                   size="icon"
                   className={cn(
-                    "absolute top-2 right-2 h-7 w-7 rounded-full z-20", // z-20 to ensure above other elements
+                    "absolute top-2 right-2 h-7 w-7 rounded-full z-dropdown",
                     "opacity-0 group-hover:opacity-100 md:opacity-0 md:group-hover:opacity-100",
-                    "touch-none pointer-events-auto",
-                    // Mobile: sempre visível quando há ações disponíveis
-                    "@media (hover: none) { opacity-100 }",
+                    "pointer-events-auto",
+                    // Mobile: sempre visível em touch devices
+                    "touch:opacity-100",
                     "transition-opacity"
                   )}
                   onClick={handleMenuButtonClick}
+                  aria-label="Menu de ações do lead"
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
@@ -275,22 +286,33 @@ export const KanbanCard = memo(function KanbanCard({
                     
                     {/* Badges Row */}
                     <div className="flex flex-wrap items-center gap-1.5">
-                      {/* Instance Badges */}
+                      {/* Instance Badges - Limita a 2 + contador */}
                       {contactInstances.length > 0 ? (
-                        contactInstances.map(inst => (
-                          <Badge 
-                            key={inst.id} 
-                            variant="outline" 
-                            className={cn(
-                              "text-[10px] px-1.5 py-0 h-5 font-medium flex items-center gap-1 truncate max-w-[120px] transition-colors",
-                              getStatusBadgeStyles(inst.connection_status)
-                            )}
-                            title={`${inst.display_name || inst.instance_name} (${inst.connection_status || 'offline'})`}
-                          >
-                            <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", getStatusColor(inst.connection_status))} />
-                            <span className="truncate">{inst.display_name || inst.instance_name}</span>
-                          </Badge>
-                        ))
+                        <>
+                          {contactInstances.slice(0, 2).map(inst => (
+                            <Badge 
+                              key={inst.id} 
+                              variant="outline" 
+                              className={cn(
+                                "text-[10px] px-1.5 py-0 h-5 font-medium flex items-center gap-1 truncate max-w-[120px] transition-colors",
+                                getStatusBadgeStyles(inst.connection_status)
+                              )}
+                              title={`${inst.display_name || inst.instance_name} (${inst.connection_status || 'offline'})`}
+                            >
+                              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", getStatusColor(inst.connection_status))} />
+                              <span className="truncate">{inst.display_name || inst.instance_name}</span>
+                            </Badge>
+                          ))}
+                          {contactInstances.length > 2 && (
+                            <Badge 
+                              variant="outline" 
+                              className="text-[10px] px-1.5 py-0 h-5 font-medium border-dashed opacity-70"
+                              title={`Mais ${contactInstances.length - 2} instância(s)`}
+                            >
+                              +{contactInstances.length - 2}
+                            </Badge>
+                          )}
+                        </>
                       ) : (
                          <Badge 
                             variant="secondary" 
@@ -313,11 +335,8 @@ export const KanbanCard = memo(function KanbanCard({
                           <Badge 
                             variant="outline" 
                             className="text-[10px] px-1.5 py-0 h-5 font-medium shrink-0"
-                            style={{
-                              backgroundColor: `hsl(${(contact.crm_win_probability / 100) * 120}, 70%, 95%)`,
-                              borderColor: `hsl(${(contact.crm_win_probability / 100) * 120}, 70%, 60%)`,
-                              color: `hsl(${(contact.crm_win_probability / 100) * 120}, 70%, 30%)`,
-                            }}
+                            style={getWinProbabilityStyles(contact.crm_win_probability)}
+                            title={`Probabilidade de fechamento: ${contact.crm_win_probability}%`}
                           >
                             {contact.crm_win_probability}%
                           </Badge>
@@ -367,7 +386,10 @@ export const KanbanCard = memo(function KanbanCard({
                         displayValue = new Date(value as string).toLocaleDateString('pt-BR');
                         break;
                       case 'currency':
-                        displayValue = `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+                        const numValue = Number(value);
+                        displayValue = !isNaN(numValue) 
+                          ? `R$ ${numValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
+                          : String(value);
                         break;
                       case 'multiselect':
                         displayValue = Array.isArray(value) ? value.slice(0, 2).join(', ') : String(value);
@@ -413,17 +435,28 @@ export const KanbanCard = memo(function KanbanCard({
             </CardContent>
             
             {/* Quick Actions Hover Overlay (Desktop) - Repositioned */}
-            <div className={cn(
-              "absolute right-2 top-10 flex flex-col gap-1 transition-all duration-200 translate-x-2 group-hover:translate-x-0 z-10",
-              isDragging ? "pointer-events-none opacity-0" : "opacity-0 group-hover:opacity-100"
-            )}>
-              <Button size="icon" variant="secondary" className="h-6 w-6 shadow-sm border" onClick={handleMessageClick}>
-                <MessageCircle className="h-3 w-3" />
-              </Button>
-              <Button size="icon" variant="secondary" className="h-6 w-6 shadow-sm border" onClick={handlePhoneClick}>
-                <Phone className="h-3 w-3" />
-              </Button>
-            </div>
+            {!isDragging && onInteraction && (
+              <div className="absolute right-2 top-10 flex flex-col gap-1 transition-all duration-200 translate-x-2 group-hover:translate-x-0 z-overlay opacity-0 group-hover:opacity-100">
+                <Button 
+                  size="icon" 
+                  variant="secondary" 
+                  className="h-6 w-6 shadow-sm border" 
+                  onClick={handleMessageClick}
+                  aria-label="Enviar mensagem"
+                >
+                  <MessageCircle className="h-3 w-3" />
+                </Button>
+                <Button 
+                  size="icon" 
+                  variant="secondary" 
+                  className="h-6 w-6 shadow-sm border" 
+                  onClick={handlePhoneClick}
+                  aria-label="Ligar"
+                >
+                  <Phone className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
           </Card>
         </div>
       </ContextMenuTrigger>

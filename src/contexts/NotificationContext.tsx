@@ -77,92 +77,124 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
   }, [cliente?.phone, fetchNotifications]);
 
   useEffect(() => {
-    if (!cliente?.phone) return;
+    if (!cliente?.phone) {
+      console.log('⚠️ NotificationContext: Usuário não autenticado ou phone não disponível');
+      return;
+    }
 
-    // Configurar autenticação Realtime antes da subscrição
-    const setupRealtime = async () => {
-      try {
-        // Garantir que a autenticação Realtime está configurada
-        await supabase.realtime.setAuth();
-        
-        const channel: RealtimeChannel = supabase.channel(`notifications:${cliente.phone}`)
-          .on('postgres_changes', { 
-            event: 'INSERT', 
-            schema: 'public', 
-            table: 'notifications', 
-            filter: `phone=eq.${cliente.phone}` 
-          },
-            (payload) => {
-              console.log('🔔 Nova notificação recebida:', payload);
-              const newNotification = payload.new as Notification;
-              
-              // Atualizar estado
-              setNotifications(current => [newNotification, ...current]);
-              setUnreadCount(current => current + 1);
-              
-              // Mostrar toast
-              toast.info(newNotification.titulo, {
-                description: newNotification.mensagem,
-                duration: 5000,
-              });
-            }
-          )
-          .on('postgres_changes', {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'notifications',
-            filter: `phone=eq.${cliente.phone}`
-          }, (payload) => {
-            console.log('📝 Notificação atualizada:', payload);
-            const updatedNotification = payload.new as Notification;
-            
-            // Atualizar notificação local
-            setNotifications(current =>
-              current.map(n => 
-                n.id === updatedNotification.id 
-                  ? updatedNotification
-                  : n
-              )
+    console.log('🔔 NotificationContext: Configurando Realtime para phone:', cliente.phone);
+
+    // Criar nome de canal seguro (remove caracteres especiais)
+    const safeName = cliente.phone.replace(/[^a-zA-Z0-9]/g, '_');
+    const channelName = `notifications_${safeName}`;
+
+    const channel: RealtimeChannel = supabase
+      .channel(channelName, {
+        config: {
+          // Broadcast e presence desabilitados para economia de recursos
+          broadcast: { self: false },
+          presence: { key: '' },
+        },
+      })
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `phone=eq.${cliente.phone}`,
+        },
+        (payload) => {
+          console.log('🔔 [Realtime] Nova notificação INSERT:', payload);
+          const newNotification = payload.new as Notification;
+
+          // Atualizar estado
+          setNotifications((current) => [newNotification, ...current]);
+          setUnreadCount((current) => current + 1);
+
+          // Mostrar toast
+          toast.info(newNotification.titulo, {
+            description: newNotification.mensagem,
+            duration: 5000,
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `phone=eq.${cliente.phone}`,
+        },
+        (payload) => {
+          console.log('📝 [Realtime] Notificação UPDATE:', payload);
+          const updatedNotification = payload.new as Notification;
+
+          // Atualizar notificação local e recalcular contagem
+          setNotifications((current) => {
+            const updated = current.map((n) =>
+              n.id === updatedNotification.id ? updatedNotification : n
             );
             
             // Recalcular contagem de não lidas
-            setNotifications(prev => {
-              const unread = prev.filter(n => !n.lida).length;
-              setUnreadCount(unread);
-              return prev;
-            });
-          })
-          .on('system', {}, (status) => {
-            console.log('📡 Status Realtime:', status);
-          })
-          .subscribe((status) => {
-            console.log('🔌 Canal de notificações:', status);
-            if (status === 'SUBSCRIBED') {
-              console.log('✅ Conectado ao canal de notificações em tempo real');
-            } else if (status === 'CHANNEL_ERROR') {
-              console.error('❌ Erro no canal de notificações');
-            }
+            const unread = updated.filter((n) => !n.lida).length;
+            setUnreadCount(unread);
+            
+            return updated;
           });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'notifications',
+          // DELETE events não suportam filter no Realtime
+        },
+        (payload) => {
+          console.log('🗑️ [Realtime] Notificação DELETE:', payload);
+          const deletedId = payload.old.id;
 
-        return channel;
-      } catch (error) {
-        console.error('❌ Erro ao configurar Realtime:', error);
-        toast.error('Erro ao conectar notificações em tempo real');
-        return null;
-      }
-    };
+          // Remover da lista local
+          setNotifications((current) => current.filter((n) => n.id !== deletedId));
 
-    let channel: RealtimeChannel | null = null;
-    
-    setupRealtime().then((ch) => {
-      channel = ch;
-    });
+          // Recalcular contagem se era não lida
+          if (payload.old.lida === false) {
+            setUnreadCount((current) => Math.max(0, current - 1));
+          }
+        }
+      )
+      .subscribe((status, err) => {
+        console.log('📡 [Realtime] Status do canal:', status);
 
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Conectado ao canal de notificações em tempo real');
+          toast.success('Sistema de notificações ativo', {
+            description: 'Você receberá alertas instantâneos de novas notificações',
+            duration: 3000,
+          });
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Erro no canal de notificações:', err);
+          toast.error('Erro ao conectar notificações em tempo real', {
+            description: 'Tente recarregar a página',
+          });
+        } else if (status === 'TIMED_OUT') {
+          console.error('⏱️ Timeout ao conectar canal de notificações');
+          toast.error('Timeout ao conectar notificações', {
+            description: 'Verifique sua conexão com a internet',
+          });
+        } else if (status === 'CLOSED') {
+          console.warn('🔌 Canal de notificações foi fechado');
+        }
+      });
+
+    // Cleanup
     return () => {
-      if (channel) {
-        console.log('🔌 Desconectando canal de notificações');
-        supabase.removeChannel(channel);
-      }
+      console.log('🔌 Limpando subscrição de notificações');
+      channel.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [cliente?.phone]);
 

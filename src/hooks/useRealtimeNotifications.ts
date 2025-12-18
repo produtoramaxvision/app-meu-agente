@@ -227,18 +227,23 @@ export function useRealtimeNotifications() {
         }
       )
       .subscribe((status) => {
-        console.log('[Realtime] Status da conexão:', status);
+        console.log('[Realtime] Status da conexão (WhatsApp/Contatos):', status);
         setIsConnected(status === 'SUBSCRIBED');
 
         if (status === 'SUBSCRIBED') {
-          toast.success('Notificações em tempo real ativadas', {
-            duration: 2000,
-          });
+          console.log('✅ Canal de contatos Evolution conectado com sucesso');
+          // Toast removido para evitar duplicação com NotificationContext
         } else if (status === 'CHANNEL_ERROR') {
-          toast.error('Erro ao conectar notificações em tempo real');
+          console.error('❌ Erro ao conectar canal de contatos');
+          toast.error('Erro ao conectar notificações de mensagens', {
+            description: 'Contatos do WhatsApp podem não atualizar em tempo real',
+          });
           setIsConnected(false);
         } else if (status === 'TIMED_OUT') {
-          toast.error('Timeout ao conectar notificações');
+          console.error('⏱️ Timeout ao conectar canal de contatos');
+          toast.error('Timeout ao conectar notificações de mensagens', {
+            description: 'Verifique sua conexão com a internet',
+          });
           setIsConnected(false);
         }
       });
