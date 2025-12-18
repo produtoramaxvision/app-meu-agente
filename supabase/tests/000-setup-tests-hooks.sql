@@ -14,13 +14,17 @@ CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 -- INSTALAÇÃO DO DATABASE.DEV (DBDEV)
 -- =====================================================
 -- Necessário para instalar supabase_test_helpers
+-- IMPORTANTE: Instalando no schema extensions (não public) por segurança
+
+-- Criar schema extensions se não existir
+CREATE SCHEMA IF NOT EXISTS extensions;
 
 -- Requisitos: pg_tle e pgsql-http
 CREATE EXTENSION IF NOT EXISTS http WITH SCHEMA extensions;
 CREATE EXTENSION IF NOT EXISTS pg_tle;
 
 -- Limpar instalações anteriores
-DROP EXTENSION IF EXISTS "supabase-dbdev";
+DROP EXTENSION IF EXISTS "supabase-dbdev" CASCADE;
 SELECT pgtle.uninstall_extension_if_exists('supabase-dbdev');
 
 -- Instalar dbdev via HTTP
@@ -51,18 +55,20 @@ LATERAL (
     ((row_to_json(x) -> 'content') #>> '{}')::json -> 0
 ) resp(contents);
 
-CREATE EXTENSION "supabase-dbdev";
+-- Criar no schema extensions
+CREATE EXTENSION "supabase-dbdev" SCHEMA extensions;
 SELECT dbdev.install('supabase-dbdev');
 
--- Recriar para garantir instalação limpa
-DROP EXTENSION IF EXISTS "supabase-dbdev";
-CREATE EXTENSION "supabase-dbdev";
+-- Recriar para garantir instalação limpa no schema correto
+DROP EXTENSION IF EXISTS "supabase-dbdev" CASCADE;
+CREATE EXTENSION "supabase-dbdev" SCHEMA extensions;
 
 -- =====================================================
 -- INSTALAÇÃO DOS TEST HELPERS
 -- =====================================================
+-- Instalar também no schema extensions por consistência
 SELECT dbdev.install('basejump-supabase_test_helpers');
-CREATE EXTENSION IF NOT EXISTS "basejump-supabase_test_helpers" VERSION '0.0.6';
+CREATE EXTENSION IF NOT EXISTS "basejump-supabase_test_helpers" VERSION '0.0.6' SCHEMA extensions;
 
 -- =====================================================
 -- TESTE DE VALIDAÇÃO DO SETUP

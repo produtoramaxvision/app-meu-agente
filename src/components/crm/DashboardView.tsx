@@ -33,14 +33,44 @@ export function DashboardView({ metrics, contacts, className }: DashboardViewPro
   // Hook de métricas temporais
   const temporalMetrics = useTemporalMetrics({ contacts, period });
 
-  // Dados para funil de conversão
+  // Dados para funil de conversão (com cores mais sofisticadas para o card)
   const funnelStages = [
-    { label: 'Novo', count: metrics.byStatus.novo || 0, color: 'bg-blue-500' },
-    { label: 'Contatado', count: metrics.byStatus.contatado || 0, color: 'bg-indigo-500' },
-    { label: 'Qualificado', count: metrics.byStatus.qualificado || 0, color: 'bg-purple-500' },
-    { label: 'Proposta', count: metrics.byStatus.proposta || 0, color: 'bg-amber-500' },
-    { label: 'Negociando', count: metrics.byStatus.negociando || 0, color: 'bg-orange-500' },
-    { label: 'Ganho', count: metrics.byStatus.ganho || 0, color: 'bg-green-500' },
+    {
+      label: 'Novo',
+      count: metrics.byStatus.novo || 0,
+      barClass: 'bg-gradient-to-r from-blue-500/30 via-blue-500 to-blue-400',
+      dotClass: 'bg-blue-400',
+    },
+    {
+      label: 'Contatado',
+      count: metrics.byStatus.contatado || 0,
+      barClass: 'bg-gradient-to-r from-indigo-500/30 via-indigo-500 to-indigo-400',
+      dotClass: 'bg-indigo-400',
+    },
+    {
+      label: 'Qualificado',
+      count: metrics.byStatus.qualificado || 0,
+      barClass: 'bg-gradient-to-r from-purple-500/30 via-purple-500 to-purple-400',
+      dotClass: 'bg-purple-400',
+    },
+    {
+      label: 'Proposta',
+      count: metrics.byStatus.proposta || 0,
+      barClass: 'bg-gradient-to-r from-amber-500/30 via-amber-500 to-amber-400',
+      dotClass: 'bg-amber-400',
+    },
+    {
+      label: 'Negociando',
+      count: metrics.byStatus.negociando || 0,
+      barClass: 'bg-gradient-to-r from-orange-500/30 via-orange-500 to-orange-400',
+      dotClass: 'bg-orange-400',
+    },
+    {
+      label: 'Ganho',
+      count: metrics.byStatus.ganho || 0,
+      barClass: 'bg-gradient-to-r from-emerald-500/30 via-emerald-500 to-emerald-400',
+      dotClass: 'bg-emerald-400',
+    },
   ];
 
   const maxCount = Math.max(...funnelStages.map(s => s.count), 1);
@@ -202,39 +232,57 @@ export function DashboardView({ metrics, contacts, className }: DashboardViewPro
 
       {/* Funil de Conversão */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            <CardTitle>Funil de Conversão</CardTitle>
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-primary/10">
+                <TrendingUp className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-sm font-semibold">
+                  Funil de Conversão
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Distribuição atual dos leads por estágio
+                </p>
+              </div>
+            </div>
+            <Badge variant="outline" className="text-xs border-primary/40 text-primary/90 bg-primary/5">
+              {metrics.byStatus.ganho || 0} ganhos •{' '}
+              {metrics.qualificationRate}% qualificação
+            </Badge>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Distribuição atual dos leads por estágio
-          </p>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-0">
           {funnelStages.map((stage, index) => {
             const percentage = maxCount > 0 ? (stage.count / maxCount) * 100 : 0;
+            const width = stage.count === 0 ? 0 : Math.max(8, percentage);
             const nextStage = funnelStages[index + 1];
             const conversionRate = stage.count > 0 && nextStage 
               ? Math.round((nextStage.count / stage.count) * 100)
               : 0;
 
             return (
-              <div key={stage.label} className="space-y-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium">{stage.label}</span>
+              <div key={stage.label} className="space-y-2">
+                <div className="flex items-center justify-between text-xs sm:text-sm">
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-xs">
+                    <span className={cn("h-2 w-2 rounded-full", stage.dotClass)} />
+                    <span className="font-medium">{stage.label}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-[0.7rem] sm:text-xs bg-muted/60">
                       {stage.count} leads
                     </Badge>
                     {nextStage && conversionRate > 0 && (
                       <Badge 
                         variant="outline" 
                         className={cn(
-                          "text-xs",
-                          conversionRate >= 70 ? "text-green-600 border-green-600" :
-                          conversionRate >= 40 ? "text-amber-600 border-amber-600" :
-                          "text-red-600 border-red-600"
+                          "text-[0.7rem] sm:text-xs border-transparent",
+                          conversionRate >= 70
+                            ? "bg-emerald-500/10 text-emerald-500"
+                            : conversionRate >= 40
+                            ? "bg-amber-500/10 text-amber-500"
+                            : "bg-red-500/10 text-red-500"
                         )}
                       >
                         {conversionRate}% →
@@ -242,12 +290,14 @@ export function DashboardView({ metrics, contacts, className }: DashboardViewPro
                     )}
                   </div>
                 </div>
-                <motion.div 
-                  className={cn("h-8 rounded-md", stage.color)}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${percentage}%` }}
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                />
+                <div className="h-3 sm:h-3.5 rounded-full bg-muted/60 overflow-hidden">
+                  <motion.div 
+                    className={cn("h-full rounded-full shadow-[0_0_0_1px_rgba(15,23,42,0.15)]", stage.barClass)}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${width}%` }}
+                    transition={{ duration: 0.7, ease: "easeOut", delay: index * 0.05 }}
+                  />
+                </div>
               </div>
             );
           })}
@@ -256,46 +306,102 @@ export function DashboardView({ metrics, contacts, className }: DashboardViewPro
 
       {/* Estatísticas Adicionais */}
       <div className="grid gap-6 sm:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Taxa de Qualificação</CardTitle>
+        {/* Taxa de Qualificação */}
+        <Card className="relative overflow-hidden border-border/60 bg-gradient-to-br from-emerald-500/5 via-transparent to-sky-500/5">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-emerald-500/10">
+                  <Target className="h-4 w-4 text-emerald-500" />
+                </div>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Taxa de Qualificação
+                </CardTitle>
+              </div>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-[0.7rem] sm:text-xs border-transparent",
+                  metrics.qualificationRate >= 50
+                    ? "bg-emerald-500/10 text-emerald-500"
+                    : metrics.qualificationRate >= 30
+                    ? "bg-amber-500/10 text-amber-500"
+                    : "bg-red-500/10 text-red-500"
+                )}
+              >
+                alvo: 50%
+              </Badge>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3 pt-0">
             <div className="flex items-baseline gap-2">
-              <span className={cn(
-                "text-3xl font-bold",
-                metrics.qualificationRate >= 50 ? "text-green-600" :
-                metrics.qualificationRate >= 30 ? "text-amber-600" :
-                "text-red-600"
-              )}>
+              <span
+                className={cn(
+                  "text-3xl font-bold",
+                  metrics.qualificationRate >= 50
+                    ? "text-emerald-500"
+                    : metrics.qualificationRate >= 30
+                    ? "text-amber-500"
+                    : "text-red-500"
+                )}
+              >
                 {metrics.qualificationRate}%
               </span>
-              <span className="text-sm text-muted-foreground">
-                dos leads
-              </span>
+              <span className="text-sm text-muted-foreground">dos leads</span>
             </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              Leads que avançaram para qualificado ou além
+            <div className="h-2.5 rounded-full bg-muted/60 overflow-hidden">
+              <motion.div
+                className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-emerald-400 to-sky-400"
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min(Math.max(metrics.qualificationRate, 4), 100)}%` }}
+                transition={{ duration: 0.7, ease: "easeOut" }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Leads que avançaram para qualificado ou além ao longo do período.
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Distribuição por Status</CardTitle>
+        {/* Distribuição por Status */}
+        <Card className="relative overflow-hidden border-border/60">
+          <CardHeader className="pb-2">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-sky-500/10">
+                <Activity className="h-4 w-4 text-sky-500" />
+              </div>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Distribuição por Status
+              </CardTitle>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Em negociação</span>
-              <span className="font-medium">{metrics.byStatus.negociando || 0}</span>
+          <CardContent className="space-y-3 pt-0">
+            <div className="flex justify-between text-xs sm:text-sm">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span className="h-2 w-2 rounded-full bg-orange-400" />
+                <span>Em negociação</span>
+              </div>
+              <Badge variant="secondary" className="text-[0.7rem] sm:text-xs bg-orange-500/10 text-orange-400">
+                {metrics.byStatus.negociando || 0}
+              </Badge>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Ganhos</span>
-              <span className="font-medium text-green-600">{metrics.byStatus.ganho || 0}</span>
+            <div className="flex justify-between text-xs sm:text-sm">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                <span>Ganhos</span>
+              </div>
+              <Badge variant="secondary" className="text-[0.7rem] sm:text-xs bg-emerald-500/10 text-emerald-400">
+                {metrics.byStatus.ganho || 0}
+              </Badge>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Perdidos</span>
-              <span className="font-medium text-red-600">{metrics.byStatus.perdido || 0}</span>
+            <div className="flex justify-between text-xs sm:text-sm">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span className="h-2 w-2 rounded-full bg-rose-400" />
+                <span>Perdidos</span>
+              </div>
+              <Badge variant="secondary" className="text-[0.7rem] sm:text-xs bg-rose-500/10 text-rose-400">
+                {metrics.byStatus.perdido || 0}
+              </Badge>
             </div>
           </CardContent>
         </Card>

@@ -32,6 +32,7 @@ import { getScoreImprovementTips, DEFAULT_WIN_PROBABILITY } from '@/utils/leadSc
 import { LeadStatus } from '@/types/sdr';
 import { supabase } from '@/integrations/supabase/client';
 import { SendWhatsAppDialog } from './SendWhatsAppDialog';
+import { TagsEditor } from './TagsEditor';
 
 interface LeadDetailsSheetProps {
   contact: EvolutionContact | null;
@@ -437,6 +438,12 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
                   Notas
                 </TabsTrigger>
                 <TabsTrigger 
+                  value="tags" 
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
+                >
+                  Tags
+                </TabsTrigger>
+                <TabsTrigger 
                   value="history" 
                   className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
                 >
@@ -543,6 +550,47 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
                     {notes.length}/500 caracteres • Salva automaticamente após parar de digitar
                   </p>
                 </div>
+              </div>
+            </TabsContent>
+
+            {/* Tags Tab */}
+            <TabsContent value="tags" className="flex-1 p-6 m-0 border-0 data-[state=active]:block overflow-auto">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Tags do Lead
+                  </label>
+                  <p className="text-xs text-muted-foreground">
+                    Use tags para categorizar e organizar seus leads. Tags facilitam a filtragem e segmentação.
+                  </p>
+                </div>
+                <TagsEditor
+                  tags={contact.crm_tags || []}
+                  onTagsChange={async (newTags) => {
+                    if (!onUpdateContact) return;
+                    const oldTags = contact.crm_tags || [];
+                    await onUpdateContact(contact.id, { crm_tags: newTags });
+                    await touchLeadInteraction();
+                    
+                    // Registrar atividade de tags
+                    if (JSON.stringify(oldTags) !== JSON.stringify(newTags)) {
+                      await logActivity.mutateAsync({
+                        contact_id: contact.id,
+                        activity_type: 'custom_field_updated',
+                        title: 'Tags atualizadas',
+                        old_value: oldTags.join(', ') || 'Nenhuma',
+                        new_value: newTags.join(', ') || 'Nenhuma',
+                        metadata: {
+                          field_label: 'Tags',
+                          added: newTags.filter(t => !oldTags.includes(t)),
+                          removed: oldTags.filter(t => !newTags.includes(t)),
+                        },
+                      });
+                    }
+                  }}
+                  instanceId={instance?.id}
+                  disabled={!onUpdateContact}
+                />
               </div>
             </TabsContent>
 

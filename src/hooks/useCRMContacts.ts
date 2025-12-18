@@ -83,6 +83,7 @@ export function useCRMContacts({ instanceId, userPhone, enabled = true }: UseCRM
 
       // ⚡ DEDUPLICAÇÃO: Agrupar contatos duplicados por remote_jid
       // Manter o contato mais recente (updated_at) como principal
+      // Fazer MERGE de dados para não perder informações (ex: profile_pic_url)
       // Adicionar array de instance_ids para tracking
       const contactMap = new Map<string, EvolutionContact & { instance_ids?: string[] }>();
       
@@ -96,17 +97,25 @@ export function useCRMContacts({ instanceId, userPhone, enabled = true }: UseCRM
             instance_ids: [contact.instance_id],
           });
         } else {
-          // Contato duplicado - merge info
+          // Contato duplicado - merge info preservando dados importantes
           const existing = contactMap.get(key)!;
           existing.instance_ids!.push(contact.instance_id);
           
-          // Usar o contato mais recente como principal
-          if (new Date(contact.updated_at) > new Date(existing.updated_at)) {
-            contactMap.set(key, {
-              ...contact,
-              instance_ids: existing.instance_ids,
-            });
-          }
+          // Usar o contato mais recente como principal, mas fazer merge de campos nulos
+          const isNewer = new Date(contact.updated_at) > new Date(existing.updated_at);
+          const primary = isNewer ? contact : existing;
+          const secondary = isNewer ? existing : contact;
+          
+          // Merge: usar dados do principal, mas preencher campos nulos com dados do secundário
+          contactMap.set(key, {
+            ...primary,
+            // Preservar profile_pic_url se o principal não tiver
+            profile_pic_url: primary.profile_pic_url || secondary.profile_pic_url,
+            // Preservar push_name se o principal não tiver
+            push_name: primary.push_name || secondary.push_name,
+            // Manter instance_ids acumulados
+            instance_ids: existing.instance_ids,
+          });
         }
       }
 

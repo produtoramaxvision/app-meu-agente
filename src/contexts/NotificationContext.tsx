@@ -171,10 +171,6 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
         if (status === 'SUBSCRIBED') {
           console.log('✅ Conectado ao canal de notificações em tempo real');
-          toast.success('Sistema de notificações ativo', {
-            description: 'Você receberá alertas instantâneos de novas notificações',
-            duration: 3000,
-          });
         } else if (status === 'CHANNEL_ERROR') {
           console.error('❌ Erro no canal de notificações:', err);
           toast.error('Erro ao conectar notificações em tempo real', {

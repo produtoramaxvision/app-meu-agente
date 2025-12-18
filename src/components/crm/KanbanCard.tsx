@@ -11,6 +11,7 @@ import { ptBR } from 'date-fns/locale';
 import { useCustomFieldDefinitions, useCustomFieldValues } from '@/hooks/useCustomFields';
 import { useEvolutionInstances } from '@/hooks/useEvolutionInstances';
 import { LeadScoreBadge } from './LeadScoreBadge';
+import { getTagColor } from '@/hooks/useLeadTags';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -385,12 +386,13 @@ export const KanbanCard = memo(function KanbanCard({
                       case 'date':
                         displayValue = new Date(value as string).toLocaleDateString('pt-BR');
                         break;
-                      case 'currency':
+                      case 'currency': {
                         const numValue = Number(value);
                         displayValue = !isNaN(numValue) 
                           ? `R$ ${numValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` 
                           : String(value);
                         break;
+                      }
                       case 'multiselect':
                         displayValue = Array.isArray(value) ? value.slice(0, 2).join(', ') : String(value);
                         break;
@@ -412,10 +414,21 @@ export const KanbanCard = memo(function KanbanCard({
               {contact.crm_tags && contact.crm_tags.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {contact.crm_tags.slice(0, 3).map((tag, i) => (
-                    <span key={i} className="text-[10px] bg-secondary px-1.5 py-0.5 rounded text-secondary-foreground">
+                    <span 
+                      key={i} 
+                      className={cn(
+                        "text-[10px] px-1.5 py-0.5 rounded border font-medium",
+                        getTagColor(tag)
+                      )}
+                    >
                       {tag}
                     </span>
                   ))}
+                  {contact.crm_tags.length > 3 && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                      +{contact.crm_tags.length - 3}
+                    </span>
+                  )}
                 </div>
               )}
 
