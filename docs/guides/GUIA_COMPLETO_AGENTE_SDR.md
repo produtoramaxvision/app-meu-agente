@@ -1,7 +1,7 @@
 # 🤖 Guia Completo do Agente SDR
 
-> **Última Atualização:** 15 de Dezembro de 2025  
-> **Versão do App:** 2.0.0  
+> **Última Atualização:** 17 de Dezembro de 2025  
+> **Versão do App:** 2.1.0  
 > **Autor:** Equipe Meu Agente
 
 ---
@@ -1211,6 +1211,57 @@ curl https://SUPABASE_URL/rest/v1/sdr_agent_config?select=* \
 - Acesse dashboard N8N
 - Vá em Executions
 - Veja último erro
+
+#### ❌ Erro ao Enviar Mensagem WhatsApp Manual
+
+**Sintomas:**
+- Mensagem não é enviada pelo dialog "Enviar WhatsApp"
+- Toast de erro aparece: "Erro ao enviar mensagem"
+- Status da instância aparece como "undefined" ou "disconnected"
+
+**Causas e Soluções:**
+
+| Erro | Causa | Solução |
+|------|-------|---------|
+| "Connection Closed" | Instância Evolution desconectada | Reconecte via QR Code na página SDR |
+| "Número inválido" | Formato incorreto do número | Use formato E.164: código país + DDD + número |
+| "Status atual: undefined" | Evolution API retornou formato inesperado | O sistema confia no status do DB; se persistir, reconecte |
+
+**Formatos de Número Suportados:**
+
+```
+✅ 5511999999999     (Brasil)
+✅ 14155551234       (EUA)
+✅ 351912345678      (Portugal)
+✅ +5511999999999    (com +, será removido)
+✅ 55 11 99999-9999  (com espaços/hífen, serão limpos)
+
+❌ 11999999999       (sem código de país)
+❌ 999999999         (apenas número local)
+❌ 5511999@whatsapp  (formato JID - use número limpo)
+```
+
+**Códigos de País Suportados (exemplos):**
+
+| Região | Códigos |
+|--------|---------|
+| América do Sul | 55 (BR), 54 (AR), 56 (CL), 57 (CO), 51 (PE), 58 (VE) |
+| América do Norte | 1 (US/CA), 52 (MX) |
+| Europa | 44 (UK), 49 (DE), 33 (FR), 34 (ES), 39 (IT), 351 (PT) |
+| Ásia | 86 (CN), 91 (IN), 81 (JP), 82 (KR), 971 (AE) |
+
+> **Total:** 195+ códigos de país suportados (padrão ITU-T E.164)
+
+**Debug via Console:**
+
+```javascript
+// No console do navegador, verifique:
+// 1. Número extraído do contato
+console.log('Número sendo enviado:', numero);
+
+// 2. Status da instância (deve ser 'connected')
+console.log('Status Evolution:', instanceStatus);
+```
 
 ### Logs e Debugging
 

@@ -31,7 +31,7 @@ export default defineConfig(({ mode }) => {
     'X-Content-Type-Options': 'nosniff',
   };
 
-  const serverConfig = {
+  const serverConfig: Record<string, unknown> = {
     host: "0.0.0.0",
     port: 8080,
     strictPort: true,
@@ -39,27 +39,18 @@ export default defineConfig(({ mode }) => {
     headers: {
       ...baseHeaders,
       ...securityHeaders,
-    }
-  };
-
-  // Configuração específica para desenvolvimento
-  if (isDevelopment) {
-    serverConfig.hmr = {
+    },
+    hmr: isDevelopment ? {
+      protocol: 'ws',
       host: "localhost",
       port: 8080,
-      clientPort: process.env.VITE_HMR_CLIENT_PORT ? parseInt(process.env.VITE_HMR_CLIENT_PORT) : undefined
-    };
-    serverConfig.allowedHosts = ["localhost", "127.0.0.1", "app.meuagente.api.br"];
-  }
-
-  // Configuração específica para produção
-  if (isProduction) {
-    serverConfig.hmr = {
+      clientPort: process.env.VITE_HMR_CLIENT_PORT ? parseInt(process.env.VITE_HMR_CLIENT_PORT) : 8080
+    } : {
+      protocol: 'wss',
       host: "app.meuagente.api.br",
       port: 8080
-    };
-    serverConfig.allowedHosts = ["app.meuagente.api.br"];
-  }
+    }
+  };
 
   return {
     server: serverConfig,

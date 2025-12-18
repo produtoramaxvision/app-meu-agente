@@ -1,11 +1,16 @@
 project_id = "teexqwlnfdlcruqbmwuz"
 
-# Desabilita verificação de JWT para o webhook da Evolution API, pois os webhooks
-# são enviados sem token pelo provedor externo.
+# Desabilita verificação de JWT para webhooks externos e processos internos
+# que não são iniciados por usuários autenticados:
+
+# Evolution API Webhook - Recebe notificações do WhatsApp sem JWT
 [functions.evolution-webhook]
 verify_jwt = false
 
-# Desabilita verificação de JWT para process-automations, pois é invocado
-# pelo pg_cron/pg_net via trigger interno do banco sem JWT de usuário.
+# Stripe Webhook - Recebe eventos do Stripe com assinatura própria, sem JWT
+[functions.stripe-webhook]
+verify_jwt = false
+
+# Process Automations - Invocado por pg_cron/pg_net internamente, sem JWT de usuário
 [functions.process-automations]
 verify_jwt = false

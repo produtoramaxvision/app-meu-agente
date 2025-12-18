@@ -230,8 +230,20 @@ export const KanbanCard = memo(function KanbanCard({
                 <AvatarImage src={contact.profile_pic_url || undefined} />
                 <AvatarFallback>{contact.push_name?.substring(0, 2).toUpperCase() || '??'}</AvatarFallback>
               </Avatar>
-              <div className="min-w-0">
-                <p className="font-semibold text-sm truncate">{contact.push_name || contact.remote_jid.split('@')[0]}</p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <p className="font-semibold text-sm truncate">{contact.push_name || contact.remote_jid.split('@')[0]}</p>
+                  {/* Badge de Múltiplas Instâncias */}
+                  {contact.instance_ids && contact.instance_ids.length > 1 && (
+                    <Badge 
+                      variant="secondary" 
+                      className="text-[9px] px-1 py-0 h-4 font-medium shrink-0"
+                      title={`Este contato existe em ${contact.instance_ids.length} instâncias`}
+                    >
+                      {contact.instance_ids.length}x
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground truncate">{contact.phone}</p>
               </div>
             </div>

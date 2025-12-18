@@ -170,6 +170,82 @@ Envia uma mensagem de texto.
   }
   ```
 
+### **Edge Function: send-evolution-text**
+
+Edge Function segura para envio de mensagens WhatsApp via Evolution API com validação E.164.
+
+- **Endpoint**: `supabase.functions.invoke('send-evolution-text', { body })`
+- **Método**: `POST`
+- **Autenticação**: Requerida (Bearer Token)
+- **Body**:
+  ```json
+  {
+    "instanceName": "sdr-cliente-123",
+    "number": "5511999999999",
+    "text": "Mensagem a enviar"
+  }
+  ```
+- **Resposta (sucesso)**:
+  ```json
+  {
+    "success": true,
+    "data": { "key": { "id": "msg-id" } }
+  }
+  ```
+- **Resposta (erro)**:
+  ```json
+  {
+    "success": false,
+    "error": "Descrição do erro"
+  }
+  ```
+
+#### **Validação de Número (E.164)**
+
+A função `normalizeAndValidateNumber` implementa validação completa:
+
+1. **Extração**: Remove `@s.whatsapp.net` de remote_jid se presente
+2. **Limpeza**: Remove caracteres não-numéricos (`+`, `-`, `(`, `)`, espaços)
+3. **Tamanho**: Mínimo 7, máximo 15 dígitos (padrão E.164)
+4. **Código de País**: Valida contra lista de 195+ códigos ITU-T
+
+**Códigos de País Suportados** (exemplos por região):
+| Região | Códigos |
+|--------|---------|
+| América do Sul | 55 (BR), 54 (AR), 56 (CL), 57 (CO), 51 (PE) |
+| América do Norte | 1 (US/CA), 52 (MX) |
+| Europa | 44 (UK), 49 (DE), 33 (FR), 34 (ES), 39 (IT), 351 (PT) |
+| Ásia | 86 (CN), 91 (IN), 81 (JP), 82 (KR) |
+| Oceania | 61 (AU), 64 (NZ) |
+| África | 27 (ZA), 20 (EG), 234 (NG) |
+
+#### **Normalização de Estado (Evolution API)**
+
+A função `normalizeEvolutionState` normaliza os diferentes formatos retornados:
+
+| Estado Original | Estado Normalizado |
+|-----------------|-------------------|
+| `open`, `Open`, `OPEN` | `connected` |
+| `connected`, `Connected` | `connected` |
+| `close`, `Close`, `CLOSE` | `disconnected` |
+| `disconnected`, `Disconnected` | `disconnected` |
+| `connecting`, `Connecting` | `connecting` |
+
+#### **Fluxo de Envio**
+
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│ SendWhatsApp │────>│ Edge Function│────>│ Validação    │────>│ Evolution    │
+│ Dialog (UI)  │     │ (Deno)       │     │ E.164        │     │ API          │
+└──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
+                           │                                          │
+                           ▼                                          ▼
+                    ┌──────────────┐                          ┌──────────────┐
+                    │ Log estrut.  │                          │ WhatsApp     │
+                    │ (debug)      │                          │ (destino)    │
+                    └──────────────┘                          └──────────────┘
+```
+
 ### **Webhook de Mensagens Recebidas**
 
 O Evolution API pode enviar mensagens recebidas para um webhook:

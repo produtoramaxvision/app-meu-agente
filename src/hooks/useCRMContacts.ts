@@ -76,10 +76,41 @@ export function useCRMContacts({ instanceId, userPhone, enabled = true }: UseCRM
       }
 
       // Normalizar sinalização de grupo
-      return allData.map((contact) => ({
+      const normalizedData = allData.map((contact) => ({
         ...contact,
         is_group: contact.is_group || contact.remote_jid?.includes('@g.us') || false,
       })) as EvolutionContact[];
+
+      // ⚡ DEDUPLICAÇÃO: Agrupar contatos duplicados por remote_jid
+      // Manter o contato mais recente (updated_at) como principal
+      // Adicionar array de instance_ids para tracking
+      const contactMap = new Map<string, EvolutionContact & { instance_ids?: string[] }>();
+      
+      for (const contact of normalizedData) {
+        const key = contact.remote_jid || contact.id; // Fallback para id se remote_jid não existir
+        
+        if (!contactMap.has(key)) {
+          // Primeiro contato com este remote_jid
+          contactMap.set(key, {
+            ...contact,
+            instance_ids: [contact.instance_id],
+          });
+        } else {
+          // Contato duplicado - merge info
+          const existing = contactMap.get(key)!;
+          existing.instance_ids!.push(contact.instance_id);
+          
+          // Usar o contato mais recente como principal
+          if (new Date(contact.updated_at) > new Date(existing.updated_at)) {
+            contactMap.set(key, {
+              ...contact,
+              instance_ids: existing.instance_ids,
+            });
+          }
+        }
+      }
+
+      return Array.from(contactMap.values());
     },
     enabled: enabled && !!userPhone,
     staleTime: 2 * 60 * 1000, // 2 minutos - dados frescos

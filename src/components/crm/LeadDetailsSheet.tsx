@@ -16,7 +16,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageCircle, Phone, Calendar, CheckSquare, Plus, Mail, Loader2 } from 'lucide-react';
 import { useTasksData, TaskFormData } from '@/hooks/useTasksData';
 import { Input } from '@/components/ui/input';
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { format } from 'date-fns';
@@ -30,6 +30,8 @@ import { ActivityTimeline } from './ActivityTimeline';
 import { LeadScoreBadge } from './LeadScoreBadge';
 import { getScoreImprovementTips, DEFAULT_WIN_PROBABILITY } from '@/utils/leadScoring';
 import { LeadStatus } from '@/types/sdr';
+import { supabase } from '@/integrations/supabase/client';
+import { SendWhatsAppDialog } from './SendWhatsAppDialog';
 
 interface LeadDetailsSheetProps {
   contact: EvolutionContact | null;
@@ -40,7 +42,7 @@ interface LeadDetailsSheetProps {
 
 export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact }: LeadDetailsSheetProps) {
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
+  const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
   const [estimatedValue, setEstimatedValue] = useState<string>('');
   const [isSavingValue, setIsSavingValue] = useState(false);
   const [notes, setNotes] = useState<string>('');
@@ -55,14 +57,6 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
   
   // Activity Log
   const { activities, isLoading: isLoadingActivities, logValueUpdate, logNoteUpdate } = useActivityLog(contact?.id);
-  const evolutionApiUrl = useMemo(
-    () => import.meta.env.VITE_EVOLUTION_API_URL || 'https://evolution-api.com',
-    []
-  );
-  const evolutionApiKey = useMemo(
-    () => import.meta.env.VITE_EVOLUTION_API_KEY || '',
-    []
-  );
   
   // Use tasks filtered by this lead
   const { tasks, createTask, toggleTaskCompletion } = useTasksData(
@@ -72,7 +66,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
   );
 
   // Inicializar valor estimado quando contato mudar
-  useMemo(() => {
+  useEffect(() => {
     if (contact?.crm_estimated_value) {
       // Formatar o valor do banco (ex: 1500 -> "1.500,00")
       const formatted = contact.crm_estimated_value.toLocaleString('pt-BR', {
@@ -83,7 +77,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
     } else {
       setEstimatedValue('');
     }
-  }, [contact]);
+  }, [contact?.crm_estimated_value]);
 
   // Sincronizar notas quando contato mudar
   useEffect(() => {
@@ -139,58 +133,6 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
   }, [notes, contact, onUpdateContact, logNoteUpdate]);
 
   if (!contact) return null;
-
-  const handleSendWhatsapp = async () => {
-    const instanceName = instance?.instance_name;
-    const phone = contact.remote_jid.split('@')[0] || contact.phone;
-    if (!instanceName) {
-      toast.error('Instância Evolution não configurada.');
-      return;
-    }
-    if (!phone) {
-      toast.error('Contato sem número de telefone válido.');
-      return;
-    }
-    if (!evolutionApiKey) {
-      toast.error('Chave da Evolution API não configurada.');
-      return;
-    }
-
-    setSendingWhatsapp(true);
-    try {
-      const payload = {
-        number: phone,
-        text: `Olá ${contact.push_name || ''}!`,
-      };
-
-      const response = await fetch(
-        `${evolutionApiUrl}/message/sendText/${instanceName}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: evolutionApiKey,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Falha ao enviar mensagem.');
-      }
-
-      toast.success('Mensagem enviada via WhatsApp.');
-    } catch (error: unknown) {
-      console.error('Erro ao enviar WhatsApp:', error);
-      const message = error instanceof Error ? error.message : 'Verifique a configuração da Evolution API.';
-      toast.error('Erro ao enviar mensagem.', {
-        description: message,
-      });
-    } finally {
-      setSendingWhatsapp(false);
-    }
-  };
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -284,9 +226,9 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[400px] sm:w-[540px] flex flex-col h-full p-0">
+      <SheetContent className="w-full sm:w-[520px] flex flex-col p-0 overflow-hidden">
         {/* Header with Cover-like style */}
-        <div className="bg-muted/30 p-6 border-b">
+        <div className="bg-muted/30 p-6 border-b flex-shrink-0">
           <div className="flex items-start gap-4">
             <Avatar className="h-16 w-16 border-2 border-background shadow-sm">
               <AvatarImage src={contact.profile_pic_url || undefined} />
@@ -312,15 +254,10 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
             <Button 
               className="flex-1 gap-2" 
               variant="outline" 
-              onClick={handleSendWhatsapp}
-              disabled={sendingWhatsapp}
+              onClick={() => setWhatsappDialogOpen(true)}
             >
-              {sendingWhatsapp ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <MessageCircle className="h-4 w-4" />
-              )}
-              {sendingWhatsapp ? 'Enviando...' : 'WhatsApp'}
+              <MessageCircle className="h-4 w-4" />
+              WhatsApp
             </Button>
             <Button className="flex-1 gap-2" variant="outline">
               <Phone className="h-4 w-4" />
@@ -361,6 +298,16 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
               </Button>
             </div>
           </div>
+
+          {/* Dialog para envio de mensagem WhatsApp */}
+          <SendWhatsAppDialog
+            open={whatsappDialogOpen}
+            onOpenChange={setWhatsappDialogOpen}
+            contactName={contact.push_name || 'Contato'}
+            contactPhone={contact.phone || contact.remote_jid.split('@')[0]}
+            contactRemoteJid={contact.remote_jid}
+            defaultMessage={`Olá ${contact.push_name || ''}!`}
+          />
 
           {/* Campo de Probabilidade de Fechamento (Fase 3.5) - Não exibir para ganho/perdido */}
           {contact.crm_lead_status !== 'ganho' && contact.crm_lead_status !== 'perdido' && (
@@ -447,10 +394,10 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
         </div>
 
         {/* Content Tabs */}
-        <div className="flex-1 overflow-hidden flex flex-col">
-          <Tabs defaultValue="tasks" className="flex-1 flex flex-col h-full">
-            <div className="px-6 pt-4 border-b bg-background">
-              <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0 h-auto overflow-x-auto">
+        <div className="flex-1 flex flex-col min-h-0">
+          <Tabs defaultValue="tasks" className="flex-1 flex flex-col">
+            <div className="px-6 pt-4 border-b bg-background flex-shrink-0">
+              <TabsList className="w-full justify-start rounded-none bg-transparent p-0 h-auto">
                 <TabsTrigger 
                   value="tasks" 
                   className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-2"
@@ -487,8 +434,8 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
             </div>
 
             {/* Tasks Tab */}
-            <TabsContent value="tasks" className="flex-1 overflow-hidden flex flex-col p-0 m-0 border-0">
-              <div className="p-4 border-b bg-muted/10">
+            <TabsContent value="tasks" className="flex-1 p-0 m-0 border-0 data-[state=active]:flex data-[state=active]:flex-col overflow-auto">
+              <div className="p-6 border-b bg-muted/10 flex-shrink-0">
                 <form onSubmit={handleAddTask} className="flex gap-2">
                   <Input 
                     placeholder="Adicionar nova tarefa..." 
@@ -501,8 +448,8 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
                   </Button>
                 </form>
               </div>
-              <ScrollArea className="flex-1">
-                <div className="p-4 space-y-2">
+              <div className="flex-1 overflow-auto">
+                <div className="p-6 space-y-2">
                   {tasks.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground text-sm">
                       Nenhuma tarefa para este lead
@@ -531,25 +478,27 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
                     ))
                   )}
                 </div>
-              </ScrollArea>
+              </div>
             </TabsContent>
 
             {/* Agenda Tab */}
-            <TabsContent value="agenda" className="flex-1 overflow-hidden p-6 m-0 border-0">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold">Próximos Eventos</h3>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Plus className="h-3.5 w-3.5" />
-                  Agendar
-                </Button>
-              </div>
-              <div className="text-center py-8 text-muted-foreground text-sm border rounded-lg border-dashed">
-                Em breve: Integração com Agenda
+            <TabsContent value="agenda" className="flex-1 p-6 m-0 border-0 data-[state=active]:block overflow-auto">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">Próximos Eventos</h3>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Plus className="h-3.5 w-3.5" />
+                    Agendar
+                  </Button>
+                </div>
+                <div className="text-center py-8 text-muted-foreground text-sm border rounded-lg border-dashed">
+                  Em breve: Integração com Agenda
+                </div>
               </div>
             </TabsContent>
 
             {/* Notes Tab */}
-            <TabsContent value="notes" className="flex-1 overflow-hidden p-6 m-0 border-0">
+            <TabsContent value="notes" className="flex-1 p-6 m-0 border-0 data-[state=active]:block overflow-auto">
               <div className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -578,22 +527,17 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
             </TabsContent>
 
             {/* History Tab */}
-            <TabsContent value="history" className="flex-1 overflow-hidden m-0 border-0">
-              <ScrollArea className="h-full">
-                <div className="p-4 sm:p-6">
-                  <ActivityTimeline 
-                    activities={activities} 
-                    isLoading={isLoadingActivities}
-                  />
-                </div>
-              </ScrollArea>
+            <TabsContent value="history" className="flex-1 p-6 m-0 border-0 data-[state=active]:block overflow-auto">
+              <ActivityTimeline 
+                activities={activities} 
+                isLoading={isLoadingActivities}
+              />
             </TabsContent>
 
             {/* Custom Fields Tab */}
             {definitions.length > 0 && (
-              <TabsContent value="custom" className="flex-1 overflow-hidden m-0 border-0">
-                <ScrollArea className="h-full">
-                  <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+              <TabsContent value="custom" className="flex-1 p-6 m-0 border-0 data-[state=active]:block overflow-auto">
+                <div className="space-y-6">
                     {definitions
                       .sort((a, b) => a.display_order - b.display_order)
                       .map((def) => (
@@ -616,8 +560,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
                         Nenhum campo personalizado configurado
                       </div>
                     )}
-                  </div>
-                </ScrollArea>
+                </div>
               </TabsContent>
             )}
           </Tabs>

@@ -56,6 +56,9 @@ export interface EvolutionContact {
   crm_loss_reason_details: string | null; // Detalhes adicionais do motivo da perda
   crm_win_probability: number | null; // Probabilidade de fechamento (0-100%). Se null, usa default do status
   
+  // ⚡ Campo virtual (computed): Array de instance_ids quando o contato existe em múltiplas instâncias
+  instance_ids?: string[];
+  
   created_at: string;
   updated_at: string;
 }
