@@ -134,7 +134,7 @@ export function getScoreImprovementTips(contact: EvolutionContact): string[] {
     tips.push('Adicione o nome do lead');
   }
   
-  if (!(contact.crm_estimated_value || 0) > 0) {
+  if ((contact.crm_estimated_value || 0) <= 0) {
     tips.push('Defina o valor estimado do negócio');
   }
   

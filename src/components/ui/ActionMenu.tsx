@@ -22,7 +22,8 @@ interface ActionMenuProps {
 }
 
 // Helper function to render menu items
-const renderMenuItems = (items: ActionMenuItem[], ItemComponent: React.ComponentType<{ onClick: () => void; disabled?: boolean; className?: string; children: React.ReactNode }>, SeparatorComponent: React.ComponentType) => (
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const renderMenuItems = (items: ActionMenuItem[], ItemComponent: any, SeparatorComponent: React.ComponentType) => (
   <>
     {items.map((item, index) => {
       const isLast = index === items.length - 1;

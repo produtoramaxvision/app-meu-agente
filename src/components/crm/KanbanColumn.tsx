@@ -21,6 +21,7 @@ interface KanbanColumnProps {
   onCardClick: (contact: EvolutionContact) => void;
   onCardEdit?: (contact: EvolutionContact) => void;
   onCardDelete?: (contact: EvolutionContact) => void;
+  onCardInteraction?: (contact: EvolutionContact, type: 'message' | 'call') => void;
 }
 
 // ⚡ OTIMIZAÇÃO: React.memo evita re-renders desnecessários da coluna
@@ -32,6 +33,7 @@ export const KanbanColumn = memo(function KanbanColumn({
   onCardClick,
   onCardEdit,
   onCardDelete,
+  onCardInteraction,
 }: KanbanColumnProps) {
   // ⚡ OTIMIZAÇÃO: Lazy Loading para evitar renderizar milhares de itens de uma vez
   const [visibleCount, setVisibleCount] = useState(20);
@@ -81,11 +83,12 @@ export const KanbanColumn = memo(function KanbanColumn({
           onClick={onCardClick} 
           onEdit={onCardEdit}
           onDelete={onCardDelete}
-          isDragging={snapshot.isDragging} 
+          isDragging={snapshot.isDragging}
+          onInteraction={onCardInteraction}
         />
       </div>
     ),
-    [onCardClick, onCardEdit, onCardDelete],
+    [onCardClick, onCardEdit, onCardDelete, onCardInteraction],
   );
 
   // ⚡ OTIMIZAÇÃO: renderização do clone para modo virtual

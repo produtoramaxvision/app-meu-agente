@@ -158,11 +158,11 @@ export function PrivacySection() {
 
       if (error) throw error;
 
-      if (!data.success) {
-        throw new Error(data.error || 'Erro na exportação');
+      if (!data || typeof data !== 'object' || !('success' in data) || !(data as Record<string, unknown>).success) {
+        throw new Error((data && typeof data === 'object' && 'error' in data ? (data as Record<string, unknown>).error as string : null) || 'Erro na exportação');
       }
 
-      const jsonContent = JSON.stringify(data.data, null, 2);
+      const jsonContent = JSON.stringify((data && typeof data === 'object' && 'data' in data ? (data as Record<string, unknown>).data : {}), null, 2);
       const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
@@ -206,7 +206,7 @@ export function PrivacySection() {
         throw error;
       }
 
-      if (!data || !data.success) {
+      if (!data || typeof data !== 'object' || !('success' in data) || !(data as Record<string, unknown>).success) {
         toast.dismiss(loadingToast);
         const errorMsg = (data as { error?: string })?.error || 'Erro na exclusão';
         throw new Error(errorMsg);
@@ -214,7 +214,7 @@ export function PrivacySection() {
 
       toast.dismiss(loadingToast);
       toast.success("Dados deletados com sucesso", {
-        description: `Todos os seus dados foram removidos permanentemente. Tabelas afetadas: ${data.deleted_tables?.join(', ') || 'N/A'}`,
+        description: `Todos os seus dados foram removidos permanentemente. Tabelas afetadas: ${(data && typeof data === 'object' && 'deleted_tables' in data && Array.isArray((data as Record<string, unknown>).deleted_tables) ? ((data as Record<string, unknown>).deleted_tables as string[]).join(', ') : 'N/A')}`,
         duration: 5000,
       });
 

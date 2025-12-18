@@ -78,7 +78,7 @@ export function AvatarUpload({
       // Simular evento de input para reutilizar handleFileUpload
       const mockEvent = {
         target: { files: [file] }
-      } as React.ChangeEvent<HTMLInputElement>;
+      } as unknown as React.ChangeEvent<HTMLInputElement>;
       handleFileUpload(mockEvent);
     }
   };
@@ -183,16 +183,18 @@ export function AvatarUpload({
       } else if (errorMsg.includes('size') || errorMsg.includes('large') || errorStatusCode === 413) {
         errorMessage = 'Arquivo muito grande. O tamanho máximo é de 600KB.';
       } else if (
-        error?.message?.includes('type') ||
-        error?.message?.includes('format') ||
-        error?.message?.includes('content-type')
+        (error && typeof error === 'object' && 'message' in error && typeof (error as Record<string, unknown>).message === 'string' && (
+          String((error as Record<string, unknown>).message).includes('type') ||
+          String((error as Record<string, unknown>).message).includes('format') ||
+          String((error as Record<string, unknown>).message).includes('content-type')
+        ))
       ) {
         errorMessage = 'Formato não suportado. Use apenas imagens JPEG ou PNG.';
-      } else if (error?.statusCode === 400) {
+      } else if (error && typeof error === 'object' && 'statusCode' in error && (error as Record<string, unknown>).statusCode === 400) {
         errorMessage = 'Erro ao fazer upload. Verifique se o arquivo é uma imagem válida.';
-      } else if (error?.statusCode === 401 || error?.statusCode === 403) {
+      } else if (error && typeof error === 'object' && 'statusCode' in error && ((error as Record<string, unknown>).statusCode === 401 || (error as Record<string, unknown>).statusCode === 403)) {
         errorMessage = 'Erro de autenticação. Faça login novamente.';
-      } else if (error?.statusCode === 500) {
+      } else if (error && typeof error === 'object' && 'statusCode' in error && (error as Record<string, unknown>).statusCode === 500) {
         errorMessage = 'Erro no servidor. Tente novamente em alguns instantes.';
       }
 

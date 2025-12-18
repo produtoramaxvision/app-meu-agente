@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import type { EvolutionContact } from '@/types/sdr';
 
@@ -87,7 +88,7 @@ export function useEvolutionContacts(
   // Carregar contatos salvos do banco de dados
   const loadContacts = useCallback(async () => {
     try {
-      let allData: EvolutionAPIContact[] = [];
+      let allData: Record<string, unknown>[] = [];
       const PAGE_SIZE = 1000;
       let from = 0;
       let to = PAGE_SIZE - 1;
@@ -137,11 +138,14 @@ export function useEvolutionContacts(
       }
 
       if (allData.length > 0) {
-        // Normalizar sinalização de grupo
-        const normalized = (allData as EvolutionContact[]).map((contact) => ({
-          ...contact,
-          is_group: contact.is_group || contact.remote_jid?.includes('@g.us') || false,
-        }));
+        // Normalizar sinalização de grupo - Type cast seguro após validação do DB
+        const normalized = allData.map((contact) => {
+          const c = contact as unknown as EvolutionContact;
+          return {
+            ...c,
+            is_group: c.is_group || c.remote_jid?.includes('@g.us') || false,
+          };
+        });
 
         setContacts(normalized);
         
@@ -197,17 +201,17 @@ export function useEvolutionContacts(
         throw new Error(`Evolution API error: ${response.status} - ${errorText}`);
       }
 
-      const evolutionContacts = await response.json();
+      const evolutionContacts = await response.json() as Record<string, unknown>[];
 
       // Filtrar: remover broadcast lists (@lid)
-      const withoutBroadcastLists = evolutionContacts.filter((c: EvolutionAPIContact) => {
-        const remoteJid = c.remoteJid || '';
+      const withoutBroadcastLists = evolutionContacts.filter((c: Record<string, unknown>) => {
+        const remoteJid = (c.remoteJid as string) || '';
         return remoteJid.includes('@s.whatsapp.net') || remoteJid.includes('@g.us');
       });
 
       // Filtrar grupos se necessário
       const filteredContacts = onlyContacts
-        ? withoutBroadcastLists.filter((c: EvolutionAPIContact) => c.remoteJid?.includes('@s.whatsapp.net'))
+        ? withoutBroadcastLists.filter((c: Record<string, unknown>) => (c.remoteJid as string)?.includes('@s.whatsapp.net'))
         : withoutBroadcastLists;
 
       // Limpar contatos antigos desta instância
@@ -218,16 +222,17 @@ export function useEvolutionContacts(
         .eq('phone', userPhone);
 
       // Preparar dados para salvar
-      const contactsToSave = filteredContacts.map((contact: EvolutionAPIContact) => ({
+      const contactsToSave = filteredContacts.map((contact: Record<string, unknown>) => ({
         instance_id: instanceId,
         phone: userPhone,
-        remote_jid: contact.remoteJid,
-        push_name: contact.pushName || null,
-        profile_pic_url: contact.profilePicUrl || null,
-        is_group: contact.isGroup || contact.remoteJid?.endsWith('@g.us') || false,
-        is_saved: contact.isSaved || !!(contact.pushName || contact.profilePicUrl),
+        remote_jid: contact.remoteJid as string,
+        push_name: (contact.pushName as string) || null,
+        profile_pic_url: (contact.profilePicUrl as string) || null,
+        is_group: (contact.isGroup as boolean) || ((contact.remoteJid as string) || '').endsWith('@g.us') || false,
+        is_saved: (contact.isSaved as boolean) || !!((contact.pushName as string) || (contact.profilePicUrl as string)),
         synced_at: new Date().toISOString(),
-        sync_source: 'manual',
+        sync_source: 'manual' as const,
+        raw_data: contact as Json,
       }));
 
       // Salvar em batches (limite de 1000 por request)
@@ -262,7 +267,7 @@ export function useEvolutionContacts(
         description: `${contactsToSave.length} contatos atualizados`,
       });
 
-      return contactsToSave.length;
+      // Função retorna void conforme interface
     } catch (error) {
       console.error('Error syncing contacts:', error);
       toast.error('Erro ao sincronizar', {

@@ -60,17 +60,20 @@ export function NotificationItem({ notification, onMarkRead, onMarkUnread, onDel
       label: 'Marcar todas como lidas',
       icon: <CheckCheck className="mr-2 h-4 w-4" />,
       onClick: onMarkAllAsRead,
+      disabled: false,
     }] : []),
     ...(notification.lida ? [{
       label: 'Marcar como não lida',
       icon: <Eye className="mr-2 h-4 w-4" />,
       onClick: handleMarkAsUnread,
+      disabled: false,
     }] : []),
     {
       label: 'Excluir',
       icon: <Trash2 className="mr-2 h-4 w-4" />,
       onClick: () => onDelete(notification.id),
       className: 'text-red-600 focus:text-red-600',
+      disabled: false,
     },
   ];
 

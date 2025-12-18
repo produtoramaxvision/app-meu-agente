@@ -14,9 +14,9 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageCircle, Phone, Calendar, CheckSquare, Plus, Mail, Loader2 } from 'lucide-react';
-import { useTasksData, TaskFormData } from '@/hooks/useTasksData';
+import { useTasksData, TaskFormData, Task } from '@/hooks/useTasksData';
 import { Input } from '@/components/ui/input';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { format } from 'date-fns';
@@ -37,7 +37,7 @@ interface LeadDetailsSheetProps {
   contact: EvolutionContact | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUpdateContact?: (contactId: string, updates: Partial<EvolutionContact>) => Promise<void>;
+  onUpdateContact?: (contactId: string, updates: Partial<EvolutionContact>, options?: { recordInteraction?: boolean }) => Promise<void>;
 }
 
 export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact }: LeadDetailsSheetProps) {
@@ -64,6 +64,11 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
     undefined, 
     contact?.remote_jid
   );
+
+  const touchLeadInteraction = useCallback(async () => {
+    if (!contact || !onUpdateContact) return;
+    await onUpdateContact(contact.id, {}, { recordInteraction: true });
+  }, [contact, onUpdateContact]);
 
   // Inicializar valor estimado quando contato mudar
   useEffect(() => {
@@ -112,10 +117,11 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
       if (onUpdateContact) {
         setIsSavingNotes(true);
         try {
+          const oldNotes = contact.crm_notes || '';
           await onUpdateContact(contact.id, { crm_notes: notes });
           
           // Registrar atividade de atualização de notas
-          await logNoteUpdate(contact.id);
+          await logNoteUpdate(contact.id, oldNotes, notes);
           
           toast.success('Notas salvas automaticamente', {
             duration: 2000,
@@ -138,12 +144,26 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
 
-    await createTask.mutateAsync({
-      title: newTaskTitle,
-      priority: 'medium',
-      lead_remote_jid: contact.remote_jid
-    });
-    setNewTaskTitle('');
+    try {
+      await createTask.mutateAsync({
+        title: newTaskTitle,
+        priority: 'medium',
+        lead_remote_jid: contact.remote_jid
+      });
+      setNewTaskTitle('');
+      await touchLeadInteraction();
+    } catch (error) {
+      console.error('Erro ao criar tarefa:', error);
+    }
+  };
+
+  const handleToggleTaskStatus = async (task: Task) => {
+    try {
+      await toggleTaskCompletion.mutateAsync(task);
+      await touchLeadInteraction();
+    } catch (error) {
+      console.error('Erro ao atualizar tarefa:', error);
+    }
   };
 
   const handleSaveEstimatedValue = async () => {
@@ -459,7 +479,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
                       <div key={task.id} className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-accent/5 transition-colors">
                          <div 
                            className={`mt-0.5 cursor-pointer rounded border h-4 w-4 flex items-center justify-center ${task.status === 'done' ? 'bg-primary border-primary' : 'border-muted-foreground'}`}
-                           onClick={() => toggleTaskCompletion.mutate(task)}
+                           onClick={() => handleToggleTaskStatus(task)}
                          >
                            {task.status === 'done' && <CheckSquare className="h-3 w-3 text-primary-foreground" />}
                          </div>
@@ -550,6 +570,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
                                 field_key: def.field_key,
                                 value,
                               });
+                                  await touchLeadInteraction();
                             }}
                           />
                         </div>

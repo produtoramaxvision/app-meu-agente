@@ -456,12 +456,18 @@ export function useOptimizedAgendaData(options: UseOptimizedAgendaDataOptions) {
 
       if ('start_ts' in eventData && eventData.start_ts) {
         // Formato com start_ts e end_ts (vindo do EventQuickCreatePopover)
-        start_ts = eventData.start_ts instanceof Date 
-          ? eventData.start_ts.toISOString() 
-          : new Date(eventData.start_ts).toISOString();
-        end_ts = eventData.end_ts instanceof Date 
-          ? eventData.end_ts.toISOString() 
-          : new Date(eventData.end_ts).toISOString();
+        const startTsValue = eventData.start_ts as string | Date;
+        if (typeof startTsValue === 'object' && 'toISOString' in startTsValue) {
+          start_ts = startTsValue.toISOString();
+        } else {
+          start_ts = new Date(startTsValue).toISOString();
+        }
+        const endTsValue = eventData.end_ts as string | Date;
+        if (typeof endTsValue === 'object' && 'toISOString' in endTsValue) {
+          end_ts = endTsValue.toISOString();
+        } else {
+          end_ts = new Date(endTsValue).toISOString();
+        }
       } else if ('start_date' in eventData && eventData.start_date) {
         // Formato com start_date/start_time (vindo do EventForm)
         start_ts = new Date(`${eventData.start_date.toDateString()} ${eventData.start_time}`).toISOString();

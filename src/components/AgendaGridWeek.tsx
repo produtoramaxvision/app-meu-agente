@@ -116,7 +116,6 @@ export default function AgendaGridWeek({ weekDate, events, calendars, isLoading,
         listeners,
         setNodeRef,
         transform,
-        transition,
         isDragging,
       } = useDraggable({
         id: `event-${event.id}`,
@@ -134,7 +133,6 @@ export default function AgendaGridWeek({ weekDate, events, calendars, isLoading,
 
       const style = {
         transform: CSS.Transform.toString(transform),
-        transition,
       };
 
       return (

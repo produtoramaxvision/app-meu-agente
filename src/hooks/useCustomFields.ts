@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -246,7 +247,7 @@ export function useCustomFieldValues(contactId?: string) {
           {
             contact_id: contactId,
             field_key,
-            value: value as Database['public']['Tables']['custom_fields_values']['Insert']['value'],
+            value: value as Json,
           },
           {
             onConflict: 'contact_id,field_key',

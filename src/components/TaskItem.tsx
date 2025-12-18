@@ -290,7 +290,7 @@ const timelinePriorityConfig = {
              <TaskForm
                open={isEditing}
                onOpenChange={handlePopoverClose}
-               onSubmit={handleFormSubmit}
+               onSubmit={handleFormSubmit as (data: unknown) => void}
                taskToEdit={task}
                isSubmitting={false}
              />

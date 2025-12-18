@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useFinancialData } from '@/hooks/useFinancialData';
+import type { FinancialRecord } from '@/hooks/useFinancialData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSearch } from '@/contexts/SearchContext';
 import { ProtectedExportButton } from '@/components/ProtectedFeature';
@@ -77,12 +78,12 @@ export default function Reports() {
   const [categoryType, setCategoryType] = useState<'entrada' | 'saida'>('saida');
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [recordToDelete, setRecordToDelete] = useState<FinanceRecord | null>(null);
+  const [recordToDelete, setRecordToDelete] = useState<FinancialRecord | null>(null);
   const [selectedRecords, setSelectedRecords] = useState<Set<number>>(new Set());
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [recordToEdit, setRecordToEdit] = useState<FinanceRecord | null>(null);
+  const [recordToEdit, setRecordToEdit] = useState<FinancialRecord | null>(null);
   const [isExportingCSV, setIsExportingCSV] = useState(false);
   const recordsPerPage = 50;
   const transactionsTableRef = useRef<HTMLDivElement>(null);
@@ -171,7 +172,7 @@ export default function Reports() {
     setSelectedRecords(newSelected);
   };
 
-  const handleToggleStatus = async (record: FinanceRecord) => {
+  const handleToggleStatus = async (record: FinancialRecord) => {
     try {
       const newStatus = record.status === 'pago' ? 'pendente' : 'pago';
       const { error } = await supabase
@@ -216,7 +217,7 @@ export default function Reports() {
     }
   };
 
-  const handleDuplicateRecord = async (record: FinanceRecord) => {
+  const handleDuplicateRecord = async (record: FinancialRecord) => {
     try {
       const { error } = await supabase
         .from('financeiro_registros')

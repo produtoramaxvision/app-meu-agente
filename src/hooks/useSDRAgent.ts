@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import type { 
   EvolutionInstance, 
   SDRAgentConfig, 
@@ -452,7 +453,7 @@ export function useSDRAgent() {
         const { error } = await supabase
           .from('sdr_agent_config')
           .update({
-            config_json: configJson as Record<string, unknown>,
+            config_json: configJson as unknown as Json,
             updated_at: new Date().toISOString(),
           })
           .eq('phone', phone)
@@ -465,7 +466,7 @@ export function useSDRAgent() {
           .insert({
             phone,
             instance_id: selectedInstance.id,
-            config_json: configJson as Record<string, unknown>,
+            config_json: configJson as unknown as Json,
             is_active: true,
           });
 
@@ -491,7 +492,7 @@ export function useSDRAgent() {
       const { data: result, error } = await supabase.rpc('update_sdr_config_section', {
         p_phone: phone,
         p_section: section,
-        p_data: data,
+        p_data: data as unknown as Json,
       });
 
       if (error) throw error;

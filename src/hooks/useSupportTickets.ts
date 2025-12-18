@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import type { Json } from '@/integrations/supabase/types';
 
 export interface SupportTicket {
   id: string;
@@ -108,7 +109,7 @@ export function useSupportTickets() {
         throw new Error(`Erro ao buscar tickets: ${error.message}`);
       }
 
-      return data || [];
+      return (data || []) as SupportTicket[];
     },
     enabled: !!cliente?.phone,
   });
@@ -194,19 +195,18 @@ export function useSupportTickets() {
         throw new Error('Você atingiu o limite de tickets para este mês. Faça upgrade do seu plano para criar mais tickets.');
       }
 
-      // Prepare ticket data
-      const ticketPayload = {
-        user_phone: cliente.phone,
-        type: ticketData.type,
-        subject: ticketData.subject,
-        description: ticketData.description,
-        priority: ticketData.priority,
-        attachments: ticketData.attachments ? [] : [], // TODO: Implement file upload
-      };
-
+      // Prepare ticket data (ticket_number é gerado automaticamente pelo DB)
       const { data, error } = await supabase
         .from('support_tickets')
-        .insert(ticketPayload)
+        .insert({
+          user_phone: cliente.phone,
+          type: ticketData.type,
+          subject: ticketData.subject,
+          description: ticketData.description,
+          priority: ticketData.priority,
+          attachments: [] as unknown as Json, // Empty array as JSON
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any)
         .select()
         .single();
 
@@ -214,7 +214,7 @@ export function useSupportTickets() {
         throw new Error(`Erro ao criar ticket: ${error.message}`);
       }
 
-      return data;
+      return data as SupportTicket;
     },
     onSuccess: (data) => {
       // Invalidate and refetch tickets
@@ -257,7 +257,7 @@ export function useSupportTickets() {
         throw new Error(`Erro ao atualizar ticket: ${error.message}`);
       }
 
-      return data;
+      return data as SupportTicket;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['support-tickets', cliente?.phone] });
@@ -287,7 +287,7 @@ export function useSupportTickets() {
     planInfoError: getSupportPlanInfo.error,
     
     // Mutations
-    createTicket: createTicket.mutate,
+    createTicket: createTicket.mutateAsync,
     isCreatingTicket: createTicket.isPending,
     createTicketError: createTicket.error,
     

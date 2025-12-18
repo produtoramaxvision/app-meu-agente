@@ -62,7 +62,7 @@ export function CustomFieldRenderer({
             {definition.required && <span className="text-destructive ml-1">*</span>}
           </Label>
           <Input 
-            value={value || ''} 
+            value={(value as string) || ''} 
             onChange={(e) => onChange(e.target.value)}
             placeholder={`Digite ${definition.field_label.toLowerCase()}`}
             disabled={disabled}
@@ -80,7 +80,7 @@ export function CustomFieldRenderer({
           </Label>
           <Input 
             type="number" 
-            value={value || ''} 
+            value={(value as number) || ''} 
             onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
             placeholder="0"
             disabled={disabled}
@@ -99,7 +99,7 @@ export function CustomFieldRenderer({
             </Label>
           </div>
           <Switch 
-            checked={value || false} 
+            checked={(value as boolean) || false} 
             onCheckedChange={onChange}
             disabled={disabled}
           />
@@ -121,13 +121,13 @@ export function CustomFieldRenderer({
                 disabled={disabled}
               >
                 <Calendar className="mr-2 h-4 w-4" />
-                {value ? format(new Date(value), 'PPP', { locale: ptBR }) : 'Selecione uma data'}
+                {value ? format(new Date(value as string), 'PPP', { locale: ptBR }) : 'Selecione uma data'}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <CalendarComponent
                 mode="single"
-                selected={value ? new Date(value) : undefined}
+                selected={value ? new Date(value as string) : undefined}
                 onSelect={(date) => onChange(date?.toISOString())}
                 locale={ptBR}
                 disabled={disabled}
@@ -258,7 +258,7 @@ export function CustomFieldRenderer({
           </Label>
           <Input 
             type="url"
-            value={value || ''} 
+            value={(value as string) || ''} 
             onChange={(e) => onChange(e.target.value)}
             placeholder="https://exemplo.com"
             disabled={disabled}
@@ -269,7 +269,7 @@ export function CustomFieldRenderer({
               variant="link"
               size="sm"
               className="h-auto p-0 text-xs"
-              onClick={() => window.open(value, '_blank')}
+              onClick={() => window.open(value as string, '_blank')}
             >
               Abrir link →
             </Button>

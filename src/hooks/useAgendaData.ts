@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { RRule, RRuleSet, rrulestr } from 'rrule';
@@ -507,6 +508,7 @@ export function useAgendaData(options: UseAgendaDataOptions) {
             reminders.map(r => ({
               event_id: event.id,
               ...r,
+              payload: r.payload as Json,
             }))
           );
 
@@ -615,7 +617,7 @@ export function useAgendaData(options: UseAgendaDataOptions) {
 
       const { data: event, error: eventError } = await supabase
         .from('events')
-        .update(updateData)
+        .update(updateData as unknown)
         .eq('id', id)
         .select()
         .single();

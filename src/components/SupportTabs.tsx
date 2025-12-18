@@ -147,7 +147,7 @@ function TicketCard({ ticket }: { ticket: SupportTicket }) {
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className={cn('p-2 rounded-lg flex-shrink-0', typeInfo.bgColor)}>
+            <div className={cn('p-2 rounded-lg flex-shrink-0', 'color' in typeInfo && typeof typeInfo.color === 'string' ? typeInfo.color : '')}>
               <typeInfo.icon className={cn('h-4 w-4', typeInfo.color)} />
             </div>
             <div className="min-w-0 flex-1">
@@ -308,7 +308,7 @@ export function SupportFormTab({ onSuccess }: { onSuccess: (ticketNumber: string
         priority: data.priority,
       });
 
-      if (result) {
+      if (result?.ticket_number) {
         setTicketNumber(result.ticket_number);
         setSubmitStatus('success');
         

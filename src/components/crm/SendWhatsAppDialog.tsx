@@ -86,10 +86,13 @@ export function SendWhatsAppDialog({
       if (contactError) throw contactError;
 
       // Transformar resultado em lista de instâncias únicas
-      const instances = contactInstances
-        ?.map((c: { evolution_instances: EvolutionInstance }) => c.evolution_instances)
-        .filter((inst: EvolutionInstance, index: number, self: EvolutionInstance[]) => 
-          self.findIndex(i => i.id === inst.id) === index
+      interface ContactWithInstance {
+        evolution_instances: EvolutionInstance;
+      }
+      const instances = (contactInstances as unknown as ContactWithInstance[])
+        ?.map((c) => c.evolution_instances)
+        .filter((inst, index, self) => 
+          self.findIndex((i) => i.id === inst.id) === index
         ) || [];
 
       setAvailableInstances(instances);

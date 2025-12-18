@@ -45,9 +45,10 @@ export function SDRConfigForm() {
     if (configJson) {
       // Migração: Se tem saudacao mas não tem modelos, converter
       let apresentacaoModelos = configJson.apresentacao?.modelos || [];
-      if (apresentacaoModelos.length === 0 && configJson.mensagens?.saudacao) {
+      const mensagens = configJson.mensagens as Record<string, unknown> | undefined;
+      if (apresentacaoModelos.length === 0 && mensagens && 'saudacao' in mensagens) {
         // Dividir saudação por linhas vazias ou números no início
-        const saudacaoTexto = configJson.mensagens.saudacao;
+        const saudacaoTexto = mensagens.saudacao as string;
         const exemplos = saudacaoTexto
           .split(/\n\n+|\n(?=\d+\s*-\s*)/)
           .map(s => s.trim().replace(/^\d+\s*-\s*/, '').replace(/^["']|["']$/g, ''))
@@ -518,8 +519,8 @@ export function SDRConfigForm() {
                     key={tecnica.id}
                     draggable
                     onDragStart={() => handleDragStartObjecao(index)}
-                    onDragOver={handleDragOverObjecao}
-                    onDrop={() => handleDragEndObjecao(index)}
+                    onDragOver={(e) => handleDragOverObjecao(e, index)}
+                    onDrop={() => handleDragEndObjecao()}
                     className="flex items-center gap-2 p-3 border rounded-lg bg-card hover:bg-accent/50 transition-colors cursor-move"
                   >
                     <GripVertical className="h-4 w-4 text-muted-foreground" />

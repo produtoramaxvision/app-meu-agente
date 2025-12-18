@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useTasksData, Task } from '@/hooks/useTasksData';
+import { useTasksData, Task, TaskFormData } from '@/hooks/useTasksData';
 import { useSearch } from '@/contexts/SearchContext';
 import { TaskForm } from '@/components/TaskForm';
 import { TaskItem } from '@/components/TaskItem';
@@ -43,7 +43,7 @@ export default function Tasks() {
         }
       );
     } else {
-      createTask.mutate(data, {
+      createTask.mutate(data as unknown as TaskFormData, {
         onSuccess: () => {
           setFormOpen(false);
         },
@@ -245,7 +245,7 @@ export default function Tasks() {
           setFormOpen(open);
           if (!open) setTaskToEdit(null);
         }}
-        onSubmit={handleFormSubmit}
+        onSubmit={handleFormSubmit as (data: unknown) => void}
         taskToEdit={taskToEdit}
         isSubmitting={createTask.isPending || updateTask.isPending}
       />

@@ -126,7 +126,7 @@ export function SupportTicketForm({
         priority: data.priority,
       });
 
-      if (result) {
+      if (result?.ticket_number) {
         setTicketNumber(result.ticket_number);
         setSubmitStatus('success');
         

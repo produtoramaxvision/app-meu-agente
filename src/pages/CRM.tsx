@@ -111,10 +111,19 @@ export default function CRM() {
     }
   }, [cliente?.phone]);
 
+  const recordInteraction = useCallback(async (contact: EvolutionContact) => {
+    try {
+      await updateContact(contact.id, {}, { recordInteraction: true });
+    } catch (error) {
+      console.error('Erro ao registrar interação do lead:', error);
+    }
+  }, [updateContact]);
+
   const handleCardClick = useCallback((contact: EvolutionContact) => {
     setSelectedContact(contact);
     setDetailsOpen(true);
-  }, []);
+    void recordInteraction(contact);
+  }, [recordInteraction]);
 
   const handleCardEdit = useCallback((contact: EvolutionContact) => {
     // Por enquanto, abre o details sheet (que permite edição)
@@ -125,6 +134,10 @@ export default function CRM() {
       description: 'Edite os campos e clique em "Salvar" para atualizar o lead.',
     });
   }, []);
+
+  const handleCardInteraction = useCallback((contact: EvolutionContact, _type: 'message' | 'call') => {
+    void recordInteraction(contact);
+  }, [recordInteraction]);
 
   const handleCardDelete = useCallback(async (contact: EvolutionContact) => {
     const confirmed = window.confirm(
@@ -191,14 +204,18 @@ export default function CRM() {
 
   // ⚡ OTIMIZAÇÃO: useCallback para handler de criação de lead
   const handleCreateLead = useCallback(async (data: {
-    name: string;
-    phone: string;
+    name?: string;
+    phone?: string;
     email?: string;
     estimatedValue?: string;
-    status: LeadStatus;
+    status?: LeadStatus;
     notes?: string;
   }) => {
     try {
+      if (!data.name || !data.phone) {
+        throw new Error('Nome e telefone são obrigatórios');
+      }
+      
       if (!cliente?.phone) {
         throw new Error('Telefone do usuário não encontrado');
       }
@@ -484,7 +501,8 @@ export default function CRM() {
                   onCardEdit={handleCardEdit}
                   onCardDelete={handleCardDelete}
                   columns={filteredColumns} 
-                  moveCard={handleMoveCard} 
+                  moveCard={handleMoveCard}
+                  onCardInteraction={handleCardInteraction}
                 />
               </div>
             )}

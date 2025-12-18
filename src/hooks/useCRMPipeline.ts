@@ -177,7 +177,7 @@ export function useCRMPipeline() {
         const updatedContact = { ...contact, ...updateData };
         const newScore = calculateLeadScore(updatedContact, 0);
         updateData.crm_lead_score = newScore;
-        updateData.crm_score_updated_at = new Date().toISOString();
+        (updateData as Record<string, unknown>).crm_score_updated_at = new Date().toISOString();
       }
 
       // ⚡ NOVO (Fase 3.5): Auto-setar probabilidade de fechamento se não houver valor customizado

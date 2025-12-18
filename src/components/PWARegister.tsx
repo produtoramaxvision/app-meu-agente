@@ -11,6 +11,7 @@
  */
 
 import { useEffect } from 'react';
+// @ts-expect-error - virtual module from vite-plugin-pwa
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 export function PWARegister() {

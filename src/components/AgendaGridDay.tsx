@@ -549,7 +549,7 @@ export default function AgendaGridDay({ date, events, calendars, isLoading, onEv
         setPopoverState({
           open: true,
           anchor: { top: startY, left: e.clientX - gridRect.left },
-          eventData: { start_ts: startTime, end_ts: endTime },
+          eventData: { start_ts: startTime.toISOString(), end_ts: endTime.toISOString() },
         });
         setSelection(null);
         return;
@@ -577,7 +577,7 @@ export default function AgendaGridDay({ date, events, calendars, isLoading, onEv
       setPopoverState({
         open: true,
         anchor: { top: y, left: e.clientX - gridRect.left },
-        eventData: { start_ts: startTime, end_ts: endTime },
+        eventData: { start_ts: startTime.toISOString(), end_ts: endTime.toISOString() },
       });
 
       setOpenEventPopover(null);
@@ -630,7 +630,7 @@ export default function AgendaGridDay({ date, events, calendars, isLoading, onEv
       setPopoverState({
         open: true,
         anchor: { top: y, left: e.clientX - gridRect.left },
-        eventData: { start_ts: startTime, end_ts: endTime },
+        eventData: { start_ts: startTime.toISOString(), end_ts: endTime.toISOString() },
       });
       setOpenEventPopover(null);
       singleClickTimeoutRef.current = null;
@@ -676,7 +676,7 @@ export default function AgendaGridDay({ date, events, calendars, isLoading, onEv
     const y = e.clientY - gridRect.top;
     const startTime = mapYToTime(y);
     const endTime = addMinutes(startTime, 60);
-    onEventDoubleClick({ start_ts: startTime, end_ts: endTime });
+    onEventDoubleClick({ start_ts: startTime.toISOString(), end_ts: endTime.toISOString() });
   }, [mapYToTime, onEventDoubleClick, isDialogOpen, isPopoverOpen, isClickInsidePopover, popoverState.open, setPopoverState]);
 
   const handlePointerLeave = useCallback(() => {
@@ -758,7 +758,8 @@ export default function AgendaGridDay({ date, events, calendars, isLoading, onEv
               if (isDialogOpen()) {
                 return;
               }
-              handleDoubleClick(e);
+              // Converter MouseEvent para PointerEvent-like
+              handleDoubleClick(e as unknown as React.PointerEvent<HTMLDivElement>);
             }}
             onClick={(e) => {
               // ✅ CORREÇÃO: Se há um Dialog aberto, não processar cliques

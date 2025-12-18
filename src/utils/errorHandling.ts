@@ -167,8 +167,8 @@ export function classifyError(error: unknown): StructuredError {
   }
   
   // Erro HTTP
-  if (error.status) {
-    switch (error.status) {
+  if (error && typeof error === 'object' && 'status' in error) {
+    switch ((error as Record<string, unknown>).status) {
       case 401:
         return {
           type: ErrorType.AUTHENTICATION,
@@ -244,7 +244,7 @@ export function classifyError(error: unknown): StructuredError {
   return {
     type: ErrorType.UNKNOWN,
     severity: ErrorSeverity.MEDIUM,
-    message: error.message || 'Erro desconhecido',
+    message: (error instanceof Error ? error.message : null) || (error && typeof error === 'object' && 'message' in error ? String((error as Record<string, unknown>).message) : null) || 'Erro desconhecido',
     originalError: error,
     timestamp,
     retryable: false,

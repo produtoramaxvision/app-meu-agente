@@ -24,10 +24,11 @@ export interface FinancialRecord {
   descricao: string | null;
   data_hora: string;
   created_at: string;
-  status: 'pago' | 'pendente';
+  status: string | null;
   data_vencimento: string | null;
-  recorrente: boolean;
+  recorrente: boolean | null;
   recorrencia_fim: string | null;
+  updated_at: string | null;
 }
 
 export interface DailyData {

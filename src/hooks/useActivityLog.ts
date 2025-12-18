@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { Tables } from '@/integrations/supabase/types';
+import type { Tables, Json } from '@/integrations/supabase/types';
 
 // ============================================================================
 // TYPES
@@ -138,7 +138,7 @@ export function useActivityLog(contactId: string | undefined) {
         .insert({
           ...activityData,
           phone: cliente.phone, // RLS
-          metadata: activityData.metadata || {},
+          metadata: (activityData.metadata || {}) as Json,
         })
         .select()
         .single();

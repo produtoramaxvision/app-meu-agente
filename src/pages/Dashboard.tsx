@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import type { FinancialRecord } from '@/hooks/useFinancialData';
 import { FinanceRecordForm } from '@/components/FinanceRecordForm';
 import { PeriodFilter } from '@/components/PeriodFilter';
 import { useFinancialData } from '@/hooks/useFinancialData';
@@ -45,9 +46,9 @@ export default function Dashboard() {
   const [categoryType, setCategoryType] = useState<'entrada' | 'saida'>('saida');
   const [activeIndex, setActiveIndex] = useState<number | undefined>(undefined);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [recordToDelete, setRecordToDelete] = useState<FinanceRecord | null>(null);
+  const [recordToDelete, setRecordToDelete] = useState<FinancialRecord | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [recordToEdit, setRecordToEdit] = useState<FinanceRecord | null>(null);
+  const [recordToEdit, setRecordToEdit] = useState<FinancialRecord | null>(null);
   const { metrics, loading, getDailyData, getCategoryData, getLatestTransactions, refetch } = useFinancialData(selectedPeriod);
   const { mainGoal, loading: goalsLoading, refetch: refetchGoals } = useGoalsData();
   
@@ -81,7 +82,7 @@ export default function Dashboard() {
     }
   };
 
-  const handleDuplicateRecord = async (record: FinanceRecord) => {
+  const handleDuplicateRecord = async (record: FinancialRecord) => {
     try {
       const { error } = await supabase
         .from('financeiro_registros')

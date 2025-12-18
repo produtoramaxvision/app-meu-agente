@@ -36,7 +36,8 @@ export function SDRPlayground() {
   // Mensagem inicial do agente
   useEffect(() => {
     if (configJson && messages.length === 0) {
-      const greeting = configJson.mensagens.saudacao || 
+      const mensagens = configJson.mensagens as Record<string, unknown> | undefined;
+      const greeting = (mensagens && 'saudacao' in mensagens ? mensagens.saudacao as string : undefined) || 
         `Olá! Sou ${configJson.identidade.nome_agente} da ${configJson.identidade.nome_empresa}. Como posso ajudar você hoje?`;
       
       setMessages([
@@ -141,7 +142,8 @@ export function SDRPlayground() {
     // Trigger re-render para mostrar mensagem inicial
     setTimeout(() => {
       if (configJson) {
-        const greeting = configJson.mensagens.saudacao || 
+        const mensagens = configJson.mensagens as Record<string, unknown> | undefined;
+        const greeting = (mensagens && 'saudacao' in mensagens ? mensagens.saudacao as string : undefined) || 
           `Olá! Sou ${configJson.identidade.nome_agente} da ${configJson.identidade.nome_empresa}. Como posso ajudar você hoje?`;
         
         setMessages([

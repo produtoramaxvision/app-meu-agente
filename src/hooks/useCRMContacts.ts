@@ -164,10 +164,21 @@ export function useCRMContacts({ instanceId, userPhone, enabled = true }: UseCRM
     },
   });
 
-  // ⚡ Wrapper memoizado para updateContact
+  // ⚡ Wrapper memoizado para updateContact com registro automático de interação
   const updateContact = useCallback(
-    async (contactId: string, updates: Partial<EvolutionContact>) => {
-      return updateMutation.mutateAsync({ contactId, updates });
+    async (
+      contactId: string, 
+      updates: Partial<EvolutionContact>, 
+      options?: { recordInteraction?: boolean }
+    ): Promise<void> => {
+      const shouldRecordInteraction = options?.recordInteraction ?? true;
+      const finalUpdates = { ...updates };
+
+      if (shouldRecordInteraction && !('crm_last_interaction_at' in finalUpdates)) {
+        finalUpdates.crm_last_interaction_at = new Date().toISOString();
+      }
+
+      await updateMutation.mutateAsync({ contactId, updates: finalUpdates });
     },
     [updateMutation]
   );

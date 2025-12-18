@@ -28,7 +28,7 @@ export const safeJSONParse = <T = unknown>(
     return destr<T>(json);
   } catch (error) {
     console.warn('Erro ao fazer parse seguro do JSON:', error);
-    return options.fallback || null;
+    return (options.fallback || null) as T;
   }
 };
 

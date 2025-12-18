@@ -590,7 +590,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
        */
       const authUserId = data.user.id;
 
-      const { error: upsertError } = await supabase.rpc('upsert_cliente_from_auth', {
+      const { error: upsertError } = await (supabase as unknown as { rpc: (name: string, params: Record<string, unknown>) => Promise<{ error: unknown }> }).rpc('upsert_cliente_from_auth', {
         p_auth_user_id: authUserId,
         p_cpf: cpf ?? '',
         p_email: userEmail,

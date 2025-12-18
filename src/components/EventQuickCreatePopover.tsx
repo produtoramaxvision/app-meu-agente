@@ -123,7 +123,7 @@ export function EventQuickCreatePopover({
     e.preventDefault();
     if (!title.trim() || !isValid || !calendarId) return;
 
-    const updatedEventData: Partial<EventFormData> | { start_ts?: Date; end_ts?: Date } = {
+    const updatedEventData: Record<string, unknown> = {
       ...eventData,
     };
 
@@ -150,11 +150,7 @@ export function EventQuickCreatePopover({
       }
     }
 
-    if ('priority' in updatedEventData) {
-      updatedEventData.priority = priority;
-    } else {
-      updatedEventData.priority = priority;
-    }
+    updatedEventData.priority = priority;
     
     onSubmit({
       ...updatedEventData,

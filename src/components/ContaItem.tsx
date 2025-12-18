@@ -204,26 +204,29 @@ export function ContaItem({ conta, onStatusChange }: ContaItemProps) {
       label: 'Editar',
       icon: <Edit className="mr-2 h-4 w-4" />,
       onClick: () => setEditDialogOpen(true),
+      disabled: false,
     },
     {
       label: 'Duplicar',
       icon: <Copy className="mr-2 h-4 w-4" />,
       onClick: handleDuplicateRecord,
+      disabled: false,
     },
     {
       label: 'Excluir',
       icon: <Trash2 className="mr-2 h-4 w-4" />,
       onClick: () => setDeleteDialogOpen(true),
       className: 'text-red-600 focus:text-red-600',
+      disabled: false,
     },
   ];
 
-  if (conta.status !== 'pago') {
+  if (conta.status !== 'pago' && !isPaying) {
     actionMenuItems.unshift({
       label: conta.tipo === 'entrada' ? 'Marcar como recebido' : 'Marcar como pago',
       icon: <Check className="mr-2 h-4 w-4" />,
       onClick: handleMarkAsPaid,
-      disabled: isPaying,
+      disabled: false,
     });
   }
 

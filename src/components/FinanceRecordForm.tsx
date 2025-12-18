@@ -68,8 +68,8 @@ const formSchema = z.object({
 });
 
 interface FinanceRecord {
-  id?: string;
-  tipo: 'receita' | 'despesa';
+  id?: number;
+  tipo: 'entrada' | 'saida';
   categoria: string;
   valor: number;
   descricao?: string;
@@ -153,10 +153,10 @@ export function FinanceRecordForm({ userPhone, onSuccess, recordToEdit, open: co
         categoria: recordToEdit.categoria,
         valor: recordToEdit.valor ? recordToEdit.valor.toFixed(2).replace('.', ',') : '',
         descricao: recordToEdit.descricao || '',
-        data: new Date(recordToEdit.data_vencimento || recordToEdit.data_hora),
+        data: new Date((recordToEdit.data_vencimento || recordToEdit.data_hora) as string),
         agendar: recordToEdit.status === 'pago', // 'agendar' toggle is ON if status is 'pago'
-        recorrente: recordToEdit.recorrente || false,
-        recorrencia_fim: recordToEdit.recorrencia_fim ? new Date(recordToEdit.recorrencia_fim) : undefined,
+        recorrente: (recordToEdit.recorrente as boolean) || false,
+        recorrencia_fim: recordToEdit.recorrencia_fim ? new Date(recordToEdit.recorrencia_fim as string) : undefined,
       });
     } else if (open) { // Reset only when opening for a new record
       form.reset({

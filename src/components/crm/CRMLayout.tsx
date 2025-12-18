@@ -29,6 +29,12 @@ interface CRMLayoutProps {
 }
 
 export function CRMLayout({ children, headerStats, viewMode, onViewChange, searchValue, onSearchChange, onExport, onNewLead, filters, onFiltersChange, onClearFilters, onApplyPreset, activeFiltersCount }: CRMLayoutProps) {
+  const baseControlButtonClasses =
+    'group relative h-8 w-8 rounded-md transition-all duration-300 ease-out text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+
+  const iconAnimationClasses =
+    'h-4 w-4 transition-transform duration-300 ease-out group-hover:scale-110 group-active:scale-95';
+
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-[hsl(var(--sidebar-bg))]">
       {/* CRM Header */}
@@ -70,43 +76,40 @@ export function CRMLayout({ children, headerStats, viewMode, onViewChange, searc
               variant="ghost"
               size="icon"
               className={cn(
-                'group relative h-7 w-7 rounded-md transition-all duration-200',
-                'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
+                baseControlButtonClasses,
                 viewMode === 'kanban' &&
                   'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
               )}
               onClick={() => onViewChange('kanban')}
               aria-pressed={viewMode === 'kanban'}
             >
-              <LayoutGrid className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+              <LayoutGrid className={iconAnimationClasses} />
             </Button>
             <Button
               variant="ghost"
               size="icon"
               className={cn(
-                'group relative h-7 w-7 rounded-md transition-all duration-200',
-                'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
+                baseControlButtonClasses,
                 viewMode === 'dashboard' &&
                   'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
               )}
               onClick={() => onViewChange('dashboard')}
               aria-pressed={viewMode === 'dashboard'}
             >
-              <BarChart3 className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+              <BarChart3 className={iconAnimationClasses} />
             </Button>
             <Button
               variant="ghost"
               size="icon"
               className={cn(
-                'group relative h-7 w-7 rounded-md transition-all duration-200',
-                'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md',
+                baseControlButtonClasses,
                 viewMode === 'lista' &&
                   'bg-gradient-to-r from-[hsl(var(--brand-900))] to-[hsl(var(--brand-700))] text-white shadow-lg'
               )}
               onClick={() => onViewChange('lista')}
               aria-pressed={viewMode === 'lista'}
             >
-              <List className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+              <List className={iconAnimationClasses} />
             </Button>
             
             {/* Automations Button */}
@@ -116,12 +119,11 @@ export function CRMLayout({ children, headerStats, viewMode, onViewChange, searc
                   variant="ghost"
                   size="icon"
                   className={cn(
-                    'group relative h-7 w-7 rounded-md transition-all duration-200',
-                    'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md'
+                    baseControlButtonClasses
                   )}
                   title="Automações"
                 >
-                  <Zap className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+                  <Zap className={iconAnimationClasses} />
                 </Button>
               </SheetTrigger>
               <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
@@ -141,12 +143,11 @@ export function CRMLayout({ children, headerStats, viewMode, onViewChange, searc
                   variant="ghost"
                   size="icon"
                   className={cn(
-                    'group relative h-7 w-7 rounded-md transition-all duration-200',
-                    'text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:shadow-md'
+                    baseControlButtonClasses
                   )}
                   title="Configurações"
                 >
-                  <Settings className="h-4 w-4 transition-transform duration-200 group-hover:rotate-90" />
+                  <Settings className={cn(iconAnimationClasses, 'group-hover:rotate-90')} />
                 </Button>
               </SheetTrigger>
               <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">

@@ -59,7 +59,7 @@ export function useStripeCheckout() {
       
       if (errMsg.includes('Cliente não encontrado')) {
         message = 'Cliente não encontrado. Entre em contato com o suporte.';
-      } else if (err.message.includes('plano inválido')) {
+      } else if (err instanceof Error && err.message.includes('plano inválido')) {
         message = 'Plano selecionado inválido.';
       }
       

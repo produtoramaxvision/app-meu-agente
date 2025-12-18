@@ -350,44 +350,52 @@ export default function Agenda() {
   }, [setSearchQuery]);
 
   const handleCreateEvent = useCallback((data: EventFormData) => {
-    const mutation = eventToEdit ? updateEvent : createEvent;
-    const mutationData = eventToEdit ? { id: eventToEdit.id, updates: data } : data;
     
-    // Definir estado de loading apropriado
+    // Definir estado de loading apropriado e executar mutação apropriada
     if (eventToEdit) {
       setIsUpdatingEvent(true);
-    } else {
-      setIsCreatingEvent(true);
-    }
-    
-    mutation.mutate(mutationData, {
-      onSuccess: () => {
-        setEventFormOpen(false);
-        setEventToEdit(null);
-        setDefaultEventData(null);
-        // Feedback visual de sucesso
-        toast.success(
-          eventToEdit ? 'Evento atualizado com sucesso!' : 'Evento criado com sucesso!',
-          { duration: 3000 }
-        );
-      },
-      onError: (error: Error) => {
-        // Feedback visual de erro
-        toast.error(
-          eventToEdit ? 'Erro ao atualizar evento' : 'Erro ao criar evento',
-          { 
+      updateEvent.mutate({ id: eventToEdit.id, updates: data }, {
+        onSuccess: () => {
+          setEventFormOpen(false);
+          setEventToEdit(null);
+          setDefaultEventData(null);
+          // Feedback visual de sucesso
+          toast.success('Evento atualizado com sucesso!', { duration: 3000 });
+        },
+        onError: (error: Error) => {
+          // Feedback visual de erro
+          toast.error('Erro ao atualizar evento', { 
             description: error.message || 'Tente novamente',
             duration: 5000
-          }
-        );
-      },
-      onSettled: () => {
-        // Limpar estados de loading
-        setIsCreatingEvent(false);
-        setIsUpdatingEvent(false);
-      }
-    });
-  }, [createEvent, updateEvent, eventToEdit]);
+          });
+        },
+        onSettled: () => {
+          setIsUpdatingEvent(false);
+        }
+      });
+    } else {
+      setIsCreatingEvent(true);
+      createEvent.mutate(data, {
+        onSuccess: () => {
+          setEventFormOpen(false);
+          setEventToEdit(null);
+          setDefaultEventData(null);
+          // Feedback visual de sucesso
+          toast.success('Evento criado com sucesso!', { duration: 3000 });
+        },
+        onError: (error: Error) => {
+          // Feedback visual de erro
+          toast.error('Erro ao criar evento', { 
+            description: error.message || 'Tente novamente',
+            duration: 5000
+          });
+        },
+        onSettled: () => {
+          setIsCreatingEvent(false);
+        }
+      });
+    }
+  }, [createEvent, updateEvent, eventToEdit, setEventFormOpen, setEventToEdit, setDefaultEventData]);
 
   const handleQuickCreate = useCallback((data: EventFormData) => {
     setIsCreatingEvent(true);

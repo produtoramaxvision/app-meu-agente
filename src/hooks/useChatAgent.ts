@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import type { 
   ChatMessage, 
   ChatSession,
@@ -308,7 +309,7 @@ export function useChatAgent() {
           role: 'assistant',
           content: data.data.response,
           status: 'sent',
-          metadata: data.data.metadata || {},
+          metadata: (data.data.metadata || {}) as Json,
         });
 
       if (assistantError) {

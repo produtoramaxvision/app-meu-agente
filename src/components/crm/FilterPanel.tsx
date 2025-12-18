@@ -51,8 +51,8 @@ interface FilterPanelProps {
  */
 const STATUS_OPTIONS: { value: LeadStatus; label: string; color: string }[] = [
   { value: 'novo', label: 'Novo', color: 'bg-blue-500' },
-  { value: 'contatado', label: 'Contatado', color: 'bg-purple-500' },
-  { value: 'qualificado', label: 'Qualificado', color: 'bg-cyan-500' },
+  { value: 'contatado', label: 'Contatado', color: 'bg-indigo-500' },
+  { value: 'qualificado', label: 'Qualificado', color: 'bg-purple-500' },
   { value: 'proposta', label: 'Proposta', color: 'bg-amber-500' },
   { value: 'negociando', label: 'Negociando', color: 'bg-orange-500' },
   { value: 'ganho', label: 'Ganho', color: 'bg-green-500' },
@@ -139,10 +139,14 @@ function FilterContent({
               variant="outline"
               size="sm"
               onClick={() => handlePresetClick(key)}
-              className="justify-start"
+              className="justify-start h-9 px-3 group"
             >
-              {PRESET_ICONS[key]}
-              <span className="ml-2 text-xs">{FILTER_PRESETS[key].name}</span>
+              <span className="shrink-0 opacity-70 group-hover:opacity-100 transition-opacity">
+                {PRESET_ICONS[key]}
+              </span>
+              <span className="ml-2 text-xs truncate font-medium">
+                {FILTER_PRESETS[key].name}
+              </span>
             </Button>
           ))}
         </div>
@@ -153,7 +157,7 @@ function FilterContent({
       {/* Filtro de Status */}
       <div className="space-y-3">
         <Label className="text-sm font-medium">Status</Label>
-        <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2">
           {STATUS_OPTIONS.map((option) => (
             <div key={option.value} className="flex items-center space-x-2">
               <Checkbox
@@ -304,7 +308,7 @@ export function FilterPanel(props: FilterPanelProps) {
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 p-4" align="start">
+        <PopoverContent className="w-[380px] p-4" align="start">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="font-semibold text-sm">Filtros</h4>
