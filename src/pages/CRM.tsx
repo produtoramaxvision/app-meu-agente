@@ -9,6 +9,7 @@ import { SendWhatsAppDialog } from '@/components/crm/SendWhatsAppDialog';
 import { EvolutionContact, LeadStatus } from '@/types/sdr';
 import { useCRMPipeline } from '@/hooks/useCRMPipeline';
 import { useLeadFilters, type LeadFilters } from '@/hooks/useLeadFilters';
+import { useAllLeadsTags } from '@/hooks/useCrmTags';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -96,6 +97,35 @@ export default function CRM() {
   const { cliente } = useAuth();
   const { metrics, loading, columns, moveCard, updateContact, refresh } = useCRMPipeline();
   const { filters, setFilter, clearFilters, applyPreset, activeFiltersCount, hasActiveFilters } = useLeadFilters();
+  
+  // ⚡ TAGS RELACIONAIS: Hook para filtrar por tags
+  const { tagsByLeadId } = useAllLeadsTags();
+
+  // Handler para clicar em uma tag e filtrar (com toggle)
+  const handleTagClick = useCallback((tagName: string) => {
+    if (filters.tags.includes(tagName)) {
+      // Remove tag do filtro (toggle off)
+      setFilter('tags', filters.tags.filter(t => t !== tagName));
+    } else {
+      // Adiciona a tag aos filtros (toggle on)
+      setFilter('tags', [...filters.tags, tagName]);
+    }
+  }, [filters.tags, setFilter]);
+
+  // ⚡ OTIMIZAÇÃO: Sincronizar selectedContact com dados atualizados
+  useEffect(() => {
+    if (!selectedContact) return;
+    
+    // Buscar versão atualizada do contato selecionado nos columns
+    const updatedContact = columns
+      .flatMap(col => col.contacts)
+      .find(c => c.id === selectedContact.id);
+    
+    // Se encontrou e os dados mudaram, atualizar
+    if (updatedContact && JSON.stringify(updatedContact) !== JSON.stringify(selectedContact)) {
+      setSelectedContact(updatedContact);
+    }
+  }, [columns, selectedContact]);
 
   // Persistência por usuário
   useEffect(() => {
@@ -249,7 +279,7 @@ export default function CRM() {
       const normalizedPhone = data.phone.replace(/[^0-9]/g, '');
       const remoteJid = `${normalizedPhone}@s.whatsapp.net`;
 
-      // Criar contato na tabela evolution_contacts
+      // Criar contato na tabela evolution_contacts (sem crm_tags - usar sistema relacional)
       const newContact = {
         instance_id: instances.id,
         phone: cliente.phone,
@@ -261,7 +291,6 @@ export default function CRM() {
         synced_at: new Date().toISOString(),
         sync_source: 'manual' as const,
         crm_notes: data.notes || null,
-        crm_tags: [],
         crm_favorite: false,
         crm_last_interaction_at: new Date().toISOString(),
         crm_lead_status: data.status,
@@ -407,9 +436,9 @@ export default function CRM() {
           }
         }
 
-        // 6. Filtro de tags (múltiplo)
+        // 6. Filtro de tags (múltiplo) - USANDO TAGS RELACIONAIS
         if (hasActiveFilters && filters.tags.length > 0) {
-          const contactTags = c.crm_tags || [];
+          const contactTags = tagsByLeadId.get(c.id) || [];
           const hasMatchingTag = filters.tags.some(tag => contactTags.includes(tag));
           if (!hasMatchingTag) return false;
         }
@@ -424,7 +453,7 @@ export default function CRM() {
     }));
 
     return filtered;
-  }, [columns, normalizedFilter, filters, hasActiveFilters]);
+  }, [columns, normalizedFilter, filters, hasActiveFilters, tagsByLeadId]);
 
   const filteredListContacts = useMemo(() => {
     return listContacts.filter((c) => {
@@ -460,15 +489,16 @@ export default function CRM() {
         }
       }
 
+      // Filtro de tags - USANDO TAGS RELACIONAIS
       if (hasActiveFilters && filters.tags.length > 0) {
-        const contactTags = c.crm_tags || [];
+        const contactTags = tagsByLeadId.get(c.id) || [];
         const hasMatchingTag = filters.tags.some(tag => contactTags.includes(tag));
         if (!hasMatchingTag) return false;
       }
 
       return true;
     });
-  }, [listContacts, normalizedFilter, filters, hasActiveFilters]);
+  }, [listContacts, normalizedFilter, filters, hasActiveFilters, tagsByLeadId]);
 
   // ⚡ OTIMIZAÇÃO: Memoizar referência do HeaderStats para evitar re-renders
   const headerStatsElement = useMemo(() => <HeaderStats metrics={metrics} />, [metrics]);
@@ -515,6 +545,8 @@ export default function CRM() {
                   columns={filteredColumns} 
                   moveCard={handleMoveCard}
                   onCardInteraction={handleCardInteraction}
+                  onTagClick={handleTagClick}
+                  selectedTags={filters.tags}
                 />
               </div>
             )}
@@ -564,7 +596,7 @@ export default function CRM() {
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <MessageCircle className="h-4 w-4" />
                       <span className="truncate">
-                        {contact.crm_tags?.slice(0, 3).join(', ') || 'Sem tags'}
+                        {(tagsByLeadId.get(contact.id) || []).slice(0, 3).join(', ') || 'Sem tags'}
                       </span>
                     </div>
                     <Separator className="opacity-60" />
@@ -596,6 +628,8 @@ export default function CRM() {
           open={detailsOpen} 
           onOpenChange={handleOpenChange}
           onUpdateContact={updateContact}
+          onTagClick={handleTagClick}
+          selectedTags={filters.tags}
         />
 
         <CreateLeadDialog 

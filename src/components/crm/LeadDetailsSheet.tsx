@@ -28,20 +28,24 @@ import { CustomFieldRenderer } from './CustomFieldRenderer';
 import { useActivityLog } from '@/hooks/useActivityLog';
 import { ActivityTimeline } from './ActivityTimeline';
 import { LeadScoreBadge } from './LeadScoreBadge';
+import { cn } from '@/lib/utils';
 import { getScoreImprovementTips, DEFAULT_WIN_PROBABILITY } from '@/utils/leadScoring';
 import { LeadStatus } from '@/types/sdr';
 import { supabase } from '@/integrations/supabase/client';
 import { SendWhatsAppDialog } from './SendWhatsAppDialog';
-import { TagsEditor } from './TagsEditor';
+import { TagsEditorRelational } from './TagsEditorRelational';
+import { useLeadTagsReadOnly } from '@/hooks/useCrmTags';
 
 interface LeadDetailsSheetProps {
   contact: EvolutionContact | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdateContact?: (contactId: string, updates: Partial<EvolutionContact>, options?: { recordInteraction?: boolean }) => Promise<void>;
+  onTagClick?: (tagName: string) => void;
+  selectedTags?: string[];
 }
 
-export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact }: LeadDetailsSheetProps) {
+export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact, onTagClick, selectedTags = [] }: LeadDetailsSheetProps) {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false);
   const [estimatedValue, setEstimatedValue] = useState<string>('');
@@ -58,6 +62,9 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
   
   // Activity Log
   const { activities, isLoading: isLoadingActivities, logValueUpdate, logNoteUpdate } = useActivityLog(contact?.id);
+  
+  // Relational Tags (for header display)
+  const { tags: relationalTags } = useLeadTagsReadOnly(contact?.id);
   
   // Use tasks filtered by this lead
   const { tasks, createTask, toggleTaskCompletion } = useTasksData(
@@ -245,33 +252,94 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
     setEstimatedValue(formatted);
   };
 
+  // Mapear status para cores (baseado em useCRMPipeline)
+  const getStatusColor = (status: LeadStatus | null) => {
+    const statusMap: Record<LeadStatus, string> = {
+      'novo': 'bg-blue-500',
+      'contatado': 'bg-indigo-500',
+      'qualificado': 'bg-purple-500',
+      'proposta': 'bg-amber-500',
+      'negociando': 'bg-orange-500',
+      'ganho': 'bg-green-500',
+      'perdido': 'bg-red-500',
+    };
+    return statusMap[status || 'novo'];
+  };
+
+  const currentStatus = (contact.crm_lead_status || 'novo') as LeadStatus;
+  const statusColor = getStatusColor(currentStatus);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:w-[520px] flex flex-col p-0 overflow-hidden">
-        {/* Header with Cover-like style */}
-        <div className="bg-muted/30 p-6 border-b flex-shrink-0">
-          <div className="flex items-start gap-4">
-            <Avatar className="h-16 w-16 border-2 border-background shadow-sm">
-              <AvatarImage src={contact.profile_pic_url || undefined} />
-              <AvatarFallback className="text-lg">{contact.push_name?.substring(0, 2).toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 space-y-1">
-              <SheetTitle className="text-xl">{contact.push_name || contact.remote_jid.split('@')[0]}</SheetTitle>
-              <SheetDescription className="flex items-center gap-1.5">
-                <Phone className="h-3.5 w-3.5" /> {contact.phone}
-              </SheetDescription>
-              <div className="flex gap-2 mt-2 flex-wrap">
-                <Badge variant="outline" className="text-xs bg-background/50">
-                  {contact.crm_lead_status || 'Novo'}
-                </Badge>
-                {contact.crm_lead_score !== null && contact.crm_lead_score !== undefined && contact.crm_lead_score > 0 && (
-                  <LeadScoreBadge score={contact.crm_lead_score} size="md" showLabel showTooltip />
-                )}
+      <SheetContent className="w-full sm:w-[580px] flex flex-col p-0 overflow-hidden">
+        {/* Header com barra colorida de status */}
+        <div className="relative">
+          {/* Barra colorida no topo */}
+          <div className={cn("h-1", statusColor)} />
+          
+          <div className="bg-muted/30 p-6 border-b flex-shrink-0">
+            <div className="flex items-start gap-4">
+              <Avatar className="h-16 w-16 border-2 border-background shadow-sm">
+                <AvatarImage src={contact.profile_pic_url || undefined} />
+                <AvatarFallback className="text-lg">{contact.push_name?.substring(0, 2).toUpperCase()}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 space-y-2">
+                <SheetTitle className="text-xl">{contact.push_name || contact.remote_jid.split('@')[0]}</SheetTitle>
+                <SheetDescription className="flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5" /> {contact.phone}
+                </SheetDescription>
+                
+                {/* Badges Row: Status + Score + Tags */}
+                <div className="flex gap-2 flex-wrap items-center">
+                  {/* Status Badge com cor */}
+                  <Badge variant="outline" className={cn("text-xs", statusColor, "text-white border-transparent")}>
+                    {contact.crm_lead_status || 'Novo'}
+                  </Badge>
+                  
+                  {/* Lead Score Badge */}
+                  {contact.crm_lead_score !== null && contact.crm_lead_score !== undefined && contact.crm_lead_score > 0 && (
+                    <LeadScoreBadge score={contact.crm_lead_score} size="md" showLabel showTooltip />
+                  )}
+                  
+                  {/* Tags Badges (Relational) */}
+                  {relationalTags.length > 0 && (
+                    <>
+                      {relationalTags.slice(0, 3).map((tag) => {
+                        const isSelected = selectedTags.includes(tag.tag_name);
+                        return (
+                          <Badge 
+                            key={tag.tag_id} 
+                            variant="secondary" 
+                            className={`text-xs cursor-pointer transition-all ${
+                              isSelected ? 'ring-2 ring-offset-1' : 'hover:opacity-80'
+                            }`}
+                            style={{
+                              backgroundColor: isSelected ? tag.tag_color : `${tag.tag_color}20`,
+                              borderColor: tag.tag_color,
+                              color: isSelected ? '#ffffff' : tag.tag_color,
+                              border: isSelected ? '2px solid' : '1px solid',
+                            }}
+                            onClick={() => onTagClick?.(tag.tag_name)}
+                            title={isSelected ? `Remover filtro: ${tag.tag_name}` : `Filtrar por: ${tag.tag_name}`}
+                          >
+                            {tag.tag_name}
+                          </Badge>
+                        );
+                      })}
+                      {relationalTags.length > 3 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{relationalTags.length - 3}
+                        </Badge>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-
-          <div className="flex gap-2 mt-6">
+          
+          {/* Action Buttons */}
+          <div className="flex gap-2 mt-4">
             <Button 
               className="flex-1 gap-2" 
               variant="outline" 
@@ -290,7 +358,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
           </div>
 
           {/* Campo de Valor Estimado */}
-          <div className="mt-4 space-y-2">
+          <div className="mt-6 space-y-2">
             <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               Valor Estimado do Deal
             </label>
@@ -332,7 +400,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
 
           {/* Campo de Probabilidade de Fechamento (Fase 3.5) - Não exibir para ganho/perdido */}
           {contact.crm_lead_status !== 'ganho' && contact.crm_lead_status !== 'perdido' && (
-            <div className="mt-4 space-y-2">
+            <div className="mt-6 space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium text-muted-foreground">
                   Probabilidade de Fechamento
@@ -388,7 +456,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
 
           {/* Motivo de Perda (only when status is "perdido") */}
           {contact.crm_lead_status === 'perdido' && contact.crm_loss_reason && (
-            <div className="mt-4 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg space-y-2">
+            <div className="mt-6 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg space-y-2">
               <div className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-red-500" />
                 <h4 className="text-sm font-semibold text-red-700 dark:text-red-400">
@@ -564,30 +632,8 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact 
                     Use tags para categorizar e organizar seus leads. Tags facilitam a filtragem e segmentação.
                   </p>
                 </div>
-                <TagsEditor
-                  tags={contact.crm_tags || []}
-                  onTagsChange={async (newTags) => {
-                    if (!onUpdateContact) return;
-                    const oldTags = contact.crm_tags || [];
-                    await onUpdateContact(contact.id, { crm_tags: newTags });
-                    await touchLeadInteraction();
-                    
-                    // Registrar atividade de tags
-                    if (JSON.stringify(oldTags) !== JSON.stringify(newTags)) {
-                      await logActivity.mutateAsync({
-                        contact_id: contact.id,
-                        activity_type: 'custom_field_updated',
-                        title: 'Tags atualizadas',
-                        old_value: oldTags.join(', ') || 'Nenhuma',
-                        new_value: newTags.join(', ') || 'Nenhuma',
-                        metadata: {
-                          field_label: 'Tags',
-                          added: newTags.filter(t => !oldTags.includes(t)),
-                          removed: oldTags.filter(t => !newTags.includes(t)),
-                        },
-                      });
-                    }
-                  }}
+                <TagsEditorRelational
+                  leadId={contact.id}
                   instanceId={instance?.id}
                   disabled={!onUpdateContact}
                 />

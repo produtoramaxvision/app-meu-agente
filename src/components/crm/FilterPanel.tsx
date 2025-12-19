@@ -33,10 +33,11 @@ import {
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { LeadFilters, FILTER_PRESETS, FilterPresetKey } from '@/hooks/useLeadFilters';
 import { LeadStatus } from '@/types/sdr';
-import { Filter, X, CalendarIcon, Zap, DollarSign, Clock, Layers } from 'lucide-react';
+import { Filter, X, CalendarIcon, Zap, DollarSign, Clock, Layers, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useCrmTags } from '@/hooks/useCrmTags';
 
 interface FilterPanelProps {
   filters: LeadFilters;
@@ -80,6 +81,7 @@ function FilterContent({
   onClose 
 }: FilterPanelProps & { onClose?: () => void }) {
   const [localFilters, setLocalFilters] = useState<LeadFilters>(filters);
+  const { tags: availableTags, isLoading: isLoadingTags } = useCrmTags();
 
   // Handlers para atualizar filtros locais
   const handleStatusToggle = (status: LeadStatus) => {
@@ -88,6 +90,14 @@ function FilterContent({
       : [...localFilters.status, status];
     
     setLocalFilters(prev => ({ ...prev, status: newStatus }));
+  };
+
+  const handleTagToggle = (tagName: string) => {
+    const newTags = localFilters.tags.includes(tagName)
+      ? localFilters.tags.filter(t => t !== tagName)
+      : [...localFilters.tags, tagName];
+    
+    setLocalFilters(prev => ({ ...prev, tags: newTags }));
   };
 
   const handlePresetClick = (presetKey: FilterPresetKey) => {
@@ -267,6 +277,47 @@ function FilterContent({
             />
           </PopoverContent>
         </Popover>
+      </div>
+
+      <Separator />
+
+      {/* Filtro de Tags */}
+      <div className="space-y-3">
+        <Label className="text-sm font-medium flex items-center gap-2">
+          <Tag className="h-4 w-4" />
+          Tags
+        </Label>
+        {isLoadingTags ? (
+          <div className="text-xs text-muted-foreground text-center py-4">
+            Carregando tags...
+          </div>
+        ) : availableTags.length === 0 ? (
+          <div className="text-xs text-muted-foreground text-center py-4">
+            Nenhuma tag criada ainda.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-2">
+            {availableTags.map((tag) => (
+              <div key={tag.id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`tag-${tag.id}`}
+                  checked={localFilters.tags.includes(tag.tag_name)}
+                  onCheckedChange={() => handleTagToggle(tag.tag_name)}
+                />
+                <label
+                  htmlFor={`tag-${tag.id}`}
+                  className="flex items-center gap-2 text-sm font-normal cursor-pointer flex-1"
+                >
+                  <div
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: tag.tag_color }}
+                  />
+                  <span className="truncate">{tag.tag_name}</span>
+                </label>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Botões de ação (mobile usa DrawerFooter) */}

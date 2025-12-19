@@ -45,7 +45,12 @@ export interface EvolutionContact {
   
   // Dados extras do CRM
   crm_notes: string | null;
-  crm_tags: string[] | null;
+  /**
+   * @deprecated Use o sistema relacional de tags (tabela crm_lead_tags).
+   * Ver hooks/useCrmTags.ts para gerenciar tags.
+   * Este campo será removido em versão futura.
+   */
+  crm_tags?: string[] | null;
   crm_favorite: boolean;
   crm_last_interaction_at: string | null;
   crm_lead_status: LeadStatus | null;

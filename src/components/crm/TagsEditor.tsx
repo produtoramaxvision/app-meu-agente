@@ -1,5 +1,12 @@
 'use client';
 
+/**
+ * @deprecated Este componente usa o sistema antigo de tags (array em evolution_contacts.crm_tags).
+ * Use TagsEditorRelational de '@/components/crm/TagsEditorRelational' para o sistema relacional.
+ * 
+ * Este arquivo será removido em versão futura.
+ */
+
 import { useState, useCallback, useMemo } from 'react';
 import { X, Check, Plus, Tag, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -41,6 +48,7 @@ interface TagsEditorProps {
 // ============================================================================
 
 /**
+ * @deprecated Use TagsEditorRelational instead.
  * Editor de tags para leads do CRM.
  * 
  * Features:
@@ -207,7 +215,6 @@ export function TagsEditor({
                 placeholder="Digite ou selecione uma tag..."
                 value={inputValue}
                 onValueChange={setInputValue}
-                onKeyDown={handleKeyDown}
               />
               <CommandList>
                 {isLoadingTags ? (
@@ -220,8 +227,11 @@ export function TagsEditor({
                     {isNewTag && (
                       <CommandGroup heading="Criar nova tag">
                         <CommandItem
-                          value={`create-${inputValue}`}
-                          onSelect={() => handleAddTag(inputValue)}
+                          value={inputValue.trim()}
+                          onSelect={() => {
+                            handleAddTag(inputValue);
+                            setOpen(false);
+                          }}
                           className="gap-2"
                         >
                           <Plus className="h-4 w-4 text-primary" />
@@ -243,7 +253,10 @@ export function TagsEditor({
                           <CommandItem
                             key={tag}
                             value={tag}
-                            onSelect={() => handleAddTag(tag)}
+                            onSelect={() => {
+                              handleAddTag(tag);
+                              setOpen(false);
+                            }}
                             className="gap-2"
                           >
                             <Check

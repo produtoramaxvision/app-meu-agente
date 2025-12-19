@@ -5,8 +5,9 @@ import { CustomFieldsManager } from './CustomFieldsManager';
 import { AutomationsManager } from './AutomationsManager';
 import { NotificationSettings } from '@/components/settings/NotificationSettings';
 import { FilterPanel } from './FilterPanel';
+import { TagsManagementDialog } from './TagsManagementDialog';
 import { Input } from '@/components/ui/input';
-import { Search, Plus, Filter, MoreHorizontal, LayoutGrid, List, BarChart3, Download, Settings, Zap, X } from 'lucide-react';
+import { Search, Plus, Filter, MoreHorizontal, LayoutGrid, List, BarChart3, Download, Settings, Zap, X, Tag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { motion } from 'framer-motion';
@@ -29,6 +30,8 @@ interface CRMLayoutProps {
 }
 
 export function CRMLayout({ children, headerStats, viewMode, onViewChange, searchValue, onSearchChange, onExport, onNewLead, filters, onFiltersChange, onClearFilters, onApplyPreset, activeFiltersCount }: CRMLayoutProps) {
+  const [tagsDialogOpen, setTagsDialogOpen] = useState(false);
+  
   const baseControlButtonClasses =
     'group relative h-8 w-8 rounded-md transition-all duration-300 ease-out text-[hsl(var(--sidebar-text-muted))] hover:bg-[hsl(var(--sidebar-hover))] hover:text-[hsl(var(--sidebar-text))] hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background';
 
@@ -123,6 +126,17 @@ export function CRMLayout({ children, headerStats, viewMode, onViewChange, searc
               <List className={iconAnimationClasses} />
             </Button>
             
+            {/* Tags Management Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(baseControlButtonClasses)}
+              onClick={() => setTagsDialogOpen(true)}
+              title="Gerenciar Tags"
+            >
+              <Tag className={iconAnimationClasses} />
+            </Button>
+
             {/* Automations Button */}
             <Sheet>
               <SheetTrigger asChild>
@@ -215,6 +229,9 @@ export function CRMLayout({ children, headerStats, viewMode, onViewChange, searc
       <div className="flex-1 overflow-auto bg-[hsl(var(--sidebar-bg))]">
         {children}
       </div>
+
+      {/* Tags Management Dialog */}
+      <TagsManagementDialog open={tagsDialogOpen} onOpenChange={setTagsDialogOpen} />
     </div>
   );
 }

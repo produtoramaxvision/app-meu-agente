@@ -1,4 +1,5 @@
 import { memo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { EvolutionContact, LeadStatus } from '@/types/sdr';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,7 +12,7 @@ import { ptBR } from 'date-fns/locale';
 import { useCustomFieldDefinitions, useCustomFieldValues } from '@/hooks/useCustomFields';
 import { useEvolutionInstances } from '@/hooks/useEvolutionInstances';
 import { LeadScoreBadge } from './LeadScoreBadge';
-import { getTagColor } from '@/hooks/useLeadTags';
+import { getTagColor, useLeadTagsReadOnly } from '@/hooks/useCrmTags';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -84,6 +85,8 @@ interface KanbanCardProps {
   onDelete?: (contact: EvolutionContact) => void;
   isDragging?: boolean;
   onInteraction?: (contact: EvolutionContact, type: LeadInteractionType) => void;
+  onTagClick?: (tagName: string) => void;
+  selectedTags?: string[];
 }
 
 // ⚡ OTIMIZAÇÃO: React.memo evita re-renders desnecessários do card
@@ -95,11 +98,16 @@ export const KanbanCard = memo(function KanbanCard({
   onDelete,
   isDragging = false,
   onInteraction,
+  onTagClick,
+  selectedTags = [],
 }: KanbanCardProps) {
   // Buscar definições de custom fields com show_in_card: true
   const { definitions } = useCustomFieldDefinitions();
   const { values } = useCustomFieldValues(contact.id);
   const { data: instances } = useEvolutionInstances();
+  
+  // Relational Tags (for card display)
+  const { tags: relationalTags } = useLeadTagsReadOnly(contact.id);
 
   const cardFields = definitions.filter(def => def.show_in_card);
 
@@ -166,6 +174,7 @@ export const KanbanCard = memo(function KanbanCard({
   // Identificar instâncias do contato
   const instanceIds = contact.instance_ids || (contact.instance_id ? [contact.instance_id] : []);
   const contactInstances = instances?.filter(i => instanceIds.includes(i.id)) || [];
+  const navigate = useNavigate();
 
   // Renderizar conteúdo do menu (reutilizado em Context e Dropdown)
   const menuContent = (
@@ -295,9 +304,13 @@ export const KanbanCard = memo(function KanbanCard({
                               key={inst.id} 
                               variant="outline" 
                               className={cn(
-                                "text-[10px] px-1.5 py-0 h-5 font-medium flex items-center gap-1 truncate max-w-[120px] transition-colors",
+                                "text-[10px] px-1.5 py-0 h-5 font-medium flex items-center gap-1 truncate max-w-[120px] transition-colors cursor-pointer",
                                 getStatusBadgeStyles(inst.connection_status)
                               )}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/agente-sdr?instanceId=${inst.id}`);
+                              }}
                               title={`${inst.display_name || inst.instance_name} (${inst.connection_status || 'offline'})`}
                             >
                               <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", getStatusColor(inst.connection_status))} />
@@ -410,23 +423,36 @@ export const KanbanCard = memo(function KanbanCard({
                 </div>
               )}
 
-              {/* Tags */}
-              {contact.crm_tags && contact.crm_tags.length > 0 && (
+              {/* Tags (Relational) */}
+              {relationalTags.length > 0 && (
                 <div className="flex flex-wrap gap-1">
-                  {contact.crm_tags.slice(0, 3).map((tag, i) => (
-                    <span 
-                      key={i} 
-                      className={cn(
-                        "text-[10px] px-1.5 py-0.5 rounded border font-medium",
-                        getTagColor(tag)
-                      )}
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                  {contact.crm_tags.length > 3 && (
+                  {relationalTags.slice(0, 3).map((tag) => {
+                    const isSelected = selectedTags.includes(tag.tag_name);
+                    return (
+                      <span 
+                        key={tag.tag_id} 
+                        className={`text-[10px] px-1.5 py-0.5 rounded font-medium cursor-pointer transition-all ${
+                          isSelected ? 'ring-2 ring-offset-1 shadow-md' : 'hover:opacity-80'
+                        }`}
+                        style={{
+                          backgroundColor: isSelected ? tag.tag_color : `${tag.tag_color}20`,
+                          borderColor: tag.tag_color,
+                          color: isSelected ? '#ffffff' : tag.tag_color,
+                          border: isSelected ? '2px solid' : '1px solid',
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onTagClick?.(tag.tag_name);
+                        }}
+                        title={isSelected ? `Remover filtro: ${tag.tag_name}` : `Filtrar por: ${tag.tag_name}`}
+                      >
+                        {tag.tag_name}
+                      </span>
+                    );
+                  })}
+                  {relationalTags.length > 3 && (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                      +{contact.crm_tags.length - 3}
+                      +{relationalTags.length - 3}
                     </span>
                   )}
                 </div>

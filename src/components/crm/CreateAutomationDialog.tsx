@@ -517,7 +517,7 @@ export function CreateAutomationDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="crm_lead_status">Status do lead</SelectItem>
-                  <SelectItem value="crm_tags">Tags</SelectItem>
+                  {/* TODO: Tags agora usam sistema relacional - implementar ação específica para adicionar/remover tags */}
                 </SelectContent>
               </Select>
             </div>

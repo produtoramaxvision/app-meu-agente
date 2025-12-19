@@ -164,12 +164,10 @@ export function useCRMContacts({ instanceId, userPhone, enabled = true }: UseCRM
       }
       toast.error('Erro ao atualizar contato');
     },
-    // Não invalidar imediatamente - já atualizamos otimistamente
-    onSettled: () => {
-      // Revalidar em background após 5 segundos para garantir consistência
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey, refetchType: 'none' });
-      }, 5000);
+    // ⚡ OTIMIZAÇÃO: Invalidar imediatamente para refetch e sincronizar todos os componentes
+    onSettled: async () => {
+      // Invalidar e refetch imediatamente para sincronizar estado em todos os componentes
+      await queryClient.invalidateQueries({ queryKey, refetchType: 'active' });
     },
   });
 

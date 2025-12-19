@@ -3,7 +3,8 @@
 // Página principal do Agente SDR com conexão WhatsApp, configuração e playground
 // =============================================================================
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ import {
 } from 'lucide-react';
 
 export default function AgenteSDR() {
+  const [searchParams] = useSearchParams();
   const {
     instance,
     instances,
@@ -56,6 +58,14 @@ export default function AgenteSDR() {
   const [activeTab, setActiveTab] = useState('conexao');
 
   const isLoading = isLoadingInstances || isLoadingConfig;
+
+  // Permite pré-selecionar a instância via query param (?instanceId=...)
+  useEffect(() => {
+    const instanceId = searchParams.get('instanceId');
+    if (instanceId && instanceId !== selectedInstanceId && instances.some(i => i.id === instanceId)) {
+      selectInstance(instanceId);
+    }
+  }, [searchParams, instances, selectInstance, selectedInstanceId]);
 
   return (
     <ProtectedFeature permission="canAccessSDRAgent" featureName="Agente SDR">
