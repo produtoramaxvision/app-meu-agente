@@ -13,6 +13,8 @@ import { useCustomFieldDefinitions, useCustomFieldValues } from '@/hooks/useCust
 import { useEvolutionInstances } from '@/hooks/useEvolutionInstances';
 import { LeadScoreBadge } from './LeadScoreBadge';
 import { getTagColor, useLeadTagsReadOnly } from '@/hooks/useCrmTags';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -337,25 +339,56 @@ export const KanbanCard = memo(function KanbanCard({
                           </Badge>
                       )}
 
-                      {/* Badges de Percentual e Cálculos - Agrupados para não quebrar linha no mobile */}
-                      <div className="flex flex-nowrap items-center gap-1.5 shrink-0">
-                        {/* Lead Score */}
-                        {contact.crm_lead_score !== null && contact.crm_lead_score !== undefined && contact.crm_lead_score > 0 && (
-                          <LeadScoreBadge score={contact.crm_lead_score} size="sm" showLabel={false} />
-                        )}
+                      {/* Badges de Percentual e Cálculos - com card explicativo em hover */}
+                      <HoverCard openDelay={120}>
+                        <HoverCardTrigger asChild>
+                          <div className="flex flex-nowrap items-center gap-1.5 shrink-0 cursor-help">
+                            {/* Lead Score */}
+                            {contact.crm_lead_score !== null && contact.crm_lead_score !== undefined && contact.crm_lead_score > 0 && (
+                              <LeadScoreBadge score={contact.crm_lead_score} size="sm" showLabel={false} />
+                            )}
 
-                        {/* Badge de Probabilidade de Fechamento (Fase 3.5) */}
-                        {contact.crm_win_probability !== null && status !== 'ganho' && status !== 'perdido' && (
-                          <Badge 
-                            variant="outline" 
-                            className="text-[10px] px-1.5 py-0 h-5 font-medium shrink-0"
-                            style={getWinProbabilityStyles(contact.crm_win_probability)}
-                            title={`Probabilidade de fechamento: ${contact.crm_win_probability}%`}
-                          >
-                            {contact.crm_win_probability}%
-                          </Badge>
-                        )}
-                      </div>
+                            {/* Badge de Probabilidade de Fechamento (Fase 3.5) */}
+                            {contact.crm_win_probability !== null && status !== 'ganho' && status !== 'perdido' && (
+                              <Badge 
+                                variant="outline" 
+                                className="text-[10px] px-1.5 py-0 h-5 font-medium shrink-0"
+                                style={getWinProbabilityStyles(contact.crm_win_probability)}
+                              >
+                                {contact.crm_win_probability}%
+                              </Badge>
+                            )}
+                          </div>
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-64 text-xs space-y-2">
+                          <p className="text-[11px] font-semibold text-muted-foreground">
+                            Como interpretar estes números
+                          </p>
+                          {contact.crm_lead_score !== null && contact.crm_lead_score !== undefined && contact.crm_lead_score > 0 && (
+                            <div className="space-y-0.5">
+                              <p className="font-medium text-foreground">
+                                ⚡ Score do lead: <span className="font-semibold">{contact.crm_lead_score}</span>/100
+                              </p>
+                              <p className="text-muted-foreground">
+                                Calculado automaticamente pela IA a partir do engajamento, dados do contato e tags. 
+                                Quanto maior o número, mais quente e prioritário é o lead.
+                              </p>
+                            </div>
+                          )}
+                          {contact.crm_win_probability !== null && status !== 'ganho' && status !== 'perdido' && (
+                            <div className="space-y-0.5">
+                              <p className="font-medium text-foreground">
+                                🎯 Probabilidade de fechamento:{" "}
+                                <span className="font-semibold">{contact.crm_win_probability}%</span>
+                              </p>
+                              <p className="text-muted-foreground">
+                                Definida na ficha do lead com base no estágio do funil e sua percepção. 
+                                Use esse valor para priorizar negociações com maior chance de ganho.
+                              </p>
+                            </div>
+                          )}
+                        </HoverCardContent>
+                      </HoverCard>
                     </div>
                   </div>
                 </div>
@@ -466,10 +499,21 @@ export const KanbanCard = memo(function KanbanCard({
                     : 'Sem interação'}
                 </span>
                 
-                {/* AI Insight Indicator (Visual only) */}
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                   <Sparkles className="h-3 w-3 text-yellow-500" />
-                </div>
+                {/* Indicador de Insights da IA com tooltip explicativo */}
+                <Tooltip delayDuration={100}>
+                  <TooltipTrigger asChild>
+                    <div 
+                      className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-help"
+                      role="button"
+                      aria-label="Saiba mais sobre insights do lead"
+                    >
+                      <Sparkles className="h-3 w-3 text-yellow-500" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs max-w-[200px] text-center">
+                    Insights inteligentes do lead. Em breve mostraremos dicas da IA aqui.
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </CardContent>
             

@@ -339,147 +339,160 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact,
           </div>
           
           {/* Action Buttons */}
-          <div className="flex gap-2 mt-4">
-            <Button 
-              className="flex-1 gap-2" 
-              variant="outline" 
-              onClick={() => setWhatsappDialogOpen(true)}
-            >
-              <MessageCircle className="h-4 w-4" />
-              WhatsApp
-            </Button>
-            <Button className="flex-1 gap-2" variant="outline">
-              <Phone className="h-4 w-4" />
-              Ligar
-            </Button>
-            <Button size="icon" variant="outline">
-              <Mail className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Campo de Valor Estimado */}
-          <div className="mt-6 space-y-2">
-            <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              Valor Estimado do Deal
-            </label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">R$</span>
-                <Input
-                  type="text"
-                  placeholder="0,00"
-                  value={estimatedValue}
-                  onChange={handleEstimatedValueChange}
-                  className="pl-10"
-                />
-              </div>
+          <div className="px-6 pb-6">
+            <div className="flex gap-2 mt-4">
               <Button 
-                onClick={handleSaveEstimatedValue} 
-                disabled={isSavingValue || !estimatedValue}
-                size="default"
-                variant="outline"
+                className="flex-1 gap-2" 
+                variant="outline" 
+                onClick={() => setWhatsappDialogOpen(true)}
               >
-                {isSavingValue ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  'Salvar'
-                )}
+                <MessageCircle className="h-4 w-4" />
+                WhatsApp
+              </Button>
+              <Button className="flex-1 gap-2" variant="outline">
+                <Phone className="h-4 w-4" />
+                Ligar
+              </Button>
+              <Button 
+                size="icon" 
+                variant="outline"
+                onClick={() => {
+                  const email = values['email'] as string;
+                  if (!email) {
+                    toast.error("Este lead não possui e-mail cadastrado.");
+                    return;
+                  }
+                  window.location.href = `mailto:${email}`;
+                }}
+              >
+                <Mail className="h-4 w-4" />
               </Button>
             </div>
-          </div>
 
-          {/* Dialog para envio de mensagem WhatsApp */}
-          <SendWhatsAppDialog
-            open={whatsappDialogOpen}
-            onOpenChange={setWhatsappDialogOpen}
-            contactName={contact.push_name || 'Contato'}
-            contactPhone={contact.phone || contact.remote_jid.split('@')[0]}
-            contactRemoteJid={contact.remote_jid}
-            defaultMessage={`Olá ${contact.push_name || ''}!`}
-          />
-
-          {/* Campo de Probabilidade de Fechamento (Fase 3.5) - Não exibir para ganho/perdido */}
-          {contact.crm_lead_status !== 'ganho' && contact.crm_lead_status !== 'perdido' && (
+            {/* Campo de Valor Estimado */}
             <div className="mt-6 space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-muted-foreground">
-                  Probabilidade de Fechamento
-                </label>
-                <Badge 
-                  variant="secondary"
-                  className="text-xs font-semibold"
-                  style={{
-                    backgroundColor: `hsl(${(winProbability[0] / 100) * 120}, 70%, 95%)`,
-                    borderColor: `hsl(${(winProbability[0] / 100) * 120}, 70%, 60%)`,
-                    color: `hsl(${(winProbability[0] / 100) * 120}, 70%, 30%)`,
-                  }}
-                >
-                  {winProbability[0]}%
-                </Badge>
-              </div>
-              <div className="space-y-3">
-                <Slider
-                  value={winProbability}
-                  onValueChange={setWinProbability}
-                  max={100}
-                  min={0}
-                  step={5}
-                  className="w-full"
-                  aria-label="Probabilidade de Fechamento"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>0%</span>
-                  <span className="text-[10px] opacity-70">
-                    {contact.crm_win_probability === null 
-                      ? `Padrão: ${DEFAULT_WIN_PROBABILITY[contact.crm_lead_status as LeadStatus] || 50}%`
-                      : 'Customizado'}
-                  </span>
-                  <span>100%</span>
+              <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                Valor Estimado do Deal
+              </label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">R$</span>
+                  <Input
+                    type="text"
+                    placeholder="0,00"
+                    value={estimatedValue}
+                    onChange={handleEstimatedValueChange}
+                    className="pl-10"
+                  />
                 </div>
-                {contact.crm_win_probability !== winProbability[0] && (
-                  <Button
-                    onClick={handleSaveProbability}
-                    disabled={isSavingProbability}
-                    size="sm"
-                    variant="outline"
-                    className="w-full"
+                <Button 
+                  onClick={handleSaveEstimatedValue} 
+                  disabled={isSavingValue || !estimatedValue}
+                  size="default"
+                  variant="outline"
+                >
+                  {isSavingValue ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    'Salvar'
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Dialog para envio de mensagem WhatsApp */}
+            <SendWhatsAppDialog
+              open={whatsappDialogOpen}
+              onOpenChange={setWhatsappDialogOpen}
+              contactName={contact.push_name || 'Contato'}
+              contactPhone={contact.phone || contact.remote_jid.split('@')[0]}
+              contactRemoteJid={contact.remote_jid}
+              defaultMessage={`Olá ${contact.push_name || ''}!`}
+            />
+
+            {/* Campo de Probabilidade de Fechamento (Fase 3.5) - Não exibir para ganho/perdido */}
+            {contact.crm_lead_status !== 'ganho' && contact.crm_lead_status !== 'perdido' && (
+              <div className="mt-6 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Probabilidade de Fechamento
+                  </label>
+                  <Badge 
+                    variant="secondary"
+                    className="text-xs font-semibold"
+                    style={{
+                      backgroundColor: `hsl(${(winProbability[0] / 100) * 120}, 70%, 95%)`,
+                      borderColor: `hsl(${(winProbability[0] / 100) * 120}, 70%, 60%)`,
+                      color: `hsl(${(winProbability[0] / 100) * 120}, 70%, 30%)`,
+                    }}
                   >
-                    {isSavingProbability ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : null}
-                    Salvar Probabilidade
-                  </Button>
+                    {winProbability[0]}%
+                  </Badge>
+                </div>
+                <div className="space-y-3">
+                  <Slider
+                    value={winProbability}
+                    onValueChange={setWinProbability}
+                    max={100}
+                    min={0}
+                    step={5}
+                    className="w-full"
+                    aria-label="Probabilidade de Fechamento"
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>0%</span>
+                    <span className="text-[10px] opacity-70">
+                      {contact.crm_win_probability === null 
+                        ? `Padrão: ${DEFAULT_WIN_PROBABILITY[contact.crm_lead_status as LeadStatus] || 50}%`
+                        : 'Customizado'}
+                    </span>
+                    <span>100%</span>
+                  </div>
+                  {contact.crm_win_probability !== winProbability[0] && (
+                    <Button
+                      onClick={handleSaveProbability}
+                      disabled={isSavingProbability}
+                      size="sm"
+                      variant="outline"
+                      className="w-full"
+                    >
+                      {isSavingProbability ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : null}
+                      Salvar Probabilidade
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Motivo de Perda (only when status is "perdido") */}
+            {contact.crm_lead_status === 'perdido' && contact.crm_loss_reason && (
+              <div className="mt-6 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-red-500" />
+                  <h4 className="text-sm font-semibold text-red-700 dark:text-red-400">
+                    Motivo da Perda
+                  </h4>
+                </div>
+                <p className="text-sm text-red-600 dark:text-red-300">
+                  {contact.crm_loss_reason === 'price' && '💰 Preço muito alto'}
+                  {contact.crm_loss_reason === 'competitor' && '🏆 Escolheu concorrente'}
+                  {contact.crm_loss_reason === 'timing' && '⏰ Não é o momento'}
+                  {contact.crm_loss_reason === 'no_budget' && '💸 Sem orçamento'}
+                  {contact.crm_loss_reason === 'no_response' && '📵 Sem resposta'}
+                  {contact.crm_loss_reason === 'not_qualified' && '❌ Lead não qualificado'}
+                  {contact.crm_loss_reason === 'changed_needs' && '🔄 Necessidades mudaram'}
+                  {contact.crm_loss_reason === 'other' && '📝 Outro motivo'}
+                </p>
+                {contact.crm_loss_reason_details && (
+                  <p className="text-xs text-red-600/80 dark:text-red-400/80 italic border-t border-red-200 dark:border-red-900 pt-2">
+                    "{contact.crm_loss_reason_details}"
+                  </p>
                 )}
               </div>
-            </div>
-          )}
-
-          {/* Motivo de Perda (only when status is "perdido") */}
-          {contact.crm_lead_status === 'perdido' && contact.crm_loss_reason && (
-            <div className="mt-6 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-red-500" />
-                <h4 className="text-sm font-semibold text-red-700 dark:text-red-400">
-                  Motivo da Perda
-                </h4>
-              </div>
-              <p className="text-sm text-red-600 dark:text-red-300">
-                {contact.crm_loss_reason === 'price' && '💰 Preço muito alto'}
-                {contact.crm_loss_reason === 'competitor' && '🏆 Escolheu concorrente'}
-                {contact.crm_loss_reason === 'timing' && '⏰ Não é o momento'}
-                {contact.crm_loss_reason === 'no_budget' && '💸 Sem orçamento'}
-                {contact.crm_loss_reason === 'no_response' && '📵 Sem resposta'}
-                {contact.crm_loss_reason === 'not_qualified' && '❌ Lead não qualificado'}
-                {contact.crm_loss_reason === 'changed_needs' && '🔄 Necessidades mudaram'}
-                {contact.crm_loss_reason === 'other' && '📝 Outro motivo'}
-              </p>
-              {contact.crm_loss_reason_details && (
-                <p className="text-xs text-red-600/80 dark:text-red-400/80 italic border-t border-red-200 dark:border-red-900 pt-2">
-                  "{contact.crm_loss_reason_details}"
-                </p>
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Content Tabs */}

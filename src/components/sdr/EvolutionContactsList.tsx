@@ -117,8 +117,12 @@ export function EvolutionContactsList({
       if (filterFavorites && !contact.crm_favorite) return false;
 
       // Filtro de grupos x contatos (modo alternância)
-      // Quando showGroupsOnly=true, mostra apenas grupos; caso contrário, exibe ambos
-      if (showGroupsOnly && !contact.is_group) return false;
+      // Quando showGroupsOnly=true, mostra apenas grupos; quando false, mostra apenas contatos
+      if (showGroupsOnly) {
+        if (!contact.is_group) return false;
+      } else {
+        if (contact.is_group) return false;
+      }
 
       return matchesSearch;
     });
