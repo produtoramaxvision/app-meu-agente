@@ -520,24 +520,39 @@ export const KanbanCard = memo(function KanbanCard({
             {/* Quick Actions Hover Overlay (Desktop) - Repositioned */}
             {!isDragging && onInteraction && (
               <div className="absolute right-2 top-10 flex flex-col gap-1 transition-all duration-200 translate-x-2 group-hover:translate-x-0 z-overlay opacity-0 group-hover:opacity-100">
-                <Button 
-                  size="icon" 
-                  variant="secondary" 
-                  className="h-6 w-6 shadow-sm border" 
-                  onClick={handleMessageClick}
-                  aria-label="Enviar mensagem"
-                >
-                  <MessageCircle className="h-3 w-3" />
-                </Button>
-                <Button 
-                  size="icon" 
-                  variant="secondary" 
-                  className="h-6 w-6 shadow-sm border" 
-                  onClick={handlePhoneClick}
-                  aria-label="Ligar"
-                >
-                  <Phone className="h-3 w-3" />
-                </Button>
+                <Tooltip delayDuration={100}>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      size="icon" 
+                      variant="secondary" 
+                      className="h-6 w-6 shadow-sm border" 
+                      onClick={handleMessageClick}
+                      aria-label="Enviar mensagem"
+                    >
+                      <MessageCircle className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" className="text-xs">
+                    Enviar mensagem
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip delayDuration={100}>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      size="icon" 
+                      variant="secondary" 
+                      className="h-6 w-6 shadow-sm border" 
+                      onClick={handlePhoneClick}
+                      aria-label="Ligar"
+                    >
+                      <Phone className="h-3 w-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left" className="text-xs">
+                    Ligar
+                  </TooltipContent>
+                </Tooltip>
               </div>
             )}
           </Card>
