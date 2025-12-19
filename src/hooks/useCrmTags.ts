@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { CrmTag, CrmTagInsert, CrmTagUpdate, LeadTagAssociation, CrmLeadTagInsert } from '@/types/crm';
+import type { JoinedLeadTag } from '@/integrations/supabase/types';
 import { TAG_COLOR_PALETTE, getTagColorFromHash } from '@/types/crm';
 
 // Helper: pick a unique color per user, avoiding duplicates already in use.
@@ -287,17 +288,6 @@ export function useLeadTagsRelational(leadId: string): UseLeadTagsReturn {
         throw queryError;
       }
 
-      // Define type for the joined query result
-      interface JoinedLeadTag {
-        tag_id: string;
-        assigned_at: string;
-        crm_tags: {
-          id: string;
-          tag_name: string;
-          tag_color: string;
-        };
-      }
-
       // Transform the data to a flat structure
       return (data || []).map((item: JoinedLeadTag) => ({
         tag_id: item.tag_id,
@@ -414,8 +404,8 @@ export function useLeadTagsRelational(leadId: string): UseLeadTagsReturn {
   const addNewTagMutation = useMutation({
     mutationFn: async ({ name, color }: { name: string; color?: string }) => {
       if (!cliente?.phone) throw new Error('Usuário não autenticado');
-      // Garantir cor única por usuário
-      const existingTags = queryClient.getQueryData<CrmTag[]>(crmTagsKeys.list()) || tags || [];
+      // Garantir cor única por usuário - buscar tags globais, não as do lead
+      const existingTags = queryClient.getQueryData<CrmTag[]>(crmTagsKeys.list()) || [];
       const tagColor = color || getUniqueTagColor(existingTags, name);
 
       // First, create the tag

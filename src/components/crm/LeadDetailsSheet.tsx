@@ -399,7 +399,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact,
                     custom: 'Detalhes'
                   };
                   
-                  const icons: Record<string, any> = {
+                  const icons: Record<string, React.ElementType> = {
                     tasks: CheckSquare,
                     notes: Edit2,
                     history: Clock,
