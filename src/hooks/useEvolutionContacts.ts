@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import type { EvolutionContact } from '@/types/sdr';
 
@@ -181,6 +180,14 @@ export function useEvolutionContacts(
 
       setSyncing(true);
 
+      console.log('[syncContacts] Iniciando sincronização:', {
+        instanceId,
+        instanceName,
+        evolutionApiUrl,
+        hasApiKey: !!evolutionApiKey,
+        userPhone,
+      });
+
       // Buscar contatos da Evolution API
       const response = await fetch(
         `${evolutionApiUrl}/chat/findContacts/${instanceName}`,
@@ -198,7 +205,23 @@ export function useEvolutionContacts(
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Evolution API error: ${response.status} - ${errorText}`);
+        console.error('[syncContacts] Evolution API error:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText,
+          url: `${evolutionApiUrl}/chat/findContacts/${instanceName}`,
+        });
+        
+        // Mensagens de erro mais específicas
+        if (response.status === 404) {
+          throw new Error(`Instância "${instanceName}" não encontrada na Evolution API. Verifique se o WhatsApp está conectado.`);
+        } else if (response.status === 401 || response.status === 403) {
+          throw new Error('API Key inválida. Verifique as credenciais da Evolution API.');
+        } else if (response.status === 0) {
+          throw new Error('Não foi possível conectar à Evolution API. Verifique CORS ou se a API está online.');
+        } else {
+          throw new Error(`Erro ao buscar contatos: ${response.status} - ${errorText || response.statusText}`);
+        }
       }
 
       const evolutionContacts = await response.json() as Record<string, unknown>[];
@@ -232,7 +255,6 @@ export function useEvolutionContacts(
         is_saved: (contact.isSaved as boolean) || !!((contact.pushName as string) || (contact.profilePicUrl as string)),
         synced_at: new Date().toISOString(),
         sync_source: 'manual' as const,
-        raw_data: contact as Json,
       }));
 
       // Salvar em batches (limite de 1000 por request)
@@ -269,9 +291,25 @@ export function useEvolutionContacts(
 
       // Função retorna void conforme interface
     } catch (error) {
-      console.error('Error syncing contacts:', error);
+      console.error('[syncContacts] Erro completo:', error);
+      console.error('[syncContacts] Tipo do erro:', typeof error);
+      console.error('[syncContacts] É Error?', error instanceof Error);
+      
+      let errorMessage = 'Erro desconhecido ao sincronizar contatos';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error && typeof error === 'object') {
+        // Tentar extrair mensagem de objetos diversos
+        const errObj = error as any;
+        errorMessage = errObj.message || errObj.error || errObj.statusText || JSON.stringify(error);
+      }
+      
       toast.error('Erro ao sincronizar', {
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        description: errorMessage,
+        duration: 8000, // Mais tempo para ler erro detalhado
       });
       throw error;
     } finally {
