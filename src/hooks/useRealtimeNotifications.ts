@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { EvolutionContact } from '@/types/sdr';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 // ============================================================================
 // TIPOS
@@ -125,137 +126,222 @@ export function useRealtimeNotifications() {
   const queryClient = useQueryClient();
   const { settings } = useNotificationSettings();
   const [isConnected, setIsConnected] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   useEffect(() => {
     if (!cliente?.phone || !settings.enabled) {
       setIsConnected(false);
+      // Limpar retry pendente
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
       return;
     }
 
-    console.log('[Realtime] Iniciando conexão para:', cliente.phone);
+    // Função para conectar/reconectar ao canal
+    const connectChannel = () => {
+      // Limpar canal anterior se existir
+      if (channelRef.current) {
+        console.log('[Realtime] Limpando canal anterior antes de reconectar');
+        channelRef.current.unsubscribe();
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
 
-    // Canal para mudanças nos contatos (evolution_contacts)
-    const contactsChannel = supabase
-      .channel(`crm-contacts-${cliente.phone}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'evolution_contacts',
-          filter: `phone=eq.${cliente.phone}`,
-        },
-        (payload) => {
-          console.log('[Realtime] Contato atualizado:', payload);
-          
-          const oldContact = payload.old as EvolutionContact;
-          const newContact = payload.new as EvolutionContact;
+      console.log(`[Realtime] Conectando canal (tentativa ${retryCount + 1}/5) para:`, cliente.phone);
 
-          // Notificação de mudança de status
-          if (
-            settings.types.status_change &&
-            oldContact.crm_lead_status !== newContact.crm_lead_status &&
-            newContact.crm_lead_status
-          ) {
-            const message = `${newContact.push_name || 'Lead'} foi movido para ${newContact.crm_lead_status}`;
+      // Criar novo canal com configuração otimizada
+      const contactsChannel = supabase
+        .channel(`crm-contacts-${cliente.phone}`, {
+          config: {
+            broadcast: { self: false },
+            presence: { key: '' },
+          },
+        })
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'evolution_contacts',
+            filter: `phone=eq.${cliente.phone}`,
+          },
+          (payload) => {
+            console.log('[Realtime] Contato atualizado:', payload);
             
-            toast.success(message, {
-              description: format(new Date(), 'HH:mm', { locale: ptBR }),
-              duration: 6000,
+            const oldContact = payload.old as EvolutionContact;
+            const newContact = payload.new as EvolutionContact;
+
+            // Notificação de mudança de status
+            if (
+              settings.types.status_change &&
+              oldContact.crm_lead_status !== newContact.crm_lead_status &&
+              newContact.crm_lead_status
+            ) {
+              const message = `${newContact.push_name || 'Lead'} foi movido para ${newContact.crm_lead_status}`;
+              
+              toast.success(message, {
+                description: format(new Date(), 'HH:mm', { locale: ptBR }),
+                duration: 6000,
+              });
+
+              if (settings.sound) {
+                playNotificationSound();
+              }
+
+              if (settings.desktop) {
+                showBrowserNotification('Status do Lead Alterado', message);
+              }
+            }
+
+            // Notificação de lead esquentando
+            if (
+              settings.types.lead_hot &&
+              oldContact.crm_lead_score !== newContact.crm_lead_score &&
+              newContact.crm_lead_score - (oldContact.crm_lead_score || 0) >= 20
+            ) {
+              const message = `${newContact.push_name || 'Lead'} está aquecendo! Score: ${newContact.crm_lead_score}`;
+              
+              toast('🔥 Lead Quente!', {
+                description: message,
+                duration: 8000,
+              });
+
+              if (settings.sound) {
+                playNotificationSound();
+              }
+
+              if (settings.desktop) {
+                showBrowserNotification('Lead Aqueceu!', message);
+              }
+            }
+
+            // Invalidar cache do React Query
+            queryClient.invalidateQueries({ queryKey: ['evolution-contacts'] });
+            queryClient.invalidateQueries({ queryKey: ['crm-pipeline'] });
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'evolution_contacts',
+            filter: `phone=eq.${cliente.phone}`,
+          },
+          (payload) => {
+            console.log('[Realtime] Novo contato adicionado:', payload);
+            
+            const newContact = payload.new as EvolutionContact;
+            
+            toast.info('Novo Lead Adicionado', {
+              description: newContact.push_name || newContact.remote_jid,
+              duration: 4000,
             });
 
             if (settings.sound) {
               playNotificationSound();
             }
 
-            if (settings.desktop) {
-              showBrowserNotification('Status do Lead Alterado', message);
-            }
+            queryClient.invalidateQueries({ queryKey: ['evolution-contacts'] });
+            queryClient.invalidateQueries({ queryKey: ['crm-pipeline'] });
           }
-
-          // Notificação de lead esquentando
-          if (
-            settings.types.lead_hot &&
-            oldContact.crm_lead_score !== newContact.crm_lead_score &&
-            newContact.crm_lead_score - (oldContact.crm_lead_score || 0) >= 20
-          ) {
-            const message = `${newContact.push_name || 'Lead'} está aquecendo! Score: ${newContact.crm_lead_score}`;
+        )
+        .subscribe((status) => {
+          console.log('[Realtime] Status da conexão (WhatsApp/Contatos):', status);
+          
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Canal de contatos Evolution conectado com sucesso');
+            setIsConnected(true);
+            setRetryCount(0); // Reset retry counter on success
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('❌ Erro ao conectar canal de contatos (retry:', retryCount, ')');
+            setIsConnected(false);
             
-            toast('🔥 Lead Quente!', {
-              description: message,
-              duration: 8000,
-            });
-
-            if (settings.sound) {
-              playNotificationSound();
+            // Retry com backoff exponencial (max 5 tentativas)
+            if (retryCount < 5) {
+              const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 30000); // Max 30s
+              console.log(`[Realtime] Tentando reconectar em ${backoffDelay}ms...`);
+              
+              retryTimeoutRef.current = setTimeout(() => {
+                setRetryCount(prev => prev + 1);
+                connectChannel();
+              }, backoffDelay);
+            } else {
+              // Exibir toast apenas após esgotar retries
+              toast.error('Erro ao conectar notificações de mensagens', {
+                description: 'Contatos do WhatsApp podem não atualizar em tempo real',
+                action: {
+                  label: 'Tentar novamente',
+                  onClick: () => {
+                    setRetryCount(0);
+                    connectChannel();
+                  },
+                },
+              });
             }
-
-            if (settings.desktop) {
-              showBrowserNotification('Lead Aqueceu!', message);
+          } else if (status === 'TIMED_OUT') {
+            console.error('⏱️ Timeout ao conectar canal de contatos (retry:', retryCount, ')');
+            setIsConnected(false);
+            
+            // Retry com backoff para timeout também
+            if (retryCount < 5) {
+              const backoffDelay = Math.min(2000 * Math.pow(2, retryCount), 60000); // Max 60s para timeout
+              console.log(`[Realtime] Timeout: tentando reconectar em ${backoffDelay}ms...`);
+              
+              retryTimeoutRef.current = setTimeout(() => {
+                setRetryCount(prev => prev + 1);
+                connectChannel();
+              }, backoffDelay);
+            } else {
+              toast.error('Timeout ao conectar notificações de mensagens', {
+                description: 'Verifique sua conexão com a internet',
+                action: {
+                  label: 'Tentar novamente',
+                  onClick: () => {
+                    setRetryCount(0);
+                    connectChannel();
+                  },
+                },
+              });
             }
+          } else if (status === 'CLOSED') {
+            console.warn('🔌 Canal de notificações foi fechado');
+            setIsConnected(false);
           }
+        });
 
-          // Invalidar cache do React Query
-          queryClient.invalidateQueries({ queryKey: ['evolution-contacts'] });
-          queryClient.invalidateQueries({ queryKey: ['crm-pipeline'] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'evolution_contacts',
-          filter: `phone=eq.${cliente.phone}`,
-        },
-        (payload) => {
-          console.log('[Realtime] Novo contato adicionado:', payload);
-          
-          const newContact = payload.new as EvolutionContact;
-          
-          toast.info('Novo Lead Adicionado', {
-            description: newContact.push_name || newContact.remote_jid,
-            duration: 4000,
-          });
+      // Salvar referência do canal
+      channelRef.current = contactsChannel;
+    };
 
-          if (settings.sound) {
-            playNotificationSound();
-          }
-
-          queryClient.invalidateQueries({ queryKey: ['evolution-contacts'] });
-          queryClient.invalidateQueries({ queryKey: ['crm-pipeline'] });
-        }
-      )
-      .subscribe((status) => {
-        console.log('[Realtime] Status da conexão (WhatsApp/Contatos):', status);
-        setIsConnected(status === 'SUBSCRIBED');
-
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Canal de contatos Evolution conectado com sucesso');
-          // Toast removido para evitar duplicação com NotificationContext
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Erro ao conectar canal de contatos');
-          toast.error('Erro ao conectar notificações de mensagens', {
-            description: 'Contatos do WhatsApp podem não atualizar em tempo real',
-          });
-          setIsConnected(false);
-        } else if (status === 'TIMED_OUT') {
-          console.error('⏱️ Timeout ao conectar canal de contatos');
-          toast.error('Timeout ao conectar notificações de mensagens', {
-            description: 'Verifique sua conexão com a internet',
-          });
-          setIsConnected(false);
-        }
-      });
+    // Iniciar conexão
+    connectChannel();
 
     // Cleanup ao desmontar
     return () => {
-      console.log('[Realtime] Desconectando canal');
-      contactsChannel.unsubscribe();
-      supabase.removeChannel(contactsChannel);
+      console.log('[Realtime] Desmontando hook, limpando recursos');
+      
+      // Limpar retry pendente
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+      
+      // Limpar canal
+      if (channelRef.current) {
+        channelRef.current.unsubscribe();
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+      
       setIsConnected(false);
+      setRetryCount(0);
     };
-  }, [cliente?.phone, settings, queryClient]);
+  }, [cliente?.phone, settings.enabled, queryClient]); // Removido 'settings' completo para evitar reconexões desnecessárias
 
   return {
     isConnected,

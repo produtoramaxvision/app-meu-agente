@@ -172,7 +172,7 @@ export function SendWhatsAppDialog({
             // Rebuscar para garantir dados atualizados
             fetchAvailableInstances();
             setDisconnectedInstance(null);
-            toast.success('Instância reconectada!');
+            // Toast exibido pelo refreshConnectionMutation.onSuccess no useSDRAgent
           }
         }
       )
@@ -217,7 +217,7 @@ export function SendWhatsAppDialog({
         });
         // Opcionalmente navegar para página do SDR
       } else if (data?.connected) {
-        toast.success('Instância reconectada!');
+        // Toast exibido pelo refreshConnectionMutation.onSuccess no useSDRAgent
         fetchAvailableInstances();
         setDisconnectedInstance(null);
       }
