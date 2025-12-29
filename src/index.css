@@ -651,3 +651,48 @@
     transform: rotate(360deg);
   }
 }
+
+/* ============================================
+   @hello-pangea/dnd - Mobile Touch Optimizations
+   Based on: https://github.com/hello-pangea/dnd/blob/main/docs/guides/preset-styles.md
+   ============================================ */
+
+/* Applied to all drag handles - optimizes touch interactions and prevents iOS Safari issues */
+[data-rbd-drag-handle-draggable-id] {
+  /* Optimize touch interactions - opts out of pull-to-refresh and delayed anchor focus on Android Chrome */
+  touch-action: manipulation;
+  
+  /* Remove iOS Safari tap highlight (grey overlay on touch) */
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  
+  /* Prevent iOS Safari long-press context menu during drag initiation */
+  -webkit-touch-callout: none;
+  
+  /* Prevent cursor change that indicates text selection on touch devices */
+  cursor: grab;
+}
+
+[data-rbd-drag-handle-draggable-id]:active {
+  cursor: grabbing;
+}
+
+/* Applied to body during dragging phase - prevents text selection during drag */
+body.rbd-dragging {
+  user-select: none;
+  -webkit-user-select: none;
+  
+  /* Prevent iOS Safari from trying to select text while dragging */
+  -webkit-touch-callout: none;
+}
+
+/* Prevent selection on draggable items to avoid iOS Safari selection bugs */
+[data-rbd-draggable-id] {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Ensure smooth performance on mobile - use GPU acceleration */
+[data-rbd-draggable-context-id] {
+  transform: translateZ(0);
+  will-change: transform;
+}

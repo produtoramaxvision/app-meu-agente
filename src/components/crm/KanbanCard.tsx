@@ -120,6 +120,11 @@ export const KanbanCard = memo(function KanbanCard({
     }
   }, [isDragging, onClick, contact]);
 
+  // Previne context menu nativo do iOS Safari durante long-press para drag
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+  }, []);
+
   // ⚡ OTIMIZAÇÃO: useCallback para handlers de ações rápidas
   const handleMessageClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -221,6 +226,7 @@ export const KanbanCard = memo(function KanbanCard({
               isDragging && "shadow-2xl scale-105"
             )}
             onClick={handleClick}
+            onContextMenu={handleContextMenu}
           >
             {/* Faixa de cor baseada na coluna/status */}
             <div
