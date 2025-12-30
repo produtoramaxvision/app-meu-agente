@@ -655,44 +655,66 @@
 /* ============================================
    @hello-pangea/dnd - Mobile Touch Optimizations
    Based on: https://github.com/hello-pangea/dnd/blob/main/docs/guides/preset-styles.md
+   Note: Library uses data-rfd-* prefix (not data-rbd-*)
    ============================================ */
 
 /* Applied to all drag handles - optimizes touch interactions and prevents iOS Safari issues */
-[data-rbd-drag-handle-draggable-id] {
-  /* Optimize touch interactions - opts out of pull-to-refresh and delayed anchor focus on Android Chrome */
-  touch-action: manipulation;
-  
+[data-rfd-drag-handle-draggable-id] {
   /* Remove iOS Safari tap highlight (grey overlay on touch) */
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   
   /* Prevent iOS Safari long-press context menu during drag initiation */
   -webkit-touch-callout: none;
   
-  /* Prevent cursor change that indicates text selection on touch devices */
+  /* Prevent text selection which causes "stuck selection" bug on iOS Safari */
+  -webkit-user-select: none;
+  user-select: none;
+  
+  /* Visual feedback for draggable elements */
   cursor: grab;
 }
 
-[data-rbd-drag-handle-draggable-id]:active {
+[data-rfd-drag-handle-draggable-id]:active {
   cursor: grabbing;
 }
 
-/* Applied to body during dragging phase - prevents text selection during drag */
-body.rbd-dragging {
-  user-select: none;
-  -webkit-user-select: none;
-  
-  /* Prevent iOS Safari from trying to select text while dragging */
-  -webkit-touch-callout: none;
+/* 📱 CRITICAL MOBILE FIX: When body has rfd-dragging-active class (set by React during drag),
+   disable ALL scroll behaviors on parent containers to prevent horizontal board scroll 
+   from hijacking the drag gesture on mobile/touch devices */
+body.rfd-dragging-active {
+  overflow: hidden !important;
+  touch-action: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+body.rfd-dragging-active .overflow-x-auto,
+body.rfd-dragging-active .overflow-y-auto,
+body.rfd-dragging-active .snap-x,
+body.rfd-dragging-active [class*="overflow"] {
+  overflow: hidden !important;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
 }
 
 /* Prevent selection on draggable items to avoid iOS Safari selection bugs */
-[data-rbd-draggable-id] {
+[data-rfd-draggable-id] {
   -webkit-user-select: none;
   user-select: none;
 }
 
 /* Ensure smooth performance on mobile - use GPU acceleration */
-[data-rbd-draggable-context-id] {
+[data-rfd-draggable-context-id] {
   transform: translateZ(0);
   will-change: transform;
+}
+
+/* Mobile-specific: Kanban board scroll containers should not interfere with drag on touch */
+@media (pointer: coarse) {
+  /* On touch devices, prevent scroll containers from capturing touch during potential drag */
+  [data-rfd-droppable-id] .overflow-y-auto,
+  [data-rfd-droppable-id] .overflow-x-auto {
+    overscroll-behavior: contain;
+  }
 }

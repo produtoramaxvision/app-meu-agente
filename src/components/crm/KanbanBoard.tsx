@@ -1,5 +1,5 @@
 import { memo, useCallback } from 'react';
-import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, DropResult, BeforeCapture } from '@hello-pangea/dnd';
 import { KanbanColumn } from './KanbanColumn';
 import { EvolutionContact, LeadStatus } from '@/types/sdr';
 
@@ -32,8 +32,35 @@ export const KanbanBoard = memo(function KanbanBoard({
   onTagClick,
   selectedTags = [],
 }: KanbanBoardProps) {
-  // ⚡ OTIMIZAÇÃO: useCallback estabiliza referência do handler
+  // 📱 MOBILE FIX: Helper para ativar modo drag (desabilita scroll)
+  const enableDragMode = useCallback(() => {
+    document.body.classList.add('rfd-dragging-active');
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+  }, []);
+
+  // 📱 MOBILE FIX: Helper para desativar modo drag (restaura scroll)
+  const disableDragMode = useCallback(() => {
+    document.body.classList.remove('rfd-dragging-active');
+    document.body.style.overflow = '';
+    document.body.style.touchAction = '';
+  }, []);
+
+  // 📱 MOBILE FIX: Chamado antes de capturar dimensões (primeiro callback no lifecycle)
+  const handleBeforeCapture = useCallback((_before: BeforeCapture) => {
+    enableDragMode();
+  }, [enableDragMode]);
+
+  // 📱 MOBILE FIX: Backup - também chamado quando drag inicia (após long-press em touch)
+  const handleDragStart = useCallback(() => {
+    enableDragMode();
+  }, [enableDragMode]);
+
+  // 📱 MOBILE FIX: Remove classe do body após drag terminar
   const handleDragEnd = useCallback((result: DropResult) => {
+    // Restaura scroll
+    disableDragMode();
+    
     const { destination, source, draggableId } = result;
 
     // Não fazer nada se dropped fora de um droppable
@@ -57,10 +84,14 @@ export const KanbanBoard = memo(function KanbanBoard({
       // Apenas atualizar status se mudou de coluna
       moveCard(draggableId, newStatus);
     }
-  }, [moveCard]);
+  }, [disableDragMode, moveCard]);
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
+    <DragDropContext 
+      onBeforeCapture={handleBeforeCapture} 
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       <div className="flex h-full items-stretch gap-4 pb-4 px-6 pt-6 snap-x lg:overflow-x-auto lg:snap-none">
         {columns.map((col) => (
           <div key={col.id} className="snap-center h-full">
