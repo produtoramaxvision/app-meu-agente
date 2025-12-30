@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import { DragDropContext, DropResult, BeforeCapture } from '@hello-pangea/dnd';
 import { KanbanColumn } from './KanbanColumn';
 import { EvolutionContact, LeadStatus } from '@/types/sdr';
@@ -32,19 +32,53 @@ export const KanbanBoard = memo(function KanbanBoard({
   onTagClick,
   selectedTags = [],
 }: KanbanBoardProps) {
-  // 📱 MOBILE FIX: Helper para ativar modo drag (desabilita scroll)
-  const enableDragMode = useCallback(() => {
-    document.body.classList.add('rfd-dragging-active');
-    document.body.style.overflow = 'hidden';
-    document.body.style.touchAction = 'none';
+  const dragModeEnabledRef = useRef(false);
+
+  // iOS Safari: long-press pode disparar context menu / seleção e deixar highlight “preso”
+  const preventDefaultEvent = useCallback((e: Event) => {
+    e.preventDefault();
   }, []);
 
-  // 📱 MOBILE FIX: Helper para desativar modo drag (restaura scroll)
+  // 📱 MOBILE FIX: Helper para ativar modo drag (bloqueia scroll do container do CRM via CSS)
+  const enableDragMode = useCallback(() => {
+    if (dragModeEnabledRef.current) return;
+    dragModeEnabledRef.current = true;
+
+    document.body.classList.add('rfd-dragging-active');
+
+    // Prevent native iOS behaviors during the drag lifecycle
+    document.addEventListener('contextmenu', preventDefaultEvent, true);
+    document.addEventListener('selectstart', preventDefaultEvent, true);
+  }, [preventDefaultEvent]);
+
+  // 📱 MOBILE FIX: Helper para desativar modo drag
   const disableDragMode = useCallback(() => {
+    if (!dragModeEnabledRef.current) return;
+    dragModeEnabledRef.current = false;
+
     document.body.classList.remove('rfd-dragging-active');
-    document.body.style.overflow = '';
-    document.body.style.touchAction = '';
-  }, []);
+
+    document.removeEventListener('contextmenu', preventDefaultEvent, true);
+    document.removeEventListener('selectstart', preventDefaultEvent, true);
+  }, [preventDefaultEvent]);
+
+  // Failsafe: se a tela perder foco / pagehide no iOS, não deixar o body “preso”
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') {
+        disableDragMode();
+      }
+    };
+
+    window.addEventListener('pagehide', disableDragMode);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('pagehide', disableDragMode);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      disableDragMode();
+    };
+  }, [disableDragMode]);
 
   // 📱 MOBILE FIX: Chamado antes de capturar dimensões (primeiro callback no lifecycle)
   const handleBeforeCapture = useCallback((_before: BeforeCapture) => {
@@ -92,7 +126,7 @@ export const KanbanBoard = memo(function KanbanBoard({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex h-full items-stretch gap-4 pb-4 px-6 pt-6 snap-x lg:overflow-x-auto lg:snap-none">
+      <div className="flex h-full items-stretch gap-4 pb-4 px-6 pt-6 snap-x overflow-x-auto lg:snap-none">
         {columns.map((col) => (
           <div key={col.id} className="snap-center h-full">
             <KanbanColumn

@@ -226,7 +226,7 @@ export function CRMLayout({ children, headerStats, viewMode, onViewChange, searc
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-auto bg-[hsl(var(--sidebar-bg))]">
+      <div className="crm-scroll-container flex-1 overflow-auto bg-[hsl(var(--sidebar-bg))]">
         {children}
       </div>
 

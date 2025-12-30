@@ -669,6 +669,9 @@
   /* Prevent text selection which causes "stuck selection" bug on iOS Safari */
   -webkit-user-select: none;
   user-select: none;
+
+  /* Recommended by preset-styles.md: improves touch UX and avoids delayed behaviors */
+  touch-action: manipulation;
   
   /* Visual feedback for draggable elements */
   cursor: grab;
@@ -683,18 +686,14 @@
    from hijacking the drag gesture on mobile/touch devices */
 body.rfd-dragging-active {
   overflow: hidden !important;
-  touch-action: none !important;
   user-select: none !important;
   -webkit-user-select: none !important;
   -webkit-touch-callout: none !important;
 }
 
-body.rfd-dragging-active .overflow-x-auto,
-body.rfd-dragging-active .overflow-y-auto,
-body.rfd-dragging-active .snap-x,
-body.rfd-dragging-active [class*="overflow"] {
+/* Lock only the CRM scroll container during drag (avoid breaking other scroll areas / auto-scroll) */
+body.rfd-dragging-active .crm-scroll-container {
   overflow: hidden !important;
-  touch-action: none !important;
   overscroll-behavior: none !important;
 }
 
