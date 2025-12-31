@@ -230,6 +230,68 @@ https://console.cloud.google.com/apis/api/speech.googleapis.com/quotas
 - Aumentar volume de entrada no sistema
 - Verificar se microfone está selecionado corretamente
 
+### Erro: "API_KEY_SERVICE_BLOCKED"
+
+**Causa:** A API Key do Google não tem permissão para acessar a Cloud Speech-to-Text API
+
+**Mensagem de erro completa:**
+```json
+{
+  "error": {
+    "code": 403,
+    "message": "Requests to this API speech.googleapis.com method google.cloud.speech.v1.Speech.Recognize are blocked.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "reason": "API_KEY_SERVICE_BLOCKED",
+        "domain": "googleapis.com"
+      }
+    ]
+  }
+}
+```
+
+**Solução:**
+1. Acesse [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials)
+2. Localize sua API Key (a mesma definida em `GOOGLE_SPEECH_API_KEY`)
+3. Clique em "Edit" (ícone de lápis)
+4. Em "API restrictions", escolha uma das opções:
+   - **Opção A (Recomendada para produção):** Selecione "Restrict key" e adicione "Cloud Speech-to-Text API" à lista
+   - **Opção B (Rápida para testes):** Selecione "Don't restrict key"
+5. Clique em "Save"
+6. Aguarde ~5 minutos para propagação das mudanças
+7. Teste novamente a transcrição
+
+**⚠️ Importante:** Se você tem dois tipos de APIs (v1 e v2), certifique-se de habilitar:
+- "Cloud Speech-to-Text API" (v1) - É a que usamos
+- ~~"Cloud Speech-to-Text API v2"~~ - Não é necessária
+
+### Loop Infinito de Toasts (Corrigido em v2.1.1)
+
+**Problema:** Após transcrever o primeiro áudio, ao gravar um segundo áudio, múltiplos toasts aparecem em loop:
+- "🎤 Gravação iniciada" (repetido)
+- "⏳ Processando áudio..." (repetido)
+- "🎙️ Transcrevendo áudio..." (repetido)
+- "❌ Erro ao transcrever" (repetido)
+
+**Causa Raiz:**
+1. O `audioBlob` não era limpo após processamento
+2. `useEffect` que monitora `audioBlob` continuava disparando
+3. `handleTranscription` era recriado a cada render, causando mais disparos
+
+**Solução (v2.1.1):**
+- ✅ Adicionada função `clearAudioBlob()` que é chamada após transcrição
+- ✅ Removida dependência `handleTranscription` do useEffect
+- ✅ Blob é limpo automaticamente no `finally` block
+
+**Se ainda ocorrer (improvável):**
+```bash
+# Limpar cache e recarregar
+1. Pressione Ctrl+Shift+R (força reload sem cache)
+2. Ou limpe cache: F12 → Application → Clear Storage → Clear site data
+3. Faça login novamente
+```
+
 ## 📚 Referências
 
 - [Google Speech-to-Text Docs](https://cloud.google.com/speech-to-text/docs)
@@ -249,22 +311,57 @@ https://console.cloud.google.com/apis/api/speech.googleapis.com/quotas
 
 ### Features Implementadas
 
-- ✅ Captura de áudio com MediaRecorder
-- ✅ Feedback visual durante gravação (timer + barras)
-- ✅ Tratamento de erros de permissão
-- ✅ Transcrição automática ao finalizar
-- ✅ Envio da transcrição como mensagem
-- ✅ Toast notifications em português
-- ✅ Confiança da transcrição exibida
+**Core (v2.1.0):**
+- ✅ Captura de áudio com MediaRecorder API
+- ✅ Feedback visual durante gravação (timer + barras animadas)
+- ✅ Tratamento de erros de permissão do microfone
+- ✅ Transcrição automática ao finalizar gravação
+- ✅ Envio da transcrição como mensagem no chat
+- ✅ Toast notifications em português com ícones
+- ✅ Confiança da transcrição exibida (confidence score)
 - ✅ Otimização de áudio (mono, 128kbps, 48kHz)
 - ✅ Verificação de permissões (plano Business/Premium)
+- ✅ Edge Function com autenticação JWT
+- ✅ Suporte a formato WebM/Opus nativo do navegador
+
+**Melhorias de UI (v2.1.1):**
+- ✅ **Botões Separados:** Cancelar (descarta áudio) vs Enviar (transcreve)
+- ✅ Estilização visual distinta (vermelho para cancelar, verde para enviar)
+- ✅ Feedback tátil com borders e hover states
+- ✅ Ícones intuitivos (X para cancelar, Send para enviar)
+- ✅ Tooltips explicativos em cada botão
+
+**Correções de Bugs (v2.1.1):**
+- ✅ **Loop infinito de toasts corrigido** (bug crítico)
+- ✅ Limpeza automática de audioBlob após processamento
+- ✅ Flag `wasCancelled` para prevenir processamento de áudio descartado
+- ✅ useEffect otimizado para evitar re-renders desnecessários
+
+**Tratamento de Erros:**
+- ✅ Permissão de microfone negada (com instruções)
+- ✅ Microfone não encontrado ou ocupado
+- ✅ Falha na transcrição com retry button
+- ✅ API Key bloqueada (com guia de solução)
+- ✅ Timeout de rede (com mensagem amigável)
 
 ### Próximas Melhorias (Opcional)
 
-- [ ] Converter para FLAC no backend (requer ffmpeg)
-- [ ] Cache de áudio para retry sem regravar
-- [ ] Histórico de transcrições no perfil
-- [ ] Suporte a múltiplos idiomas (seletor UI)
-- [ ] Visualizador de forma de onda mais detalhado
-- [ ] Cancelar gravação (botão ESC)
-- [ ] Limite de duração configurável (ex: 2 min)
+**Backend:**
+- [ ] Converter para FLAC no backend (requer ffmpeg no Edge Function)
+- [ ] Cache de áudio temporário para retry sem regravar
+- [ ] Histórico de transcrições no perfil do usuário
+- [ ] Estatísticas de uso (minutos transcritos, custo estimado)
+
+**Frontend:**
+- [ ] Suporte a múltiplos idiomas com seletor UI (pt-BR, en-US, es-ES)
+- [ ] Visualizador de forma de onda FFT em tempo real
+- [ ] Atalho de teclado ESC para cancelar gravação
+- [ ] Limite de duração configurável por plano (2min Basic, 5min Business, 10min Premium)
+- [ ] Preview de áudio antes de enviar para transcrição
+- [ ] Indicador de volume/nível do microfone durante gravação
+
+**Otimizações:**
+- [ ] Compressão de áudio no frontend antes de enviar
+- [ ] Streaming de áudio (enviar chunks durante gravação)
+- [ ] Cache de API responses para áudios idênticos
+- [ ] Debounce de clicks no botão de microfone

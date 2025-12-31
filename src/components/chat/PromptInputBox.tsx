@@ -743,20 +743,80 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
   };
 
   const isImageFile = (file: File) => file.type.startsWith("image/");
+  
+  const isAudioFile = (file: File) => {
+    const audioTypes = [
+      'audio/mpeg',      // MP3
+      'audio/mp3',       // MP3
+      'audio/wav',       // WAV
+      'audio/wave',      // WAV
+      'audio/x-wav',     // WAV
+      'audio/flac',      // FLAC
+      'audio/x-flac',    // FLAC
+      'audio/ogg',       // OGG
+      'audio/webm',      // WebM
+      'audio/mp4',       // M4A
+      'audio/x-m4a',     // M4A
+      'audio/aac',       // AAC
+    ];
+    return file.type.startsWith('audio/') || audioTypes.includes(file.type);
+  };
+
+  const isDocumentFile = (file: File) => {
+    const documentTypes = [
+      'text/plain',           // TXT
+      'text/markdown',        // MD
+      'application/pdf',      // PDF
+    ];
+    const documentExtensions = ['.txt', '.md', '.markdown', '.pdf'];
+    const hasValidType = documentTypes.includes(file.type);
+    const hasValidExtension = documentExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+    return hasValidType || hasValidExtension;
+  };
+
+  const isSupportedFile = (file: File) => {
+    return isImageFile(file) || isAudioFile(file) || isDocumentFile(file);
+  };
 
   const processFile = React.useCallback((file: File) => {
-    if (!isImageFile(file)) {
-      console.log("Only image files are allowed");
+    // Verificar se é tipo suportado
+    if (!isSupportedFile(file)) {
+      toast.error('Tipo de arquivo não suportado. Use: imagens, áudio (MP3, WAV, etc), documentos (TXT, PDF, MD)', {
+        duration: 5000,
+      });
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      console.log("File too large (max 10MB)");
+
+    // Validar tamanho baseado no tipo
+    const maxSize = isImageFile(file) ? 10 * 1024 * 1024 : 25 * 1024 * 1024;
+    const maxSizeLabel = isImageFile(file) ? '10MB' : '25MB';
+    
+    if (file.size > maxSize) {
+      toast.error(`Arquivo muito grande (máx. ${maxSizeLabel})`, {
+        duration: 4000,
+      });
       return;
     }
+
+    // Adicionar arquivo aos anexos
     setFiles([file]);
-    const reader = new FileReader();
-    reader.onload = (e) => setFilePreviews({ [file.name]: e.target?.result as string });
-    reader.readAsDataURL(file);
+    
+    // Criar preview apenas para imagens
+    if (isImageFile(file)) {
+      const reader = new FileReader();
+      reader.onload = (e) => setFilePreviews({ [file.name]: e.target?.result as string });
+      reader.readAsDataURL(file);
+    } else {
+      // Para outros tipos, limpar previews de imagem
+      setFilePreviews({});
+    }
+
+    // Exibir toast informativo
+    const fileType = isImageFile(file) ? 'Imagem' : isAudioFile(file) ? 'Áudio' : 'Documento';
+    toast.success(`${fileType} adicionado: ${file.name}`, {
+      duration: 3000,
+      icon: '📎',
+    });
   }, [setFiles, setFilePreviews]);
 
   const handleDragOver = React.useCallback((e: React.DragEvent) => {
@@ -773,8 +833,11 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
     e.preventDefault();
     e.stopPropagation();
     const droppedFiles = Array.from(e.dataTransfer.files);
-    const imageFiles = droppedFiles.filter((file) => isImageFile(file));
-    if (imageFiles.length > 0) processFile(imageFiles[0]);
+    const supportedFiles = droppedFiles.filter((file) => isSupportedFile(file));
+    if (supportedFiles.length > 0) processFile(supportedFiles[0]);
+    else if (droppedFiles.length > 0) {
+      toast.error('Tipo de arquivo não suportado');
+    }
   }, [processFile]);
 
   const handleRemoveFile = (index: number) => {
@@ -885,7 +948,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
           <div className="flex flex-wrap gap-2 p-0 pb-1 transition-all duration-300">
             {files.map((file, index) => (
               <div key={index} className="relative group">
-                {file.type.startsWith("image/") && filePreviews[file.name] && (
+                {file.type.startsWith("image/") && filePreviews[file.name] ? (
                   <div
                     className="w-16 h-16 rounded-xl overflow-hidden cursor-pointer transition-all duration-300"
                     onClick={() => openImageModal(filePreviews[file.name])}
@@ -903,6 +966,31 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                       className="absolute top-1 right-1 rounded-full bg-black/70 p-0.5 opacity-100 transition-opacity"
                     >
                       <X className="h-3 w-3 text-white" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg max-w-xs">
+                    <div className="flex-shrink-0">
+                      {isAudioFile(file) ? (
+                        <span className="text-xl">🎵</span>
+                      ) : (
+                        <span className="text-xl">📄</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-200 truncate">{file.name}</p>
+                      <p className="text-xs text-gray-400">
+                        {(file.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveFile(index);
+                      }}
+                      className="flex-shrink-0 rounded-full bg-gray-700 hover:bg-red-500/20 p-1 transition-colors"
+                    >
+                      <X className="h-3 w-3 text-gray-300 hover:text-red-400" />
                     </button>
                   </div>
                 )}
@@ -946,11 +1034,11 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
               isRecording ? "opacity-0 invisible h-0" : "opacity-100 visible"
             )}
           >
-            <PromptInputAction tooltip="Enviar imagem">
+            <PromptInputAction tooltip="Enviar arquivo (imagem, áudio, documento)">
               <button
                 onClick={() => uploadInputRef.current?.click()}
               className="flex h-8 w-8 text-[#9CA3AF] cursor-pointer items-center justify-center rounded-full transition-colors duration-200 hover:bg-gray-600/30 hover:text-[#D1D5DB]"
-                disabled={isRecording || disabled}
+                disabled={isRecording || disabled || isTranscribing}
               >
                 <motion.div
                   className="pointer-events-none"
@@ -968,7 +1056,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
                     if (e.target.files && e.target.files.length > 0) processFile(e.target.files[0]);
                     if (e.target) e.target.value = "";
                   }}
-                  accept="image/*"
+                  accept="image/*,audio/*,.mp3,.wav,.m4a,.flac,.ogg,.webm,.aac,.txt,.pdf,.md,.markdown"
                 />
               </button>
             </PromptInputAction>

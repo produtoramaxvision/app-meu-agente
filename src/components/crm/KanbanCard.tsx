@@ -12,6 +12,7 @@ import { ptBR } from 'date-fns/locale';
 import { useCustomFieldDefinitions, useCustomFieldValues } from '@/hooks/useCustomFields';
 import { useEvolutionInstances } from '@/hooks/useEvolutionInstances';
 import { LeadScoreBadge } from './LeadScoreBadge';
+import { ConnectionsBadge } from './ConnectionsBadge';
 import { getTagColor, useLeadTagsReadOnly } from '@/hooks/useCrmTags';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -159,25 +160,6 @@ export const KanbanCard = memo(function KanbanCard({
   const status = (contact.crm_lead_status || 'novo') as LeadStatus;
   const statusStyles = STATUS_STYLES[status];
 
-  // Cores de status das instâncias
-  const getStatusColor = (status?: string) => {
-    switch (status) {
-      case 'connected': return 'bg-green-500';
-      case 'connecting': return 'bg-yellow-500';
-      case 'error': return 'bg-red-500';
-      default: return 'bg-gray-400';
-    }
-  };
-
-  const getStatusBadgeStyles = (status?: string) => {
-    switch (status) {
-      case 'connected': return 'bg-green-500/10 text-green-700 dark:text-green-400 border-green-200/50';
-      case 'connecting': return 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-200/50';
-      case 'error': return 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-200/50';
-      default: return 'bg-secondary/50 text-secondary-foreground border-transparent';
-    }
-  };
-
   // Identificar instâncias do contato
   const instanceIds = contact.instance_ids || (contact.instance_id ? [contact.instance_id] : []);
   const contactInstances = instances?.filter(i => instanceIds.includes(i.id)) || [];
@@ -304,46 +286,13 @@ export const KanbanCard = memo(function KanbanCard({
                     
                     {/* Badges Row */}
                     <div className="flex flex-wrap items-center gap-1.5">
-                      {/* Instance Badges - Limita a 2 + contador */}
-                      {contactInstances.length > 0 ? (
-                        <>
-                          {contactInstances.slice(0, 2).map(inst => (
-                            <Badge 
-                              key={inst.id} 
-                              variant="outline" 
-                              className={cn(
-                                "text-[10px] px-1.5 py-0 h-5 font-medium flex items-center gap-1 truncate max-w-[120px] transition-colors cursor-pointer",
-                                getStatusBadgeStyles(inst.connection_status)
-                              )}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/agente-sdr?instanceId=${inst.id}`);
-                              }}
-                              title={`${inst.display_name || inst.instance_name} (${inst.connection_status || 'offline'})`}
-                            >
-                              <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", getStatusColor(inst.connection_status))} />
-                              <span className="truncate">{inst.display_name || inst.instance_name}</span>
-                            </Badge>
-                          ))}
-                          {contactInstances.length > 2 && (
-                            <Badge 
-                              variant="outline" 
-                              className="text-[10px] px-1.5 py-0 h-5 font-medium border-dashed opacity-70"
-                              title={`Mais ${contactInstances.length - 2} instância(s)`}
-                            >
-                              +{contactInstances.length - 2}
-                            </Badge>
-                          )}
-                        </>
-                      ) : (
-                         <Badge 
-                            variant="secondary" 
-                            className="text-[10px] px-1.5 py-0 h-5 font-medium border-0 bg-secondary/30 opacity-60 flex items-center gap-1"
-                          >
-                            <Circle className="w-1.5 h-1.5 fill-muted-foreground stroke-none" />
-                            Sem instância
-                          </Badge>
-                      )}
+                      {/* Connection Badge - Unified display of all instances */}
+                      <ConnectionsBadge 
+                        instances={contactInstances}
+                        onInstanceClick={(instanceId) => {
+                          navigate(`/agente-sdr?instanceId=${instanceId}`);
+                        }}
+                      />
 
                       {/* Badges de Percentual e Cálculos - com card explicativo em hover */}
                       <HoverCard openDelay={120}>

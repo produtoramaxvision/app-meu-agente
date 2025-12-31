@@ -21,6 +21,59 @@ Este changelog segue o padrão [Keep a Changelog](https://keepachangelog.com/pt-
 
 ---
 
+## [2.1.1] - 2025-12-31
+
+### 🐛 Fixed
+
+#### Correção de Loop Infinito na Transcrição de Áudio
+- **Problema:** Após enviar o primeiro áudio transcrito e tentar gravar um segundo áudio, o app entrava em loop infinito disparando múltiplos toasts
+- **Causa Raiz:** 
+  - `useEffect` que processava o `audioBlob` tinha `handleTranscription` como dependência
+  - `handleTranscription` era recriado a cada renderização devido a `onSend` nas dependências do `useCallback`
+  - O `audioBlob` não era limpo após processamento, mantendo o estado e re-disparando o effect continuamente
+- **Solução Implementada:**
+  1. Adicionada função `clearAudioBlob()` no hook `useAudioRecorder`
+  2. Blob é limpo automaticamente após transcrição (no `finally` de `handleTranscription`)
+  3. Removida dependência `handleTranscription` do `useEffect` (com eslint-disable comentado)
+  4. Adicionada flag `wasCancelled` para prevenir processamento de áudio cancelado
+- **Resultado:** Transcrição agora funciona corretamente em múltiplas gravações sequenciais sem loops
+- **Arquivos Modificados:**
+  - `src/hooks/useAudioRecorder.ts` - Adicionado `clearAudioBlob()` e `wasCancelled`
+  - `src/components/chat/PromptInputBox.tsx` - Limpeza de blob e correção de dependências
+
+### 🔄 Changed
+
+#### Nova UI para Gravação de Áudio - Botões Separados
+- **Antes:** Durante a gravação, havia apenas 1 botão (Stop) que parava E enviava o áudio para transcrição
+- **Agora:** Durante a gravação, existem 2 botões distintos:
+  - **❌ Cancelar (vermelho):** Para a gravação e **descarta** o áudio sem processar
+  - **📤 Enviar (verde):** Para a gravação e **envia** para transcrição
+- **Benefícios:**
+  - Usuário tem controle total sobre descartar gravações ruins
+  - Interface mais intuitiva e explícita
+  - Reduz transcrições desnecessárias (economia de API calls)
+- **Detalhes Técnicos:**
+  - `handleCancelRecording()` chama `stopRecording(true)` passando flag de cancelamento
+  - `handleStopRecording()` chama `stopRecording(false)` para processar normalmente
+  - `useEffect` verifica `!wasCancelled` antes de processar o blob
+  - Botões com estilos visuais distintos (border, background, hover states)
+- **Arquivos Modificados:**
+  - `src/components/chat/PromptInputBox.tsx` - Nova UI condicional com 2 botões
+  - `src/hooks/useAudioRecorder.ts` - Parâmetro `cancel` em `stopRecording()`
+  - Importado ícone `Send` do lucide-react
+
+### 📚 Documentation
+
+#### Documentação Técnica Atualizada
+- Adicionada seção "Troubleshooting Avançado" em `AUDIO_TRANSCRIPTION_GOOGLE.md`
+- Documentado problema de loop infinito e solução técnica
+- Adicionadas instruções para configurar API Key no Google Cloud Console
+- Documentado erro `API_KEY_SERVICE_BLOCKED` e como resolver
+- Atualizada lista de features implementadas
+- Adicionados detalhes sobre nova UI de cancelar/enviar
+
+---
+
 ## [2.1.0] - 2025-12-30
 
 ### ✨ Added

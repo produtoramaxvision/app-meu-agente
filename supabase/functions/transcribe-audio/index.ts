@@ -16,8 +16,18 @@ interface TranscribeRequest {
 /**
  * Edge Function para transcrever áudio usando Google Cloud Speech-to-Text
  * 
- * Recebe áudio em WebM, converte para FLAC (formato otimizado) e 
+ * Recebe áudio em múltiplos formatos (WebM, MP3, WAV, FLAC, OGG) e 
  * transcreve usando a API do Google com configurações otimizadas para pt-BR
+ * 
+ * Formatos suportados:
+ * - WebM/Opus (gravação do navegador)
+ * - MP3 (upload de arquivo)
+ * - WAV/PCM (upload de arquivo)
+ * - FLAC (recomendado, melhor qualidade)
+ * - OGG/Opus (upload de arquivo)
+ * 
+ * Formatos NÃO suportados (API v1):
+ * - M4A/AAC (requer conversão prévia ou uso da API v2)
  */
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -49,14 +59,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Processing audio transcription, language: ${languageCode}`);
+    console.log(`Processing audio transcription, language: ${languageCode}, mimeType: ${mimeType}`);
 
     // Converter base64 para bytes
     const audioBytes = Uint8Array.from(atob(audioData), c => c.charCodeAt(0));
-    
-    // Para melhor qualidade, idealmente converter WebM para FLAC aqui
-    // Como Deno não tem ffmpeg nativo, vamos usar o formato original
-    // mas configurar a API do Google para aceitar WebM/Opus
     
     // Determinar encoding baseado no mimeType
     let encoding = 'WEBM_OPUS';
@@ -68,9 +74,32 @@ Deno.serve(async (req) => {
     } else if (mimeType.includes('flac')) {
       encoding = 'FLAC';
       sampleRateHertz = 16000;
-    } else if (mimeType.includes('wav')) {
+    } else if (mimeType.includes('wav') || mimeType.includes('wave')) {
       encoding = 'LINEAR16';
       sampleRateHertz = 16000;
+    } else if (mimeType.includes('mp3') || mimeType.includes('mpeg')) {
+      encoding = 'MP3';
+      sampleRateHertz = 16000; // Será ajustado automaticamente pela API
+    } else if (mimeType.includes('ogg') || mimeType.includes('opus')) {
+      encoding = 'OGG_OPUS';
+      sampleRateHertz = 16000;
+    } else if (mimeType.includes('m4a') || mimeType.includes('mp4') || mimeType.includes('aac')) {
+      // M4A/AAC não são diretamente suportados pela API v1
+      // Tentaremos usar LINEAR16 como fallback ou retornar erro
+      console.warn('M4A/AAC format detected. API v1 does not support it directly. Consider using v2 API or converting to FLAC/WAV.');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Unsupported format',
+          message: 'Formato M4A/AAC não é suportado diretamente. Por favor, use MP3, WAV, FLAC, OGG ou WebM.',
+          details: 'Consider converting the audio to a supported format like FLAC or WAV.'
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } else {
+      // Formato desconhecido, tentar WebM como padrão
+      console.warn(`Unknown mime type: ${mimeType}. Defaulting to WEBM_OPUS`);
+      encoding = 'WEBM_OPUS';
+      sampleRateHertz = 48000;
     }
 
     // Preparar request para Google Speech-to-Text API v1

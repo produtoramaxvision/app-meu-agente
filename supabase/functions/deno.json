@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "lib": ["deno.window"],
+    "strict": false
+  },
+  "lint": {
+    "files": {
+      "exclude": []
+    }
+  },
+  "fmt": {
+    "files": {
+      "exclude": []
+    }
+  }
+}

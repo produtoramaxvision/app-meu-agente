@@ -14,15 +14,15 @@ export interface TranscriptionError {
 }
 
 /**
- * Transcreve um Blob de áudio usando Google Speech-to-Text via Edge Function
+ * Transcreve um Blob ou File de áudio usando Google Speech-to-Text via Edge Function
  * 
- * @param audioBlob - Blob contendo o áudio gravado (WebM, WAV, FLAC, etc)
+ * @param audioBlob - Blob ou File contendo o áudio (WebM, MP3, WAV, FLAC, M4A, OGG, etc)
  * @param languageCode - Código do idioma (padrão: 'pt-BR')
  * @returns Promise com o texto transcrito e metadados
  * @throws Error se a transcrição falhar
  */
 export async function transcribeAudio(
-  audioBlob: Blob,
+  audioBlob: Blob | File,
   languageCode: string = 'pt-BR'
 ): Promise<TranscriptionResult> {
   try {
@@ -34,7 +34,10 @@ export async function transcribeAudio(
       ? base64Audio.split(',')[1] 
       : base64Audio;
 
+    const fileName = audioBlob instanceof File ? audioBlob.name : 'audio';
+    
     console.log('Transcribing audio:', {
+      fileName,
       size: audioBlob.size,
       type: audioBlob.type,
       languageCode,
