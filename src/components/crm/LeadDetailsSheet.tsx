@@ -385,7 +385,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact,
 
         {/* Content Area */}
         <div className="flex-1 flex flex-col min-h-0 bg-muted/5">
-          <Tabs defaultValue="tasks" className="flex-1 flex flex-col">
+          <Tabs defaultValue="tasks" className="flex-1 flex flex-col min-h-0">
             <div className="px-6 border-b bg-background sticky top-0 z-10">
               <TabsList className="w-full justify-start h-12 bg-transparent p-0 gap-6">
                 {['tasks', 'notes', 'history', 'tags', 'custom'].map((tab) => {
@@ -425,8 +425,8 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact,
               </TabsList>
             </div>
 
-            <div className="flex-1 overflow-auto p-6">
-              <TabsContent value="tasks" className="mt-0 h-full flex flex-col space-y-4">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 min-h-0">
+              <TabsContent value="tasks" className="mt-0 data-[state=active]:flex data-[state=inactive]:hidden flex-col space-y-4">
                 <form onSubmit={handleAddTask} className="flex gap-3">
                   <Input 
                     placeholder="Adicionar nova tarefa..." 
@@ -485,8 +485,8 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact,
                 </div>
               </TabsContent>
 
-              <TabsContent value="notes" className="mt-0 h-full">
-                <div className="h-full flex flex-col space-y-2">
+              <TabsContent value="notes" className="mt-0 data-[state=active]:block data-[state=inactive]:hidden">
+                <div className="flex flex-col space-y-2">
                   <div className="flex items-center justify-between px-1">
                     <label className="text-sm font-medium text-muted-foreground">
                       Anotações
@@ -508,14 +508,14 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact,
                 </div>
               </TabsContent>
 
-              <TabsContent value="history" className="mt-0">
+              <TabsContent value="history" className="mt-0 data-[state=active]:block data-[state=inactive]:hidden">
                 <ActivityTimeline 
                   activities={activities} 
                   isLoading={isLoadingActivities}
                 />
               </TabsContent>
 
-              <TabsContent value="tags" className="mt-0">
+              <TabsContent value="tags" className="mt-0 data-[state=active]:block data-[state=inactive]:hidden">
                 <div className="space-y-4">
                   <div className="p-4 rounded-xl border bg-card/50">
                     <TagsEditorRelational
@@ -527,7 +527,7 @@ export function LeadDetailsSheet({ contact, open, onOpenChange, onUpdateContact,
                 </div>
               </TabsContent>
 
-              <TabsContent value="custom" className="mt-0">
+              <TabsContent value="custom" className="mt-0 data-[state=active]:block data-[state=inactive]:hidden">
                 <div className="grid gap-6">
                   {definitions
                     .sort((a, b) => a.display_order - b.display_order)

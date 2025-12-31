@@ -297,21 +297,25 @@ export const KanbanCard = memo(function KanbanCard({
                       {/* Badges de Percentual e Cálculos - com card explicativo em hover */}
                       <HoverCard openDelay={120}>
                         <HoverCardTrigger asChild>
-                          <div className="flex flex-nowrap items-center gap-1.5 shrink-0 cursor-help">
-                            {/* Lead Score */}
+                          <div className="flex flex-nowrap items-center gap-1.5 shrink-0">
+                            {/* Lead Score - com hover individual */}
                             {contact.crm_lead_score !== null && contact.crm_lead_score !== undefined && contact.crm_lead_score > 0 && (
-                              <LeadScoreBadge score={contact.crm_lead_score} size="sm" showLabel={false} />
+                              <div className="inline-flex">
+                                <LeadScoreBadge score={contact.crm_lead_score} size="sm" showLabel={false} />
+                              </div>
                             )}
 
-                            {/* Badge de Probabilidade de Fechamento (Fase 3.5) */}
+                            {/* Badge de Probabilidade de Fechamento (Fase 3.5) - com hover individual */}
                             {contact.crm_win_probability !== null && status !== 'ganho' && status !== 'perdido' && (
-                              <Badge 
-                                variant="outline" 
-                                className="text-[10px] px-1.5 py-0 h-5 font-medium shrink-0"
-                                style={getWinProbabilityStyles(contact.crm_win_probability)}
-                              >
-                                {contact.crm_win_probability}%
-                              </Badge>
+                              <div className="inline-flex">
+                                <Badge 
+                                  variant="outline" 
+                                  className="text-[10px] px-1.5 py-0 h-5 font-medium shrink-0 cursor-help transition-all hover:scale-105 active:scale-95"
+                                  style={getWinProbabilityStyles(contact.crm_win_probability)}
+                                >
+                                  {contact.crm_win_probability}%
+                                </Badge>
+                              </div>
                             )}
                           </div>
                         </HoverCardTrigger>

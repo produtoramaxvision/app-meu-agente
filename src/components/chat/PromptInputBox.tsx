@@ -1037,7 +1037,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
             <PromptInputAction tooltip="Enviar arquivo (imagem, áudio, documento)">
               <button
                 onClick={() => uploadInputRef.current?.click()}
-              className="flex h-8 w-8 text-[#9CA3AF] cursor-pointer items-center justify-center rounded-full transition-colors duration-200 hover:bg-gray-600/30 hover:text-[#D1D5DB]"
+              className="flex h-8 w-8 text-[#9CA3AF] cursor-pointer items-center justify-center transition-colors duration-200 hover:text-[#D1D5DB]"
                 disabled={isRecording || disabled || isTranscribing}
               >
                 <motion.div

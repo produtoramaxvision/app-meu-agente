@@ -162,7 +162,7 @@ export function ActivityTimeline({ activities, isLoading, className }: ActivityT
 
   // Timeline render
   return (
-    <div className={cn('space-y-6', className)}>
+    <div className={cn('space-y-8', className)}>
       <AnimatePresence>
         {groupedActivities.map(({ date, activities: dayActivities }) => (
           <motion.div
@@ -171,18 +171,20 @@ export function ActivityTimeline({ activities, isLoading, className }: ActivityT
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
-            className="space-y-3"
+            className="space-y-4"
           >
             {/* Date Header */}
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Clock className="h-3.5 w-3.5" />
-              <span>
+            <div className="flex items-center gap-2.5 px-1">
+              <div className="flex items-center justify-center w-7 h-7 rounded-full bg-muted/50">
+                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+              <span className="text-sm font-semibold text-foreground">
                 {format(date, "EEEE, dd 'de' MMMM", { locale: ptBR })}
               </span>
             </div>
 
             {/* Activities List */}
-            <div className="space-y-4 pl-6 border-l-2 border-muted relative">
+            <div className="space-y-3 pl-1">
               {dayActivities.map((activity, index) => {
                 const Icon = activityIcons[activity.activity_type];
                 const colorClass = activityColors[activity.activity_type];
@@ -194,47 +196,54 @@ export function ActivityTimeline({ activities, isLoading, className }: ActivityT
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05, duration: 0.2 }}
-                    className="relative"
+                    className="grid grid-cols-[28px_1fr] items-start gap-x-3"
                   >
-                    {/* Timeline dot */}
-                    <div
-                      className={cn(
-                        'absolute -left-[29px] top-1 rounded-full p-1.5 border-2 border-background shadow-sm',
-                        colorClass
-                      )}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
+                    {/* Timeline column (line + dot) */}
+                    <div className="relative flex justify-center">
+                      <div className="absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-border/50" />
+                      <div
+                        className={cn(
+                          'relative z-10 mt-2 flex h-7 w-7 items-center justify-center rounded-full border-2 border-background shadow-md',
+                          colorClass
+                        )}
+                      >
+                        <Icon className="h-3 w-3 text-white" />
+                      </div>
                     </div>
 
                     {/* Activity Card */}
-                    <div className="bg-card border rounded-lg p-4 hover:shadow-sm transition-shadow">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-2 flex-1">
-                          <h4 className="text-sm font-medium">{activity.title}</h4>
-                          <Badge variant="outline" className="text-xs">
-                            {label}
-                          </Badge>
+                    <div className="min-w-0 bg-card/50 backdrop-blur-sm border rounded-xl p-3.5 hover:shadow-md hover:bg-card transition-all duration-200 group">
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-semibold text-foreground mb-1 line-clamp-2 group-hover:text-primary transition-colors">
+                            {activity.title}
+                          </h4>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="secondary" className="text-xs font-medium px-2 py-0.5">
+                              {label}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(activity.created_at || new Date()), {
+                                addSuffix: true,
+                                locale: ptBR,
+                              })}
+                            </span>
+                          </div>
                         </div>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {formatDistanceToNow(new Date(activity.created_at || new Date()), {
-                            addSuffix: true,
-                            locale: ptBR,
-                          })}
-                        </span>
                       </div>
 
                       {/* Description */}
                       {activity.description && (
-                        <p className="text-sm text-muted-foreground mb-3">
+                        <p className="text-sm text-muted-foreground leading-relaxed mb-2.5">
                           {activity.description}
                         </p>
                       )}
 
                       {/* Old/New Values (for changes) */}
                       {(activity.old_value || activity.new_value) && (
-                        <div className="flex items-center gap-2 text-xs bg-muted/50 rounded p-2">
+                        <div className="flex items-center gap-2.5 text-sm bg-muted/30 rounded-lg px-3 py-2 border border-border/50">
                           {activity.old_value && (
-                            <span className="text-muted-foreground line-through">
+                            <span className="text-muted-foreground/80 line-through font-medium">
                               {activity.old_value}
                             </span>
                           )}
@@ -242,22 +251,24 @@ export function ActivityTimeline({ activities, isLoading, className }: ActivityT
                             <span className="text-muted-foreground">→</span>
                           )}
                           {activity.new_value && (
-                            <span className="font-medium">
+                            <span className="font-semibold text-foreground">
                               {activity.new_value}
                             </span>
                           )}
                         </div>
                       )}
 
-                      {/* Metadata (if exists) */}
+                      {/* Metadata (if exists) - Collapsible */}
                       {activity.metadata && Object.keys(activity.metadata as object).length > 0 && (
-                        <div className="mt-2 text-xs text-muted-foreground">
-                          {JSON.stringify(activity.metadata).length < 100 && (
-                            <pre className="whitespace-pre-wrap break-all">
-                              {JSON.stringify(activity.metadata, null, 2)}
-                            </pre>
-                          )}
-                        </div>
+                        <details className="mt-2.5 group/details">
+                          <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors flex items-center gap-1.5 select-none">
+                            <span className="group-open/details:rotate-90 transition-transform">▶</span>
+                            <span>Ver detalhes técnicos</span>
+                          </summary>
+                          <pre className="mt-2 text-xs text-muted-foreground bg-muted/30 rounded-lg p-2.5 overflow-x-auto border border-border/50 font-mono">
+{JSON.stringify(activity.metadata, null, 2)}
+                          </pre>
+                        </details>
                       )}
                     </div>
                   </motion.div>

@@ -37,7 +37,7 @@ export const LeadScoreBadge = memo(function LeadScoreBadge({
     <Badge 
       variant="outline"
       className={cn(
-        "font-semibold select-none inline-flex items-center",
+        "font-semibold select-none inline-flex items-center cursor-help transition-all hover:scale-105 active:scale-95",
         level.color,
         level.bgColor,
         sizeClasses[size],
