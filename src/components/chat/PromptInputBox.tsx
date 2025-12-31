@@ -2,7 +2,7 @@ import React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
-import { ArrowUp, Paperclip, Square, X, StopCircle, Mic, Globe, BrainCog, FolderCode, History, MessageSquare, Clock, Lock, Crown, Trash2 } from "lucide-react";
+import { ArrowUp, Paperclip, Square, X, StopCircle, Mic, Globe, BrainCog, FolderCode, History, MessageSquare, Clock, Lock, Crown, Trash2, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -13,6 +13,8 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { useAudioRecorder } from "@/hooks/useAudioRecorder";
+import { transcribeAudio } from "@/lib/transcription";
 
 // Textarea Component
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -161,20 +163,18 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
 
   React.useEffect(() => {
     if (isRecording) {
-      onStartRecording();
+      setTime(0);
       timerRef.current = setInterval(() => setTime((t) => t + 1), 1000);
     } else {
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
-      onStopRecording(time);
-      setTime(0);
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isRecording, time, onStartRecording, onStopRecording]);
+  }, [isRecording]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -586,7 +586,7 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
   const [files, setFiles] = React.useState<File[]>([]);
   const [filePreviews, setFilePreviews] = React.useState<{ [key: string]: string }>({});
   const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
-  const [isRecording, setIsRecording] = React.useState(false);
+  const [isTranscribing, setIsTranscribing] = React.useState(false);
   const [showSearch, setShowSearch] = React.useState(false);
   const [showThink, setShowThink] = React.useState(false);
   const [showCanvas, setShowCanvas] = React.useState(false);
@@ -603,6 +603,78 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
   const [isCanvasHovered, setIsCanvasHovered] = React.useState(false);
   const [isMicHovered, setIsMicHovered] = React.useState(false);
   const [isHistoryHovered, setIsHistoryHovered] = React.useState(false);
+
+  // Hook para captura de áudio
+  const audioRecorder = useAudioRecorder();
+  const { isRecording, audioBlob, duration, startRecording, stopRecording, clearAudioBlob, error: recorderError, clearError, wasCancelled } = audioRecorder;
+
+  // Função para processar transcrição
+  const handleTranscription = React.useCallback(async (blob: Blob) => {
+    setIsTranscribing(true);
+    
+    try {
+      toast.info('Transcrevendo áudio...', {
+        duration: 3000,
+        icon: '🎙️',
+      });
+
+      const result = await transcribeAudio(blob, 'pt-BR');
+      
+      if (result.transcript && result.transcript.trim().length > 0) {
+        // Enviar transcrição como mensagem
+        onSend(result.transcript, []);
+        
+        toast.success(
+          `Áudio transcrito com ${Math.round(result.confidence * 100)}% de confiança`,
+          {
+            duration: 3000,
+            icon: '✅',
+          }
+        );
+      } else {
+        toast.error('Não foi possível detectar fala no áudio', {
+          duration: 4000,
+        });
+      }
+    } catch (err) {
+      console.error('Transcription error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao transcrever áudio';
+      
+      toast.error(errorMessage, {
+        duration: 5000,
+        action: {
+          label: 'Tentar novamente',
+          onClick: () => handleStartRecording(),
+        },
+      });
+    } finally {
+      setIsTranscribing(false);
+      // Limpar o blob após processar para evitar re-processamento
+      clearAudioBlob();
+    }
+  }, [onSend, clearAudioBlob]);
+
+  // Exibir erro de gravação
+  React.useEffect(() => {
+    if (recorderError) {
+      toast.error(recorderError, {
+        duration: 5000,
+        action: {
+          label: 'Entendi',
+          onClick: () => clearError(),
+        },
+      });
+      clearError();
+    }
+  }, [recorderError, clearError]);
+
+  // Processar áudio quando gravação terminar (não cancelada)
+  React.useEffect(() => {
+    if (audioBlob && !isRecording && !wasCancelled) {
+      handleTranscription(audioBlob);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioBlob, isRecording, wasCancelled]);
 
   const showUpgradeToast = (featureName: string) => {
     toast.error(
@@ -748,12 +820,44 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
     }
   };
 
-  const handleStartRecording = () => console.log("Started recording");
+  const handleStartRecording = async () => {
+    console.log('handleStartRecording called', { canAccessAIFeatures });
+    
+    if (!canAccessAIFeatures) {
+      showUpgradeToast('Gravação de áudio');
+      return;
+    }
 
-  const handleStopRecording = (duration: number) => {
-    console.log(`Stopped recording after ${duration} seconds`);
-    setIsRecording(false);
-    onSend(`[Voice message - ${duration} seconds]`, []);
+    try {
+      console.log('Starting audio recording...');
+      await startRecording();
+      toast.success('Gravação iniciada', {
+        duration: 2000,
+        icon: '🎤',
+      });
+    } catch (err) {
+      // Erro já tratado pelo useEffect
+      console.error('Failed to start recording:', err);
+    }
+  };
+
+  const handleStopRecording = () => {
+    console.log('handleStopRecording called');
+    stopRecording();
+    toast.info('Processando áudio...', {
+      duration: 2000,
+      icon: '⏳',
+    });
+  };
+
+  const handleCancelRecording = () => {
+    console.log('handleCancelRecording called');
+    // Para a gravação sem processar o áudio
+    stopRecording(true); // true = cancel (não transcrever)
+    toast.info('Gravação cancelada', {
+      duration: 2000,
+      icon: '❌',
+    });
   };
 
   const hasContent = input.trim() !== "" || files.length > 0;
@@ -768,9 +872,10 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
         className={cn(
           "w-full bg-[#1F2023] border-[#444444] shadow-[0_8px_30px_rgba(0,0,0,0.24)] transition-all duration-300 ease-in-out",
           isRecording && "border-red-500/70",
+          isTranscribing && "border-blue-500/70",
           className
         )}
-        disabled={isLoading || isRecording || disabled}
+        disabled={isLoading || isRecording || isTranscribing || disabled}
         ref={ref || promptBoxRef}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -1113,72 +1218,96 @@ export const PromptInputBox = React.forwardRef((props: PromptInputBoxProps, ref:
             </div>
           </div>
 
-          <PromptInputAction
-            tooltip={
-              isLoading
-                ? "Parar geração"
-                : isRecording
-                ? "Parar gravação"
-                : hasContent
-                ? "Enviar mensagem"
-                : !canAccessAIFeatures
-                ? "Recurso Plano Business/Premium"
-                : "Mensagem de voz"
-            }
-          >
-            <Button
-              variant="default"
-              size="icon"
-              className={cn(
-                "h-8 w-8 rounded-full transition-all duration-200",
-                isRecording
-                  ? "bg-transparent hover:bg-gray-600/30 text-red-500 hover:text-red-400"
+          {/* Botões de ação - Durante gravação: Cancelar e Enviar */}
+          {isRecording ? (
+            <div className="flex items-center gap-2">
+              {/* Botão Cancelar (vermelho) */}
+              <PromptInputAction tooltip="Cancelar gravação">
+                <Button
+                  variant="default"
+                  size="icon"
+                  className="h-8 w-8 rounded-full transition-all duration-200 bg-red-500/20 hover:bg-red-500/40 text-red-500 hover:text-red-400 border border-red-500/50"
+                  onClick={handleCancelRecording}
+                  disabled={disabled || isTranscribing}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </PromptInputAction>
+
+              {/* Botão Enviar (verde) */}
+              <PromptInputAction tooltip="Enviar áudio para transcrição">
+                <Button
+                  variant="default"
+                  size="icon"
+                  className="h-8 w-8 rounded-full transition-all duration-200 bg-green-500/20 hover:bg-green-500/40 text-green-500 hover:text-green-400 border border-green-500/50"
+                  onClick={handleStopRecording}
+                  disabled={disabled || isTranscribing}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </PromptInputAction>
+            </div>
+          ) : (
+            <PromptInputAction
+              tooltip={
+                isLoading
+                  ? "Parar geração"
                   : hasContent
-                  ? "bg-white hover:bg-white/80 text-[#1F2023]"
-                  : "bg-transparent hover:bg-gray-600/30 text-[#9CA3AF] hover:text-[#D1D5DB]"
-              )}
-              onMouseEnter={() => setIsMicHovered(true)}
-              onMouseLeave={() => setIsMicHovered(false)}
-              onClick={() => {
-                if (isRecording) setIsRecording(false);
-                else if (hasContent) handleSubmit();
-                else handleMicToggle();
-              }}
-              disabled={(isLoading && !hasContent) || disabled}
+                  ? "Enviar mensagem"
+                  : !canAccessAIFeatures
+                  ? "Recurso Plano Business/Premium"
+                  : "Mensagem de voz"
+              }
             >
-              {isLoading ? (
-                <Square className="h-4 w-4 animate-pulse" />
-              ) : isRecording ? (
-                <StopCircle className="h-5 w-5 text-red-500" />
-              ) : hasContent ? (
-                <ArrowUp className="h-4 w-4" />
-              ) : (
-                <AnimatePresence mode="wait">
-                  {!canAccessAIFeatures && isMicHovered ? (
-                    <motion.div
-                      key="lock"
-                      initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
-                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                      exit={{ opacity: 0, scale: 0.5, rotate: 90 }}
-                      transition={{ type: "spring", stiffness: 1500, damping: 100 }}
-                    >
-                      <Lock className="h-5 w-5 text-amber-500" />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="mic"
-                      initial={{ opacity: 0, scale: 0.5, rotate: 90 }}
-                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                      exit={{ opacity: 0, scale: 0.5, rotate: -90 }}
-                      transition={{ type: "spring", stiffness: 1500, damping: 100 }}
-                    >
-                      <Mic className="h-5 w-5 transition-colors" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              )}
-            </Button>
-          </PromptInputAction>
+              <Button
+                variant="default"
+                size="icon"
+                className={cn(
+                  "h-8 w-8 rounded-full transition-all duration-200",
+                  hasContent
+                    ? "bg-white hover:bg-white/80 text-[#1F2023]"
+                    : "bg-transparent hover:bg-gray-600/30 text-[#9CA3AF] hover:text-[#D1D5DB]"
+                )}
+                onMouseEnter={() => setIsMicHovered(true)}
+                onMouseLeave={() => setIsMicHovered(false)}
+                onClick={() => {
+                  if (hasContent) handleSubmit();
+                  else handleStartRecording();
+                }}
+                disabled={(isLoading && !hasContent) || disabled || isTranscribing}
+              >
+                {isLoading ? (
+                  <Square className="h-4 w-4 animate-pulse" />
+                ) : hasContent ? (
+                  <ArrowUp className="h-4 w-4" />
+                ) : (
+                  <AnimatePresence mode="wait">
+                    {!canAccessAIFeatures && isMicHovered ? (
+                      <motion.div
+                        key="lock"
+                        initial={{ opacity: 0, scale: 0.5, rotate: -90 }}
+                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                        exit={{ opacity: 0, scale: 0.5, rotate: 90 }}
+                        transition={{ type: "spring", stiffness: 1500, damping: 100 }}
+                      >
+                        <Lock className="h-5 w-5 text-amber-500" />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="mic"
+                        initial={{ opacity: 0, scale: 0.5, rotate: 90 }}
+                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                        exit={{ opacity: 0, scale: 0.5, rotate: -90 }}
+                        transition={{ type: "spring", stiffness: 1500, damping: 100 }}
+                      >
+                        <Mic className="h-5 w-5 transition-colors" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                )}
+              </Button>
+            </PromptInputAction>
+          )}
         </PromptInputActions>
       </PromptInput>
 

@@ -1,8 +1,8 @@
 # 📝 CHANGELOG - Histórico de Versões
 
-> **Última Atualização:** 15 de Dezembro de 2025  
+> **Última Atualização:** 30 de Dezembro de 2025  
 > **Projeto:** Meu Agente  
-> **Versão Atual:** 2.0.0
+> **Versão Atual:** 2.1.0
 
 ---
 
@@ -18,6 +18,48 @@ Este changelog segue o padrão [Keep a Changelog](https://keepachangelog.com/pt-
 - **🗑️ Deprecated** - Recursos que serão removidos
 - **❌ Removed** - Recursos removidos
 - **🔒 Security** - Correções de segurança
+
+---
+
+## [2.1.0] - 2025-12-30
+
+### ✨ Added
+
+#### Transcrição de Áudio no Chat
+- Gravação de mensagens de voz com botão de microfone no chat
+- Transcrição automática usando Google Cloud Speech-to-Text API
+- Hook `useAudioRecorder` com MediaRecorder API nativo
+- Otimizações de qualidade: echo cancellation, noise suppression, auto gain control
+- Captura em formato WebM/Opus (128kbps, mono, 48kHz)
+- Edge Function `transcribe-audio` para processar transcrição no backend
+- Suporte a idioma pt-BR com pontuação automática
+- Feedback visual durante todas as etapas (gravando, processando, transcrevendo)
+- Tratamento de erros amigável:
+  - Permissão de microfone negada
+  - Microfone não encontrado ou em uso
+  - Falha na transcrição
+- Exibição de confiança da transcrição (confidence score)
+- Restrição por plano (Business/Premium)
+- Timer visual com contador de tempo (MM:SS)
+- Visualizador de áudio com 32 barras animadas
+- Toast notifications em português com ícones
+- Botão de retry em caso de erro
+- Documentação completa em `docs/features/AUDIO_TRANSCRIPTION_GOOGLE.md`
+- Guia rápido em `docs/features/AUDIO_TRANSCRIPTION_QUICKSTART.md`
+
+### 🔄 Changed
+
+- Atualizado `.env.example` com variável `VITE_GOOGLE_SPEECH_API_KEY`
+- Modificado `PromptInputBox.tsx` para usar transcrição real (substituído placeholder)
+- Adicionado estado `isTranscribing` para feedback visual durante processamento
+- Borda do input muda de cor: vermelho (gravando) → azul (transcrevendo)
+
+### 🔒 Security
+
+- API Key do Google processada apenas no backend (Edge Function)
+- Verificação de autenticação Supabase antes de transcrever
+- Validação de usuário autenticado em cada request
+- Recomendações de segurança documentadas (restrição de API key, CORS, etc)
 
 ---
 
