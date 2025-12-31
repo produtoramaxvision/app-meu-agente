@@ -670,8 +670,9 @@
   -webkit-user-select: none;
   user-select: none;
 
-  /* Recommended by preset-styles.md: improves touch UX and avoids delayed behaviors */
-  touch-action: manipulation;
+  /* CRITICAL FIX: 'none' is required for reliable drag on mobile.
+     'manipulation' allows scroll/pan which conflicts with drag initiation. */
+  touch-action: none;
   
   /* Visual feedback for draggable elements */
   cursor: grab;

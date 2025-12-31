@@ -45,10 +45,12 @@ export const KanbanBoard = memo(function KanbanBoard({
     dragModeEnabledRef.current = true;
 
     document.body.classList.add('rfd-dragging-active');
-
+    
     // Prevent native iOS behaviors during the drag lifecycle
-    document.addEventListener('contextmenu', preventDefaultEvent, true);
-    document.addEventListener('selectstart', preventDefaultEvent, true);
+    // Note: touch-action: none in CSS handles the primary scroll blocking
+    document.addEventListener('contextmenu', preventDefaultEvent, { capture: true, passive: false });
+    document.addEventListener('selectstart', preventDefaultEvent, { capture: true, passive: false });
+    document.addEventListener('touchmove', preventDefaultEvent, { capture: true, passive: false }); // Extra safety for iOS
   }, [preventDefaultEvent]);
 
   // 📱 MOBILE FIX: Helper para desativar modo drag
@@ -60,6 +62,7 @@ export const KanbanBoard = memo(function KanbanBoard({
 
     document.removeEventListener('contextmenu', preventDefaultEvent, true);
     document.removeEventListener('selectstart', preventDefaultEvent, true);
+    document.removeEventListener('touchmove', preventDefaultEvent, true);
   }, [preventDefaultEvent]);
 
   // Failsafe: se a tela perder foco / pagehide no iOS, não deixar o body “preso”

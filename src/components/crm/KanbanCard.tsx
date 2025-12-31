@@ -127,12 +127,18 @@ export const KanbanCard = memo(function KanbanCard({
   }, []);
 
   // ⚡ OTIMIZAÇÃO: useCallback para handlers de ações rápidas
-  const handleMessageClick = useCallback((e: React.MouseEvent) => {
+  // IMPORTANTE: stopPropagation é crucial aqui pois o card pai tem touch-action: none
+  const handleMessageClick = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
+    // Previne que o toque inicie o drag se for um evento de toque
+    if ('onTouchStart' in e) {
+       // Não precisamos de preventDefault aqui pois queremos o clique,
+       // mas o stopPropagation evita que suba para o drag handle
+    }
     onInteraction?.(contact, 'message');
   }, [onInteraction, contact]);
 
-  const handlePhoneClick = useCallback((e: React.MouseEvent) => {
+  const handlePhoneClick = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     onInteraction?.(contact, 'call');
   }, [onInteraction, contact]);
@@ -242,6 +248,8 @@ export const KanbanCard = memo(function KanbanCard({
                     "transition-opacity"
                   )}
                   onClick={handleMenuButtonClick}
+                  onTouchStart={(e) => e.stopPropagation()} // Garante que o toque no menu não inicie drag
+                  onMouseDown={(e) => e.stopPropagation()}
                   aria-label="Menu de ações do lead"
                 >
                   <MoreVertical className="h-4 w-4" />
